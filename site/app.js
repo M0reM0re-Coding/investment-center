@@ -19,7 +19,25 @@ const state = {
   cal: { filter: "All", wk: 0, sel: null, range: { days: 28, from: null, to: null }, hide: new Set() }, user: null, settings: null, stories: [], saved: new Set(), filter: "All", draft: null, fresh: new Set(),
   status: new Map(), notes: new Map(), events: [], more: new Map(), since: new Date(Date.now() - 864e5), ready005: false,
   briefing: null, searchQ: "", searchResults: null, loadingStory: null };
-const calm = () => safe(() => matchMedia("(prefers-reduced-motion: reduce)").matches, false);
+// Motion setting (Settings page): "auto" follows the device, "full" always animates, "reduced" keeps things still.
+const motionPref = () => safe(() => localStorage.getItem("ic_motion"), null) || "auto";
+const deviceCalm = () => safe(() => matchMedia("(prefers-reduced-motion: reduce)").matches, false);
+const calm = () => { const p = motionPref(); return p === "reduced" || (p !== "full" && deviceCalm()); };
+const applyMotion = () => document.documentElement.classList.toggle("calm", calm());
+applyMotion();
+// Theme setting (Settings page): "auto" follows the device, "light" or "dark"; dark has 3 styles (design round 16)
+const themePref = () => safe(() => localStorage.getItem("ic_theme"), null) || "auto";
+const darkStyle = () => safe(() => localStorage.getItem("ic_dark"), null) || "graphite";
+const deviceDark = () => safe(() => matchMedia("(prefers-color-scheme: dark)").matches, false);
+const isDark = () => { const p = themePref(); return p === "dark" || (p === "auto" && deviceDark()); };
+function applyTheme() {
+  const r = document.documentElement;
+  r.dataset.theme = isDark() ? "dark" : "light";
+  r.dataset.dark = darkStyle();
+}
+applyTheme();
+safe(() => matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyTheme(); if (location.hash === "#/prefs") render(false); }));
+safe(() => matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () => { applyMotion(); if (location.hash === "#/prefs") render(false); }));
 const EYE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M2 2l20 20"/></svg>`;
 const MAX_CUSTOM_TOPICS = 5, MAX_EXTRA_TICKERS = 5, MAX_WATCHLIST = 30;
@@ -143,7 +161,7 @@ function priceStrip() {
   const cards = items.length
     ? items.map((it) => `<div class="mk"><span class="nm">${esc(it.n)}</span><span class="sub">${esc(it.sub)}</span>${pxSpan(it.y)}${chSpan(it.y)}${spSpan(it.y, 74, 40)}</div>`).join("")
     : `<p class="note">Your watchlist is empty. Add stocks in Topics &amp; watchlist.</p>`;
-  return `<div class="stripwrap a"><div class="strip-head"><h2>${tab === "m" ? "Markets" : "My watchlist"} <span class="delay">· Yahoo Finance, may be delayed</span>${marketBadges()}</h2>
+  return `<div class="stripwrap a" data-sig="${esc([tab, ...items.map((it) => it.y + (quotes[it.y] ? "+" : "-"))].join(","))}"><div class="strip-head"><h2>${tab === "m" ? "Markets" : "My watchlist"} <span class="delay">· Yahoo Finance, may be delayed</span>${marketBadges()}</h2>
       <div class="tabs"><button class="${tab === "m" ? "on" : ""}" data-ptab="m">Markets</button><button class="${tab === "w" ? "on" : ""}" data-ptab="w">My watchlist</button></div></div>
     <div class="strip">${cards}</div></div>`;
 }
@@ -194,7 +212,7 @@ function dock() {
   const rest = w.length ? [...m, ...w.slice(5)] : m.slice(5);
   const it = (x) => `<span class="it"><b>${esc(x.n)}</b>${pxSpan(x.y)}${chSpan(x.y)}</span>`;
   const cell = (x) => `<div class="cell"><b>${esc(x.n)}</b><div>${pxSpan(x.y)} ${chSpan(x.y)}</div></div>`;
-  return `<div class="dock ${state.dockOpen ? "open" : ""}" aria-label="Prices">
+  return `<div class="dock ${state.dockOpen ? "open" : ""}" data-sig="${esc([state.dockOpen, ...[...w, ...m].map((x) => x.y + (quotes[x.y] ? "+" : "-"))].join(","))}" aria-label="Prices">
     <div class="bar"><span class="lbl">${w.length ? "MY WATCHLIST" : "MARKETS"}</span><div class="items">${calm() ? bar.map(it).join("") : (() => {
         // the whole list scrolls like an exchange ticker; repeated so the loop has no gap
         const all = w.length ? [...w, ...m] : m, half = (all.length < 8 ? [...all, ...all] : all).map(it).join("");
@@ -304,7 +322,7 @@ function briefBar() {
     .sort((a, b) => Math.abs(pctOf(b[1])) - Math.abs(pctOf(a[1])));
   const mover = movers.length ? ` · ${esc(movers[0][0])} <span class="${dirOf(movers[0][1])}">${pctTxt(movers[0][1])}</span> today` : "";
   const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="${impClass(s.impact_score)}">${s.impact_score}</span>`);
-  return `<div class="brief a">${calm() ? "" : BRIEF_BG}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
+  return `<div class="brief a" data-sig="${esc([waiting.length, fresh.length, hi, mover].join("|"))}">${calm() ? "" : BRIEF_BG}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${hi} high-impact${mover}</p></div>
     <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
     ${waiting.length ? `<button class="go" data-brief>▶ Start briefing · ~${waiting.length} min</button>` : ""}</div>`;
@@ -588,6 +606,7 @@ function header(active) {
       <form class="hsearch" id="hsearch" role="search"><span>⌕</span><input id="hq" type="search" placeholder="Search news & notes" value="${esc(state.searchQ || "")}" autocomplete="off" maxlength="60"></form>
       <span class="live" title="Checks for new stories every 2 minutes"><i></i>LIVE</span>
       <a class="btn ghost" href="#/settings">Topics &amp; watchlist</a>
+      <a class="gear ${active === "prefs" ? "on" : ""}" href="#/prefs" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
       <button class="btn" data-act="logout">Sign out</button>
     </div></div></header>`;
 }
@@ -702,6 +721,40 @@ const makeDraft = () => ({
   watch_names: { ...(state.settings.watch_names || {}) },
 });
 const known = (t) => CFG.tickers.includes(t);
+
+// Settings page (gear icon): display preferences saved on this device
+function viewPrefs() {
+  const p = motionPref(), dev = deviceCalm();
+  const tp = themePref();
+  const topt = (k, title, sub) => `<button class="mopt ${tp === k ? "on" : ""}" data-theme-pick="${k}" aria-pressed="${tp === k}">
+      <span class="radio"></span><span><b>${title}</b><small>${sub}</small></span></button>`;
+  const opt = (k, title, sub) => `<button class="mopt ${p === k ? "on" : ""}" data-motion="${k}" aria-pressed="${p === k}">
+      <span class="radio"></span><span><b>${title}</b><small>${sub}</small></span></button>`;
+  return `${header("prefs")}<div class="wrap"><div class="panel">
+    <a class="back a" href="#/">← Back to My News</a>
+    <h1 class="a" style="margin-top:16px">Settings</h1>
+    <p class="why a">Saved on this device only.</p>
+    <h2 class="sec a" style="margin-top:32px">Theme</h2>
+    <div class="mopts a">
+      ${topt("auto", "Automatic", `Follow this device. Right now your device is in <b>${deviceDark() ? "dark" : "light"} mode</b>.`)}
+      ${topt("light", "Light", "White pages, like a newspaper.")}
+      ${topt("dark", "Dark", "Dark pages: easier on the eyes at night.")}
+    </div>
+    <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">Dark style</h3>
+    <div class="dpick a">${[["graphite", "Graphite", "Soft charcoal greys", ["#0f0f10", "#18181b", "#222226"]], ["black", "True black", "Pure black, high contrast", ["#000", "#0b0b0c", "#151517"]], ["navy", "Midnight", "Deep blue, trading-terminal feel", ["#0a0f1c", "#101829", "#16203a"]]]
+      .map(([k, n, sub, c]) => `<button class="dsw ${darkStyle() === k ? "on" : ""}" data-dark-pick="${k}"><span class="sw" style="background:${c[0]}"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i><i style="background:#ff4500"></i></span><b>${n}</b><small>${sub}</small></button>`).join("")}</div>
+    <h2 class="sec a" style="margin-top:32px">Motion</h2>
+    <div class="mopts a">
+      ${opt("auto", "Automatic", `Follow this device's setting. Right now your device asks for <b>${dev ? "less motion" : "normal motion"}</b>, so motion is <b>${dev ? "reduced" : "on"}</b>.`)}
+      ${opt("full", "Full motion", "Opening intro, rolling prices, charts drawing in, page transitions and all other effects.")}
+      ${opt("reduced", "Reduced motion", "No intro and no moving effects. Everything appears straight away. Easier on the eyes and on older computers.")}
+    </div>
+    <div class="a" style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn ghost" data-act="play-intro" ${calm() ? "disabled" : ""}>▶ Play the opening intro</button>
+      <span class="note" id="motion-msg" style="margin:0">${calm() ? "The intro is off while motion is reduced." : "Plays the next of the 4 intros."}</span>
+    </div>
+  </div></div>`;
+}
 
 function viewSettings() {
   const d = state.draft;
@@ -832,8 +885,8 @@ function rememberQuotes() {
   if (rows.length) lsSet("ic_last_quotes", JSON.stringify(rows));
 }
 let pageReady = false;   // true once the first real page (news or login) is drawn
-function playIntro() {
-  const force = /[?&]intro\b/.test(location.search);
+function playIntro(now = false) {
+  const force = now || /[?&]intro\b/.test(location.search);
   if (calm() || (!force && ssGet("ic_intro_seen"))) return;
   ssSet("ic_intro_seen", "1");
   const n = Number(lsGet("ic_intro_n") || 0) % 4;
@@ -960,7 +1013,27 @@ addEventListener("scroll", () => {
 // ---------- router ----------
 // animate = true when a page opens (things rise in); false for small updates like saving a star.
 // animate: true = page opens (rise in), "soft" = same page, new content (short fade), false = no motion
+// Small updates (filters, ticks): only swap the parts of the page that changed. Untouched parts stay in place,
+// so nothing blinks and running effects (ticker dock, briefing line, pulses) carry on without restarting.
+const samePart = (o, n) => o.tagName === n.tagName && ((o.dataset.sig && o.dataset.sig === n.dataset.sig) || o.outerHTML === n.outerHTML);
+function swapChanged(oldParent, newParent) {
+  const od = [...oldParent.children], nw = [...newParent.children];
+  if (od.length !== nw.length) { oldParent.replaceChildren(...nw); return; }
+  nw.forEach((n, i) => {
+    const o = od[i];
+    if (samePart(o, n)) return;
+    if (o.tagName === n.tagName && o.className === n.className && (n.classList.contains("wrap") || n.classList.contains("page"))) return swapChanged(o, n);
+    o.replaceWith(n);
+  });
+}
+function setApp(html, animate) {
+  if (animate === true || !app.querySelector(".wrap")) { app.innerHTML = html; return; }
+  const t = document.createElement("template");
+  t.innerHTML = html;
+  swapChanged(app, t.content);
+}
 function render(animate = true) {
+  applyMotion();
   app.classList.remove("enter", "soft"); void app.offsetWidth;
   if (animate === true && !calm()) app.classList.add("enter");
   if (animate === "soft" && !calm()) app.classList.add("soft");
@@ -983,10 +1056,13 @@ function render(animate = true) {
     const d = h.slice(11), c = state.cal;
     if (/^\d{4}-\d\d-\d\d$/.test(d) && c.from !== h) { c.from = h; c.sel = d; c.wk = Math.max(0, Math.min(1, Math.floor(Math.round((dayOf(d) - monday()) / 864e5) / 35))); }
     if (!c.sel) c.sel = isoDay(today0());
-    app.innerHTML = viewCalendar();
+    setApp(viewCalendar(), animate);
   }
+  else if (h === "#/prefs") app.innerHTML = viewPrefs();
   else if (h === "#/settings") { state.draft = state.draft || makeDraft(); app.innerHTML = viewSettings(); }
-  else app.innerHTML = viewFeed();
+  else setApp(viewFeed(), animate);
+  // soft updates: charts appear already drawn (no redraw flash)
+  if (animate === "soft") app.querySelectorAll(".spark.draw").forEach((el) => el.classList.remove("draw"));
   app.querySelectorAll(".a").forEach((el, i) => el.style.setProperty("--i", Math.min(i, 14)));
   updateDock();
   const side = app.querySelector(".right, .sidecol");
@@ -1044,7 +1120,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { ch
 app.addEventListener("click", async (e) => {
   // Clicking outside the search box closes its results
   if (!e.target.closest(".search")) { const r = document.getElementById("res"); if (r) r.innerHTML = ""; }
-  const el = e.target.closest("[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add]");
+  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add]");
   if (!el) return;
   if (el.dataset.save) {
     e.preventDefault(); e.stopPropagation();
@@ -1053,6 +1129,19 @@ app.addEventListener("click", async (e) => {
     else { await sb.from("saved").insert({ user_id: state.user.id, story_id: id }); state.saved.add(id); }
     render(false);
     return pop(`[data-save="${CSS.escape(id)}"]`);
+  }
+  if (el.dataset.themePick || el.dataset.darkPick) {
+    if (el.dataset.themePick) safe(() => localStorage.setItem("ic_theme", el.dataset.themePick));
+    if (el.dataset.darkPick) { safe(() => localStorage.setItem("ic_dark", el.dataset.darkPick)); if (!isDark()) safe(() => localStorage.setItem("ic_theme", "dark")); }
+    applyTheme();
+    return render(false);
+  }
+  if (el.dataset.motion) {
+    safe(() => localStorage.setItem("ic_motion", el.dataset.motion));
+    applyMotion();
+    render("soft");
+    toast(`Motion: ${{ auto: "Automatic", full: "Full motion", reduced: "Reduced motion" }[el.dataset.motion]} · saved on this device`);
+    return;
   }
   if (el.dataset.lrange) { state.cal.range = { days: Number(el.dataset.lrange), from: null, to: null }; return render("soft"); }
   if (el.dataset.lpick) { const h = state.cal.hide, k = el.dataset.lpick; if (k === "*") h.clear(); else if (h.has(k)) h.delete(k); else h.add(k); return render(false); }
@@ -1117,6 +1206,7 @@ app.addEventListener("click", async (e) => {
     return;
   }
   if (act === "magic") { e.preventDefault(); return sendMagicLink(); }
+  if (act === "play-intro") { playIntro(true); return; }
   if (act === "logout") { clearInterval(pollTimer); clearInterval(priceTimer); await sb.auth.signOut(); return; }
   if (act === "save-settings" && d) {
     const row = { topics: d.topics, watchlist: d.watchlist, custom_topics: d.custom_topics, watch_names: d.watch_names, updated_at: new Date().toISOString() };
