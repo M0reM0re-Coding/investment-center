@@ -831,6 +831,7 @@ function rememberQuotes() {
     .filter(([y]) => quotes[y]).slice(0, 10).map(([y, n]) => [n, fmtPx(quotes[y].price), pctTxt(quotes[y])]);
   if (rows.length) lsSet("ic_last_quotes", JSON.stringify(rows));
 }
+let pageReady = false;   // true once the first real page (news or login) is drawn
 function playIntro() {
   const force = /[?&]intro\b/.test(location.search);
   if (calm() || (!force && ssGet("ic_intro_seen"))) return;
@@ -879,15 +880,17 @@ function playIntro() {
     if (done) return; done = true;
     el.classList.add("out");
     document.documentElement.classList.remove("intro-on");
-    // replay the page's rise-in so it arrives as the intro leaves
-    app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
+    // the page was drawn (paused) under the intro: un-pausing makes it rise in exactly once
     if (typeof countUp === "function") countUp();
     setTimeout(() => el.remove(), 650);
     removeEventListener("keydown", finish);
   };
   el.addEventListener("click", finish);
   addEventListener("keydown", finish);
-  setTimeout(finish, total);
+  // leave after the animation AND once your news is on the page (never longer than 5 s)
+  const t0 = performance.now();
+  const tryEnd = () => { if (pageReady || performance.now() - t0 > 5000) finish(); else setTimeout(tryEnd, 120); };
+  setTimeout(tryEnd, total);
 }
 
 // 1. Rolling digits: when a price changes, only the digits that changed roll up (price rose) or down (fell)
@@ -930,7 +933,7 @@ function pageWipe() {
   const w = document.createElement("div");
   w.className = "pwipe";
   w.setAttribute("aria-hidden", "true");
-  w.innerHTML = `<div class="cover"></div><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="M0 80 L120 66 L230 72 L360 44 L470 54 L600 28 L720 36 L860 14 L1000 8"/></svg>`;
+  w.innerHTML = `<svg viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="M0 80 L120 66 L230 72 L360 44 L470 54 L600 28 L720 36 L860 14 L1000 8"/></svg>`;
   document.body.appendChild(w);
   setTimeout(() => w.remove(), 800);
 }
@@ -956,8 +959,11 @@ addEventListener("scroll", () => {
 
 // ---------- router ----------
 // animate = true when a page opens (things rise in); false for small updates like saving a star.
+// animate: true = page opens (rise in), "soft" = same page, new content (short fade), false = no motion
 function render(animate = true) {
-  app.classList.toggle("enter", animate && !calm());
+  app.classList.remove("enter", "soft"); void app.offsetWidth;
+  if (animate === true && !calm()) app.classList.add("enter");
+  if (animate === "soft" && !calm()) app.classList.add("soft");
   if (!state.user) {
     // A failed email link comes back as #error=...; show it in plain words and tidy the address bar
     const err = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("error_description");
@@ -986,7 +992,7 @@ function render(animate = true) {
   const side = app.querySelector(".right, .sidecol");
   if (side && sideWatch) { sideWatch.disconnect(); sideWatch.observe(side); }
   setupFilterRow();
-  if (animate) countUp();
+  if (animate === true) countUp();
 }
 window.addEventListener("hashchange", () => {
   const h = location.hash || "";
@@ -1048,12 +1054,12 @@ app.addEventListener("click", async (e) => {
     render(false);
     return pop(`[data-save="${CSS.escape(id)}"]`);
   }
-  if (el.dataset.lrange) { state.cal.range = { days: Number(el.dataset.lrange), from: null, to: null }; return render(false); }
+  if (el.dataset.lrange) { state.cal.range = { days: Number(el.dataset.lrange), from: null, to: null }; return render("soft"); }
   if (el.dataset.lpick) { const h = state.cal.hide, k = el.dataset.lpick; if (k === "*") h.clear(); else if (h.has(k)) h.delete(k); else h.add(k); return render(false); }
   if (el.dataset.calday) { location.hash = `#/calendar/${el.dataset.calday}`; return; }
   if (el.dataset.cal !== undefined) { if (!e.target.closest("a")) location.hash = "#/calendar"; return; }
   if (el.dataset.calsel) { state.cal.sel = el.dataset.calsel; return render(false); }
-  if (el.dataset.calf) { state.cal.filter = el.dataset.calf; return render(false); }
+  if (el.dataset.calf) { state.cal.filter = el.dataset.calf; return render("soft"); }
   if (el.dataset.calwk) { state.cal.wk = Math.max(0, Math.min(1, state.cal.wk + Number(el.dataset.calwk))); return render(false); }
   if (el.dataset.done) { e.preventDefault(); e.stopPropagation(); if (stOf({ id: el.dataset.done }) !== "done") burst(el); return changeStatus(el.dataset.done, "done"); }
   if (el.dataset.later) { e.preventDefault(); e.stopPropagation(); return changeStatus(el.dataset.later, "later"); }
@@ -1073,7 +1079,7 @@ app.addEventListener("click", async (e) => {
     return render(false);
   }
   if (el.dataset.go) { location.hash = `#/story/${el.dataset.go}`; return; }
-  if (el.dataset.filter) { state.filter = el.dataset.filter; render(); return loadQuotes(); }
+  if (el.dataset.filter) { state.filter = el.dataset.filter; render("soft"); return loadQuotes(); }
   if (el.dataset.scroll !== undefined) { app.querySelector(".filters .track")?.scrollBy({ left: 320, behavior: calm() ? "auto" : "smooth" }); return; }
   if (el.dataset.dock !== undefined) {
     state.dockOpen = !state.dockOpen;
@@ -1184,7 +1190,7 @@ async function start(session) {
   loading = uid;
   state.user = session?.user || null;
   if (location.search.includes("code=")) history.replaceState(null, "", location.pathname + location.hash); // tidy URL after login
-  if (!state.user) return render();
+  if (!state.user) { render(); pageReady = true; return; }
   app.innerHTML = `<p class="loading">Loading your news…</p>`;
   try {
     await loadSettings();
@@ -1192,10 +1198,12 @@ async function start(session) {
     await loadReading();
     await Promise.race([loadQuotes(), new Promise((r) => setTimeout(r, 1500))]); // show prices with the first paint if they come quickly
     render();
+    pageReady = true;
     startPolling();
     if ((location.hash || "").startsWith("#/search/")) window.dispatchEvent(new HashChangeEvent("hashchange"));
   } catch (err) {
     loading = null; // allow a retry on reload
+    pageReady = true;
     app.innerHTML = `${header("news")}<div class="wrap"><div class="empty"><h2>Couldn't load</h2><p>${esc(err.message)}</p></div></div>`;
   }
 }

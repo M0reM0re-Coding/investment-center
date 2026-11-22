@@ -667,3 +667,20 @@ textarea#note:focus{border-color:var(--ink)}
 .mk{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
 .mk:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(0,0,0,.08)}
 @media (prefers-reduced-motion:reduce){.intro,.pwipe,.burst{display:none}.dock .items .run,.brief .bgline,.badge.imp-hi,.kc.first::after,.live .hb path,.mkt.open i{animation:none!important}.live .hb .beat{display:none}.live .hb .base{opacity:1}}
+
+/* ---------- motion clean-up ---------- */
+:root{--ease:cubic-bezier(.2,.8,.2,1)}
+/* page drawn under the intro waits (paused, hidden) and rises once when the intro leaves */
+.intro-on #app .a,.intro-on #app .enter .a,.intro-on .enter .a,.intro-on .enter .kn b,.intro-on .enter .lchip,.intro-on .enter .calp .mini .c{animation-play-state:paused!important}
+.enter .a{animation:rise .5s var(--ease) backwards;animation-delay:calc(min(var(--i,0),10) * 40ms)}
+/* same page, new content (filters, ranges): a short gentle fade, no big rise */
+.soft .a{animation:softin .28s var(--ease) backwards;animation-delay:calc(min(var(--i,0),6) * 18ms)}
+@keyframes softin{from{opacity:0;transform:translateY(5px)}}
+/* page change: orange line only (no white flash); the new page rises underneath */
+.pwipe svg{top:40%;height:20%}
+/* fewer things looping forever */
+.badge.imp-hi{animation:hot 2.2s ease-out 3}
+.kc.first::after{animation:shine 9s 1.5s ease-in-out infinite}
+@keyframes shine{0%{transform:translateX(-120%)}18%,100%{transform:translateX(120%)}}
+.brief .bgline{animation-duration:60s}
+.dock .items .run{animation-timing-function:linear}
