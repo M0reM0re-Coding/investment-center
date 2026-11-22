@@ -99,17 +99,21 @@ def news_events(saved_rows):
 
 
 def maybe_refresh_earnings(watchlist):
-    """Once a day: next earnings / ex-dividend dates for your watchlist (Yahoo)."""
-    marker = f"events:{date.today().isoformat()}"
+    """Next earnings / ex-dividend dates (Yahoo), checked once a day PER STOCK.
+    A stock you just added gets its dates on the next run (within 30 minutes), not the next day."""
+    today = date.today().isoformat()
     try:
-        if db.seen_links([marker]):
+        tickers = prices.real_tickers(watchlist, watchlist)
+        marks = {t: f"events:{today}:{t}" for t in tickers}
+        done = db.seen_links(marks.values())
+        todo = [t for t in tickers if marks[t] not in done]
+        if not todo:
             return
-        today = date.today().isoformat()
-        rows = [e for e in prices.earnings_events(prices.real_tickers(watchlist, watchlist)) if e["day"] >= today]
+        rows = [e for e in prices.earnings_events(todo) if e["day"] >= today]
         if rows:
             db.upsert_events(rows)
-        db.mark_seen({marker: None})
-        print(f"Upcoming events: {len(rows)} earnings/dividend dates saved")
+        db.mark_seen({marks[t]: None for t in todo})
+        print(f"Upcoming events: {len(rows)} earnings/dividend dates saved for {', '.join(todo)}")
     except RuntimeError as e:
         print(f"  Earnings dates not saved: {str(e)[:120]}")
 

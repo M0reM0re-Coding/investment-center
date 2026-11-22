@@ -217,8 +217,19 @@ addEventListener("resize", setupFilterRow);
 const updateDock = () => {
   const strip = app.querySelector(".stripwrap");
   document.body.classList.toggle("docked", !!strip && strip.getBoundingClientRect().bottom < 69);
+  fitSide();
 };
 addEventListener("scroll", updateDock, { passive: true });
+// Right column: sticks under the header when it fits on screen. When it is taller than the screen,
+// it scrolls with the page until its bottom (the calendar) is fully visible above the dock, then sticks there.
+function fitSide() {
+  const el = app.querySelector(".right, .sidecol");
+  if (!el) return;
+  const gap = document.body.classList.contains("docked") ? 100 : 24;
+  el.style.top = `${Math.min(84, Math.round(innerHeight - el.offsetHeight - gap))}px`;
+}
+addEventListener("resize", fitSide);
+const sideWatch = typeof ResizeObserver === "function" ? new ResizeObserver(() => fitSide()) : null;
 
 // ---------- reading status, notes, events, mutes (design round 11: D briefing + B queue + C actions in A style) ----------
 const CHK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
@@ -380,8 +391,7 @@ function keyDates(ev, n) {
 
 // My News right column: mini heat-map calendar (5 weeks) + key dates; click opens the full calendar
 function upcomingPanel() {
-  const ev = calEvents();
-  if (!ev.length) return "";
+  const ev = calEvents();   // always shown, so the full calendar is reachable even before any dates arrive
   const t0 = today0(), st = monday();
   const cell = (x) => {
     const d = isoDay(x), list = ev.filter((e) => e.day === d).sort(byLvl);
@@ -389,7 +399,7 @@ function upcomingPanel() {
   };
   return `<div class="calp a" data-cal><div class="mh"><h2>Upcoming</h2><a href="#/calendar">Full calendar →</a></div>
     <div class="mini">${["M", "T", "W", "T", "F", "S", "S"].map((w) => `<div class="w">${w}</div>`).join("")}${[...Array(35)].map((_, k) => cell(addDays(st, k))).join("")}</div>
-    ${keyDates(ev, 3)}</div>`;
+    ${ev.length ? keyDates(ev, 3) : `<p class="note" style="margin-top:12px">No dates yet. Earnings and dividend dates for your watchlist are added once a day, and dates found in the news as they arrive.</p>`}</div>`;
 }
 
 function viewCalendar() {
@@ -973,6 +983,8 @@ function render(animate = true) {
   else app.innerHTML = viewFeed();
   app.querySelectorAll(".a").forEach((el, i) => el.style.setProperty("--i", Math.min(i, 14)));
   updateDock();
+  const side = app.querySelector(".right, .sidecol");
+  if (side && sideWatch) { sideWatch.disconnect(); sideWatch.observe(side); }
   setupFilterRow();
   if (animate) countUp();
 }
