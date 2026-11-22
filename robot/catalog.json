@@ -1,48 +1,257 @@
 {
   "_note": "Keywords with any capital letter match case-sensitively (so 'AI' doesn't match 'said'). All-lowercase keywords match any case.",
   "topics": {
-    "SET / Thai market": ["SET index", "SET50", "Stock Exchange of Thailand", "Thai stocks", "Thai shares", "foreign investors", "Thai market"],
-    "Thai economy & BOT": ["Bank of Thailand", "BOT", "Thai economy", "baht", "Thailand's economy", "Thai exports"],
-    "Global macro & Fed": ["Federal Reserve", "Fed", "interest rate", "interest rates", "inflation", "CPI", "recession", "Treasury yields", "ECB", "GDP", "tariff", "tariffs"],
-    "Big 4 / audit / IFRS": ["Big Four", "Big 4", "Deloitte", "PwC", "EY", "KPMG", "audit", "auditor", "auditors", "IFRS", "TFRS", "accounting"],
-    "AI in finance": ["AI", "artificial intelligence", "generative AI", "automation", "AI agent", "AI agents"],
-    "Tech & chips": ["Nvidia", "chip", "chips", "semiconductor", "semiconductors", "TSMC", "Apple", "Microsoft", "Alphabet", "Google", "Meta"],
-    "Energy & oil": ["oil", "crude", "Brent", "OPEC", "natural gas", "LNG", "energy prices"],
-    "Banking": ["bank", "banks", "lender", "lenders", "Kasikorn", "SCB", "Bangkok Bank", "Krungthai"],
-    "Crypto": ["bitcoin", "crypto", "cryptocurrency", "ether", "stablecoin", "stablecoins"],
-    "Fintech": ["fintech", "digital payment", "digital payments", "neobank", "PromptPay", "e-wallet"],
-    "China economy": ["China", "Chinese economy", "yuan", "PBOC", "Beijing"],
-    "Commodities & gold": ["gold", "silver", "copper", "commodity", "commodities"]
+    "SET / Thai market": [
+      "SET index",
+      "SET50",
+      "Stock Exchange of Thailand",
+      "Thai stocks",
+      "Thai shares",
+      "foreign investors",
+      "Thai market"
+    ],
+    "Thai economy & BOT": [
+      "Bank of Thailand",
+      "BOT",
+      "Thai economy",
+      "baht",
+      "Thailand's economy",
+      "Thai exports"
+    ],
+    "Global macro & Fed": [
+      "Federal Reserve",
+      "Fed",
+      "interest rate",
+      "interest rates",
+      "inflation",
+      "CPI",
+      "recession",
+      "Treasury yields",
+      "ECB",
+      "GDP",
+      "tariff",
+      "tariffs"
+    ],
+    "Big 4 / audit / IFRS": [
+      "Big Four",
+      "Big 4",
+      "Deloitte",
+      "PwC",
+      "EY",
+      "KPMG",
+      "audit",
+      "auditor",
+      "auditors",
+      "IFRS",
+      "TFRS",
+      "accounting"
+    ],
+    "AI in finance": [
+      "AI",
+      "artificial intelligence",
+      "generative AI",
+      "automation",
+      "AI agent",
+      "AI agents"
+    ],
+    "Tech & chips": [
+      "Nvidia",
+      "chip",
+      "chips",
+      "semiconductor",
+      "semiconductors",
+      "TSMC",
+      "Apple",
+      "Microsoft",
+      "Alphabet",
+      "Google",
+      "Meta"
+    ],
+    "Energy & oil": [
+      "oil",
+      "crude",
+      "Brent",
+      "OPEC",
+      "natural gas",
+      "LNG",
+      "energy prices"
+    ],
+    "Banking": [
+      "bank",
+      "banks",
+      "lender",
+      "lenders",
+      "Kasikorn",
+      "SCB",
+      "Bangkok Bank",
+      "Krungthai"
+    ],
+    "Crypto": [
+      "bitcoin",
+      "crypto",
+      "cryptocurrency",
+      "ether",
+      "stablecoin",
+      "stablecoins"
+    ],
+    "Fintech": [
+      "fintech",
+      "digital payment",
+      "digital payments",
+      "neobank",
+      "PromptPay",
+      "e-wallet"
+    ],
+    "China economy": [
+      "China",
+      "Chinese economy",
+      "yuan",
+      "PBOC",
+      "Beijing"
+    ],
+    "Commodities & gold": [
+      "gold",
+      "silver",
+      "copper",
+      "commodity",
+      "commodities"
+    ]
   },
-  "default_watchlist": ["NVDA", "AAPL", "PTT", "KBANK", "CPALL"],
+  "default_watchlist": [
+    "NVDA",
+    "AAPL",
+    "PTT",
+    "KBANK",
+    "CPALL"
+  ],
   "outlet_trust": {
     "_note": "Overrides the feed's trust for stories from these outlets (feeds like Google News mix many outlets). 2 = high, 1 = normal, 0 = low.",
-    "Reuters": 2, "Bloomberg": 2, "Bloomberg.com": 2, "Financial Times": 2, "The Wall Street Journal": 2, "WSJ": 2,
-    "Associated Press": 2, "AP News": 2, "CNBC": 2, "BBC": 2, "Nikkei Asia": 2, "Bangkok Post": 2, "The Economist": 2,
-    "Accounting Today": 2, "Thai PBS World": 1, "The Nation Thailand": 1, "Nation Thailand": 1,
-    "The Motley Fool": 0, "Motley Fool": 0, "24/7 Wall St.": 0, "InvestorPlace": 0, "Zacks": 0, "Zacks Investment Research": 0,
-    "Benzinga": 0, "TipRanks": 0, "GuruFocus": 0, "Seeking Alpha": 0, "MarketBeat": 0, "Simply Wall St": 0, "AOL.com": 0, "Yahoo Finance": 1
+    "Reuters": 2,
+    "Bloomberg": 2,
+    "Bloomberg.com": 2,
+    "Financial Times": 2,
+    "The Wall Street Journal": 2,
+    "WSJ": 2,
+    "Associated Press": 2,
+    "AP News": 2,
+    "CNBC": 2,
+    "BBC": 2,
+    "Nikkei Asia": 2,
+    "Bangkok Post": 2,
+    "The Economist": 2,
+    "Accounting Today": 2,
+    "Thai PBS World": 1,
+    "The Nation Thailand": 1,
+    "Nation Thailand": 1,
+    "The Motley Fool": 0,
+    "Motley Fool": 0,
+    "24/7 Wall St.": 0,
+    "InvestorPlace": 0,
+    "Zacks": 0,
+    "Zacks Investment Research": 0,
+    "Benzinga": 0,
+    "TipRanks": 0,
+    "GuruFocus": 0,
+    "Seeking Alpha": 0,
+    "MarketBeat": 0,
+    "Simply Wall St": 0,
+    "AOL.com": 0,
+    "Yahoo Finance": 1
   },
   "tickers": {
-    "NVDA": ["Nvidia", "NVDA"],
-    "AAPL": ["Apple", "AAPL"],
-    "MSFT": ["Microsoft", "MSFT"],
-    "GOOGL": ["Alphabet", "Google", "GOOGL"],
-    "AMZN": ["Amazon", "AMZN"],
-    "META": ["Meta Platforms", "META"],
-    "TSLA": ["Tesla", "TSLA"],
-    "TSM": ["TSMC", "Taiwan Semiconductor"],
-    "PTT": ["PTT"],
-    "KBANK": ["Kasikornbank", "KBank", "KBANK"],
-    "SCB": ["SCB X", "SCBX", "Siam Commercial Bank"],
-    "BBL": ["Bangkok Bank"],
-    "KTB": ["Krungthai", "Krung Thai Bank"],
-    "CPALL": ["CP All", "CPALL"],
-    "AOT": ["Airports of Thailand", "AOT"],
-    "ADVANC": ["Advanced Info Service", "ADVANC"],
-    "DELTA": ["Delta Electronics"],
-    "GULF": ["Gulf Energy", "Gulf Development"],
-    "CPN": ["Central Pattana"],
-    "BDMS": ["Bangkok Dusit Medical", "BDMS"]
+    "NVDA": [
+      "Nvidia",
+      "NVDA"
+    ],
+    "AAPL": [
+      "Apple",
+      "AAPL"
+    ],
+    "MSFT": [
+      "Microsoft",
+      "MSFT"
+    ],
+    "GOOGL": [
+      "Alphabet",
+      "Google",
+      "GOOGL"
+    ],
+    "AMZN": [
+      "Amazon",
+      "AMZN"
+    ],
+    "META": [
+      "Meta Platforms",
+      "META"
+    ],
+    "TSLA": [
+      "Tesla",
+      "TSLA"
+    ],
+    "TSM": [
+      "TSMC",
+      "Taiwan Semiconductor"
+    ],
+    "PTT": [
+      "PTT"
+    ],
+    "KBANK": [
+      "Kasikornbank",
+      "KBank",
+      "KBANK"
+    ],
+    "SCB": [
+      "SCB X",
+      "SCBX",
+      "Siam Commercial Bank"
+    ],
+    "BBL": [
+      "Bangkok Bank"
+    ],
+    "KTB": [
+      "Krungthai",
+      "Krung Thai Bank"
+    ],
+    "CPALL": [
+      "CP All",
+      "CPALL"
+    ],
+    "AOT": [
+      "Airports of Thailand",
+      "AOT"
+    ],
+    "ADVANC": [
+      "Advanced Info Service",
+      "ADVANC"
+    ],
+    "DELTA": [
+      "Delta Electronics"
+    ],
+    "GULF": [
+      "Gulf Energy",
+      "Gulf Development"
+    ],
+    "CPN": [
+      "Central Pattana"
+    ],
+    "BDMS": [
+      "Bangkok Dusit Medical",
+      "BDMS"
+    ]
+  },
+  "yahoo_symbols": {
+    "_note": "Yahoo Finance symbols for tickers whose plain name differs (Thai stocks end in .BK). Used by the website's price strip.",
+    "PTT": "PTT.BK",
+    "KBANK": "KBANK.BK",
+    "SCB": "SCB.BK",
+    "BBL": "BBL.BK",
+    "KTB": "KTB.BK",
+    "CPALL": "CPALL.BK",
+    "AOT": "AOT.BK",
+    "ADVANC": "ADVANC.BK",
+    "DELTA": "DELTA.BK",
+    "GULF": "GULF.BK",
+    "CPN": "CPN.BK",
+    "BDMS": "BDMS.BK"
   }
 }

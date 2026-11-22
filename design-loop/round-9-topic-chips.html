@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 9: Topic filter</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--accent:#ff4500}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#fff;color:var(--ink);padding-bottom:60px}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+.sw{background:#111;color:#fff;font:600 13px Inter;position:sticky;top:0;z-index:60}
+.sw .wrap{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding-top:10px;padding-bottom:10px}
+.sw b{color:#aaa}.sw button{border:1px solid #444;background:#222;color:#ddd;border-radius:99px;padding:5px 12px;font-weight:700;font-size:12px}
+.sw button.on{background:#ff4500;border-color:#ff4500;color:#fff}.sw .hint{color:#888;font-weight:500;margin-left:auto}
+.desc{background:#fff7f2;border-bottom:1px solid #ffe0cc;font-size:14px;color:#7a3b17}.desc .wrap{padding-top:10px;padding-bottom:10px;line-height:1.5}
+header{border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:32px;height:68px}
+.logo{font:900 24px 'Inter Tight';letter-spacing:-1px}
+.nav nav{display:flex;gap:24px;font-weight:600;font-size:15px;color:var(--soft)}
+.nav nav a{padding:23px 0 21px;border-bottom:2px solid transparent}.nav nav a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.nav nav a.soon{color:#bbb}.nav nav small{font-size:10px;font-weight:700;margin-left:4px}
+.nav .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{border:0;border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px;background:var(--ink);color:#fff}.btn.ghost{background:var(--chip);color:var(--ink)}
+.live{display:flex;align-items:center;gap:6px;font:800 11px Inter;letter-spacing:1px;color:var(--accent)}.live i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+/* context below the filter (static picture of the price strip) */
+.ctx{margin-top:22px;opacity:.55}
+.ctx .h{display:flex;justify-content:space-between;font:800 18px 'Inter Tight'}
+.ctx .row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:12px}
+.ctx .row div{height:104px;border:1px solid var(--line);border-radius:14px}
+.count{font:700 11px Inter;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.ico{width:18px;height:18px;display:inline-grid;place-items:center;font-size:12px;line-height:1}
+
+/* ===== A. One clean row: quick views + scrollable topics ===== */
+.fa{margin-top:22px;display:flex;align-items:center;gap:10px}
+.fa .quick{display:flex;gap:6px;padding-right:12px;border-right:1px solid var(--line);flex:none}
+.fa .scroller{position:relative;flex:1;min-width:0}
+.fa .track{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;padding:2px 36px 2px 2px}
+.fa .track::-webkit-scrollbar{display:none}
+.fa .scroller::after{content:"";position:absolute;right:0;top:0;bottom:0;width:70px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff 70%);pointer-events:none}
+.fa .arrow{position:absolute;right:0;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;z-index:2;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.fa .c{flex:none;border:1px solid #e5e5e5;border-radius:99px;padding:8px 14px;font-weight:600;font-size:14px;background:#fff;display:inline-flex;align-items:center;gap:6px;transition:background .2s,color .2s,border-color .2s,transform .12s}
+.fa .c:hover{border-color:#ccc}.fa .c:active{transform:scale(.96)}
+.fa .c.on{background:var(--ink);color:#fff;border-color:var(--ink)}.fa .c.on .count{color:#bbb}
+.fa .quick .c{background:var(--chip);border-color:transparent}.fa .quick .c.on{background:var(--ink)}
+
+/* ===== B. Text tabs with a sliding orange underline ===== */
+.fb{margin-top:18px;position:relative;border-bottom:1px solid var(--line);display:flex;align-items:flex-end}
+.fb .tabs{display:flex;gap:26px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;position:relative;padding-right:48px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent)}
+.fb .tabs::-webkit-scrollbar{display:none}
+.fb .t{flex:none;border:0;background:none;padding:12px 0 13px;font-weight:700;font-size:15px;color:var(--muted);transition:color .2s;white-space:nowrap}
+.fb .t:hover{color:var(--ink)}.fb .t.on{color:var(--ink)}
+.fb .bar{position:absolute;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--accent);transition:left .35s cubic-bezier(.2,.8,.2,1),width .35s cubic-bezier(.2,.8,.2,1)}
+.fb .side{flex:none;display:flex;gap:6px;padding:0 0 8px 18px}
+.fb .side button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 12px;font-weight:700;font-size:13px;color:var(--soft)}
+.fb .side button.on{background:#fff1ea;border-color:#ffd2bd;color:#b33200}
+
+/* ===== C. Segmented track with a sliding white thumb ===== */
+.fc{margin-top:22px;display:flex;gap:12px;align-items:center}
+.fc .seg{position:relative;display:flex;background:#f2f2f2;border-radius:14px;padding:4px 48px 4px 4px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 64px),transparent)}
+.fc .seg::-webkit-scrollbar{display:none}
+.fc .thumb{position:absolute;top:4px;bottom:4px;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);transition:left .35s cubic-bezier(.2,.8,.2,1),width .35s cubic-bezier(.2,.8,.2,1)}
+.fc .s{position:relative;z-index:1;flex:none;border:0;background:none;padding:9px 14px;border-radius:10px;font-weight:700;font-size:14px;color:#666;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;transition:color .2s}
+.fc .s.on{color:var(--ink)}
+.fc .s .ico{opacity:.7}
+.fc .more{flex:none;border:0;background:#f2f2f2;border-radius:14px;padding:13px 16px;font-weight:700;font-size:14px}
+
+/* ===== D. Colour-coded topic cards with live counts ===== */
+.fd{margin-top:22px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.fd .k{border:1px solid var(--line);border-radius:14px;padding:10px 12px;align-content:center;background:#fff;text-align:left;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;gap:0 10px;align-items:center;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s,background .2s}
+.fd .k:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.06)}
+.fd .k .dot{grid-row:1/3;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:15px;background:var(--tint);color:var(--tc)}
+.fd .k b{font:700 14px/1.2 Inter;min-width:0}
+.fd .k small{font:600 12px Inter;color:var(--muted)}
+.fd .k.on{border-color:var(--tc);background:var(--tint)}
+.fd .k.on b{color:var(--tc)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="sw"><div class="wrap"><b>Topic filter</b><span id="sw"></span><span class="hint">← → switch · click the topics to feel the motion</span></div></div>
+<div class="desc"><div class="wrap" id="desc"></div></div>
+<header><div class="wrap nav"><span class="logo">investment center</span>
+  <nav><a class="on">My News</a><a class="soon">World Brief<small>SOON</small></a><a class="soon">Charts<small>SOON</small></a></nav>
+  <div class="r"><span class="live"><i></i>LIVE</span><a class="btn ghost">Topics &amp; watchlist</a><button class="btn">Sign out</button></div></div></header>
+<div class="wrap"><div id="f"></div>
+  <div class="ctx"><div class="h">Markets <span style="font-size:13px;color:#888">Markets · My watchlist</span></div><div class="row"><div></div><div></div><div></div><div></div><div></div><div></div></div></div>
+</div>
+<script>
+const OPTS = [
+  ["a", "A. One clean row", "Everything on one line. 'All / My watchlist / Saved' sit at the left as quick views, a thin divider, then your topics in a row that scrolls sideways (fade + › arrow when more are hidden). Each chip shows how many stories it has. Motion: colour fades, chip presses in. Tidy, never wraps to 2 rows."],
+  ["b", "B. Underline tabs", "Text tabs like a news site, with an orange underline that slides to the topic you click. Saved and My watchlist become small buttons on the right. Motion: the underline glides. Lightest and most 'editorial'; least obviously clickable."],
+  ["c", "C. Segmented track", "A soft grey track with a white 'thumb' that slides behind the topic you pick (like iPhone segmented controls), small icons per topic. Motion: the thumb glides and the text darkens. Feels like an app; hidden topics scroll inside the track."],
+  ["d", "D. Topic tiles", "Each topic is a small tile with its own colour and icon plus today's story count, in a 6-column grid (2 even rows). Motion: tiles lift on hover, the picked tile fills with its colour. Most visual and scannable; takes ~110 px of height."],
+];
+// your current topics (sample counts)
+const TOPICS = [
+  ["SET / Thai market", "📈", 8, "#16a34a", "#dcfce7"], ["Thai economy & BOT", "🏦", 5, "#0f766e", "#ccfbf1"], ["Global macro & Fed", "🌐", 6, "#2563eb", "#dbeafe"],
+  ["Tech & chips", "💻", 9, "#7c3aed", "#ede9fe"], ["Energy & oil", "🛢️", 4, "#ea580c", "#ffedd5"], ["Banking", "💳", 3, "#0369a1", "#e0f2fe"],
+  ["Commodities & gold", "🪙", 3, "#ca8a04", "#fef9c3"], ["China economy", "🇨🇳", 2, "#dc2626", "#fee2e2"], ["rare earths", "#", 2, "#b33200", "#fff1ea"],
+];
+const S = { o: "a", on: "All" };
+const cnt = (n) => `<span class="count">${n}</span>`;
+
+function A() {
+  const q = [["All", 42], ["My watchlist", 11], ["Saved", 3]];
+  return `<div class="fa"><div class="quick">${q.map(([n, c]) => `<button class="c ${S.on === n ? "on" : ""}" data-on="${n}">${n}${cnt(c)}</button>`).join("")}</div>
+    <div class="scroller"><div class="track" id="track">${TOPICS.map(([n, , c]) => `<button class="c ${S.on === n ? "on" : ""}" data-on="${n}">${n}${cnt(c)}</button>`).join("")}</div><button class="arrow" id="arrow">›</button></div></div>`;
+}
+function B() {
+  const all = [["All"], ...TOPICS];
+  return `<div class="fb"><div class="tabs" id="tabs">${all.map(([n]) => `<button class="t ${S.on === n ? "on" : ""}" data-on="${n}">${n}</button>`).join("")}<span class="bar" id="bar"></span></div>
+    <div class="side"><button class="${S.on === "My watchlist" ? "on" : ""}" data-on="My watchlist">☆ My watchlist</button><button class="${S.on === "Saved" ? "on" : ""}" data-on="Saved">★ Saved 3</button></div></div>`;
+}
+function C() {
+  const all = [["All", "✦"], ["My watchlist", "👁"], ...TOPICS.map(([n, i]) => [n, i]), ["Saved", "★"]];
+  return `<div class="fc"><div class="seg" id="seg"><span class="thumb" id="thumb"></span>${all.map(([n, i]) => `<button class="s ${S.on === n ? "on" : ""}" data-on="${n}"><span class="ico">${i}</span>${n}</button>`).join("")}</div></div>`;
+}
+function D() {
+  const all = [["All", "✦", 42, "#111", "#f3f3f3"], ["My watchlist", "👁", 11, "#ff4500", "#fff1ea"], ...TOPICS.slice(0, 9), ["Saved", "★", 3, "#555", "#f3f3f3"]];
+  return `<div class="fd">${all.map(([n, i, c, tc, tint]) => `<button class="k ${S.on === n ? "on" : ""}" data-on="${n}" style="--tc:${tc};--tint:${tint}"><span class="dot">${i}</span><b>${n}</b><small>${c} stories</small></button>`).join("")}</div>`;
+}
+function slide() {
+  if (S.o === "b") { const on = document.querySelector(".fb .t.on"), bar = document.getElementById("bar"); if (on && bar) { bar.style.left = on.offsetLeft + "px"; bar.style.width = on.offsetWidth + "px"; } else if (bar) bar.style.width = 0; }
+  if (S.o === "c") { const on = document.querySelector(".fc .s.on"), th = document.getElementById("thumb"); if (on && th) { th.style.left = on.offsetLeft + "px"; th.style.width = on.offsetWidth + "px"; } }
+}
+function render() {
+  document.getElementById("sw").innerHTML = OPTS.map(([k, n]) => `<button class="${k === S.o ? "on" : ""}" data-o="${k}">${n}</button>`).join(" ");
+  document.getElementById("desc").textContent = OPTS.find((x) => x[0] === S.o)[2];
+  document.getElementById("f").innerHTML = { a: A, b: B, c: C, d: D }[S.o]();
+  slide();
+}
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-o],[data-on],#arrow"); if (!el) return;
+  if (el.id === "arrow") { document.getElementById("track").scrollBy({ left: 300 }); return; }
+  if (el.dataset.o) { S.o = el.dataset.o; return render(); }
+  // change the selection in place so the slide motion is visible
+  S.on = el.dataset.on;
+  document.querySelectorAll("[data-on]").forEach((b) => b.classList.toggle("on", b.dataset.on === S.on));
+  slide();
+  el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+});
+document.addEventListener("keydown", (e) => { const i = OPTS.findIndex((x) => x[0] === S.o); if (e.key === "ArrowRight") S.o = OPTS[(i + 1) % 4][0]; else if (e.key === "ArrowLeft") S.o = OPTS[(i + 3) % 4][0]; else return; render(); });
+addEventListener("resize", slide); document.fonts?.ready.then(slide);
+const u = new URLSearchParams(location.search); if (u.get("o")) S.o = u.get("o"); if (u.get("on")) S.on = u.get("on");
+render();
+</script>
+</body>
+</html>

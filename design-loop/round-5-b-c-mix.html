@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 5: B + C mixes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ---------- base = the live Digg style ---------- */
+:root{--bg:#fff;--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:0 0 80px}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+
+/* mockup switcher (not part of the site) */
+.sw{background:#111;color:#fff;font:600 13px Inter;position:sticky;top:0;z-index:50}
+.sw .wrap{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;padding-top:10px;padding-bottom:10px}
+.sw b{color:#aaa;font-weight:700;margin-right:4px}
+.sw .g{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sw button{border:1px solid #444;background:#222;color:#ddd;border-radius:99px;padding:5px 12px;font-weight:700;font-size:12px}
+.sw button.on{background:#ff4500;border-color:#ff4500;color:#fff}
+.sw .hint{color:#888;font-weight:500;margin-left:auto}
+.desc{background:#fff7f2;border-bottom:1px solid #ffe0cc;font-size:14px;color:#7a3b17}
+.desc .wrap{padding-top:10px;padding-bottom:10px}
+
+/* header */
+header{border-bottom:1px solid var(--line);background:#fff;position:relative;z-index:10}
+.nav{display:flex;align-items:center;gap:32px;height:68px}
+.logo{font:900 24px 'Inter Tight';letter-spacing:-1px}
+.nav nav{display:flex;gap:24px;font-weight:600;font-size:15px;color:var(--soft);position:relative}
+.nav nav a{padding:23px 0 21px;border-bottom:2px solid transparent}
+.nav nav a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.nav nav a.soon{color:#bbb}
+.nav nav a.soon small{font-size:10px;font-weight:700;margin-left:4px}
+.nav .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{border:0;border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px;background:var(--ink);color:#fff}
+.btn.ghost{background:var(--chip);color:var(--ink)}
+.live{display:none;align-items:center;gap:6px;font:800 11px Inter;letter-spacing:1px;color:var(--accent)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+/* ticker tape (Live wire only) */
+.tape{display:none;border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;font:700 13px Inter;background:#fafafa}
+.tape .run{display:inline-block;padding:9px 0}
+.tape span{margin-right:34px}.tape .u{color:var(--up)}.tape .d{color:var(--down)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.chip{border:1px solid #e5e5e5;border-radius:99px;padding:7px 16px;font-weight:600;font-size:14px;background:#fff;color:var(--ink)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.meta{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.why{color:var(--soft);font-size:16px;line-height:1.5}
+
+.tile{border-radius:16px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:18px;overflow:hidden}
+.tile small{font:700 11px Inter;letter-spacing:1px;text-transform:uppercase;opacity:.9}
+.tile .n{font:900 72px/.9 'Inter Tight';letter-spacing:-3px}
+.tile .n span{font:700 14px Inter;letter-spacing:1px;margin-left:8px;opacity:.85}
+.tile .tk{font:800 15px 'Inter Tight'}
+.imp-hi{background:linear-gradient(135deg,#ff416c,#ff4b2b)}
+.imp-md{background:linear-gradient(135deg,#f7971e,#ff6a00)}
+.imp-lo{background:linear-gradient(135deg,#f6b93b,#e8a33d)}
+.imp-min{background:linear-gradient(135deg,#9aa0a6,#6b7280)}
+
+.hero{display:grid;grid-template-columns:1.6fr 1fr;gap:40px;margin-top:24px}
+.hero .tile{height:340px}.hero .tile .n{font-size:140px}
+.hero h1{font:800 36px/1.1 'Inter Tight';letter-spacing:-1px;margin:18px 0 10px}
+.trend h2,.sec{font:800 20px 'Inter Tight';margin-bottom:6px}
+.sec{font-size:24px;margin:52px 0 18px}
+.trend ol{list-style:none}
+.trend li{display:grid;grid-template-columns:40px 1fr;padding:15px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.trend .num{font:900 28px 'Inter Tight';color:var(--accent)}
+.trend h3{font:700 17px/1.25 'Inter Tight'}
+.vote{font-size:13px;font-weight:700;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.card{cursor:pointer;border-radius:16px}
+.card .tile{height:170px}
+.card h3{font:700 20px/1.2 'Inter Tight';margin:12px 0 8px;letter-spacing:-.3px}
+.star{border:0;background:none;font-size:20px;line-height:1;color:#bbb;padding:2px 4px;position:relative}
+.star.on{color:var(--accent)}
+.rowline{display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+.detail{display:grid;grid-template-columns:1fr 340px;gap:48px;margin-top:28px;align-items:start}
+.back{display:inline-block;margin-top:24px;font-weight:700;color:var(--soft)}
+.detail h1{font:800 40px/1.08 'Inter Tight';letter-spacing:-1.2px;margin:10px 0 18px}
+.box{border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;background:#fff}
+.box h4{font:800 13px Inter;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.box ul{margin-left:18px}.box li,.box p{font-size:16px;line-height:1.55}.box li{margin-bottom:6px}
+.wl{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.wl b{display:block;font:800 14px Inter;margin-bottom:6px}.wl .w b{color:var(--up)}.wl .l b{color:var(--down)}
+.side .tile{height:170px}
+.bars div{display:grid;grid-template-columns:70px 1fr 26px;align-items:center;gap:10px;font-size:13px;font-weight:600;margin-top:8px}
+.bars i{display:block;height:8px;border-radius:99px;background:var(--chip);overflow:hidden}
+.bars i em{display:block;height:100%;background:var(--accent);width:var(--w)}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;background:var(--chip);margin:0 6px 6px 0}
+.tag.bear{background:#fee2e2;color:#991b1b}
+.note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
+
+/* settings */
+.panel{max-width:760px;margin:40px auto 0}
+.panel h1{font:800 36px 'Inter Tight';letter-spacing:-1px;margin:16px 0 6px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.checks label{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-weight:600;cursor:pointer;height:48px}
+.checks input{width:18px;height:18px;accent-color:var(--accent)}
+.wlist{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-height:36px}
+.wlist .chip{display:inline-flex;align-items:center}
+.wlist .chip.topic{background:#fff1ea;color:#b33200;border-color:#ffd2bd}
+.wlist .chip button{border:0;background:none;margin-left:6px;color:inherit;font-weight:800}
+.search{position:relative;margin-top:14px}
+.search input{width:100%;font:inherit;font-size:16px;padding:14px 16px 14px 44px;border:1px solid #ddd;border-radius:12px;background:#fff;outline:none}
+.search input:focus{border-color:var(--ink)}
+.search .mag{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.results{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.1);overflow:hidden;z-index:5}
+.results .row{display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-items:center;padding:0 16px;height:56px;border-bottom:1px solid var(--line);cursor:pointer}
+.results .row:last-child{border-bottom:0}
+.results .row:hover{background:#fafafa}
+.results .sym{font:800 15px 'Inter Tight'}
+.results .nm{font-size:14px;font-weight:600}.results .nm small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+.results .kind{font:800 10px Inter;letter-spacing:1px;padding:4px 8px;border-radius:99px;background:var(--chip);color:var(--soft)}
+.results .kind.t{background:#fff1ea;color:#b33200}
+.results .head{padding:8px 16px;font:800 11px Inter;letter-spacing:1px;color:var(--muted);background:#fafafa;border-bottom:1px solid var(--line)}
+
+/* login */
+.login{max-width:440px;margin:110px auto 0;text-align:center}
+.login .logo{font-size:36px}
+.login-form{display:flex;flex-direction:column;gap:10px;margin-top:24px;text-align:left}
+.login-form input{font:inherit;padding:12px 14px;border:1px solid #ddd;border-radius:10px;background:#fff;width:100%;height:48px}
+.pw{position:relative}
+.pw input{padding-right:52px}
+.eye{position:absolute;right:6px;top:6px;width:36px;height:36px;border:0;border-radius:8px;background:none;color:var(--soft);display:grid;place-items:center}
+.eye:hover{background:var(--chip);color:var(--ink)}
+.eye svg{width:20px;height:20px}
+.remember{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--soft)}
+.remember input{width:16px;height:16px;accent-color:var(--accent)}
+.login-form .btn{padding:12px 18px;height:48px}
+.linkbtn{border:0;background:none;margin-top:14px;color:var(--soft);font-size:14px;font-weight:600;text-decoration:underline}
+.sample{display:inline-block;margin-top:24px;font:700 11px Inter;letter-spacing:1px;color:#b33200;background:#fff1ea;padding:4px 10px;border-radius:99px}
+
+/* toast (new story) */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;font-weight:700;font-size:14px;padding:12px 20px;border-radius:99px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:40;display:none}
+.toast b{color:#ff8a5c}
+
+/* =========================================================
+   A. QUIET: fades only, nothing changes position
+   ========================================================= */
+.m-a .anim{animation:fade .22s ease both}
+.m-a .chip,.m-a .card h3,.m-a .star,.m-a .btn{transition:color .15s,background .15s,opacity .15s}
+.m-a .card:hover h3,.m-a .trend li:hover h3{color:var(--accent)}
+.m-a .results{animation:fade .15s ease both}
+
+/* =========================================================
+   B. SNAPPY: things rise in one after another, lift on hover
+   ========================================================= */
+.m-b .anim{animation:rise .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 45ms)}
+.m-b .card{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+.m-b .card:hover{transform:translateY(-4px)}
+.m-b .card .tile{transition:box-shadow .2s}
+.m-b .card:hover .tile{box-shadow:0 12px 28px rgba(255,69,0,.25)}
+.m-b .chip,.m-b .btn{transition:background .18s,color .18s,transform .12s}
+.m-b .chip:active,.m-b .btn:active{transform:scale(.96)}
+.m-b .trend li{transition:padding-left .2s}
+.m-b .trend li:hover{padding-left:6px}
+.m-b .star.pop{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.m-b .bars em{animation:grow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:.25s}
+.m-b .results{animation:drop .2s cubic-bezier(.2,.8,.2,1) both}
+.m-b .results .row{animation:rise .25s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+.m-b .wlist .chip.new{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.m-b .eye svg{transition:transform .25s}
+.m-b .eye.on svg{transform:rotate(-12deg)}
+
+/* =========================================================
+   C. LIVE WIRE: the page feels connected to the market
+   ========================================================= */
+.m-c .anim{animation:fade .3s ease both;animation-delay:calc(var(--i,0) * 25ms)}
+.f-live .live{display:flex}
+.f-live .live i{animation:pulse 1.4s ease-out infinite}
+.f-tape .tape{display:block}
+.f-tape .tape .run{animation:tape 40s linear infinite}
+.m-c .bars em{animation:grow 1s ease-out both;animation-delay:.3s}
+.f-new .fresh{animation:flash 2.4s ease-out both}
+.f-new .fresh-in{animation:slidein .5s cubic-bezier(.2,.8,.2,1) both}
+.f-shim .card .tile,.f-shim .hero .tile{background-size:180% 180%;animation:shift 8s ease-in-out infinite alternate}
+.m-c .results .row{animation:fade .2s ease both;animation-delay:calc(var(--i,0) * 40ms)}
+.m-c .chip,.m-c .btn{transition:background .15s,color .15s}
+
+.m-c .card{transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.m-c .card:hover{transform:translateY(-4px)}
+.m-c .card .tile{transition:box-shadow .2s}
+.m-c .card:hover .tile{box-shadow:0 12px 28px rgba(255,69,0,.25)}
+.m-c .star.pop{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.m-c .wlist .chip.new{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+
+/* =========================================================
+   D. PLAYFUL: springy, tactile, a bit of personality
+   ========================================================= */
+.m-d .anim{animation:spring .6s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--i,0) * 55ms)}
+.m-d .card{transition:transform .25s cubic-bezier(.34,1.56,.64,1);transform-style:preserve-3d;will-change:transform}
+.m-d .chip,.m-d .btn{transition:transform .25s cubic-bezier(.34,1.56,.64,1),background .15s,color .15s}
+.m-d .chip:hover,.m-d .btn:hover{transform:translateY(-2px) rotate(-1deg)}
+.m-d .chip:active,.m-d .btn:active{transform:scale(.9)}
+.m-d .star.pop{animation:boing .5s cubic-bezier(.34,1.56,.64,1)}
+.m-d .burst{position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:var(--accent);pointer-events:none;animation:burst .55s ease-out forwards}
+.m-d .bars em{animation:grow .9s cubic-bezier(.34,1.56,.64,1) both;animation-delay:.3s}
+.m-d .results{animation:spring .35s cubic-bezier(.34,1.56,.64,1) both;transform-origin:top center}
+.m-d .results .row{animation:spring .4s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+.m-d .wlist .chip.new{animation:boing .5s cubic-bezier(.34,1.56,.64,1)}
+.m-d .checks input:checked{animation:boing .4s cubic-bezier(.34,1.56,.64,1)}
+.m-d .eye.blink svg{animation:blink .3s ease}
+
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-6px)}}
+@keyframes grow{from{width:0}}
+@keyframes pop{50%{transform:scale(1.45)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,69,0,.6)}100%{box-shadow:0 0 0 10px rgba(255,69,0,0)}}
+@keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes flash{0%{background:#ffe3d6}100%{background:transparent}}
+@keyframes slidein{from{opacity:0;transform:translateY(-12px)}}
+@keyframes shift{from{background-position:0% 50%}to{background-position:100% 50%}}
+@keyframes spring{from{opacity:0;transform:scale(.92) translateY(10px)}}
+@keyframes boing{30%{transform:scale(1.5) rotate(-12deg)}60%{transform:scale(.9)}}
+@keyframes burst{to{transform:translate(var(--x),var(--y)) scale(.3);opacity:0}}
+@keyframes blink{50%{transform:scaleY(.1)}}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,20px)}}
+
+/* Everyone: honour the "reduce motion" setting in Windows / iOS */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sw"><div class="wrap">
+  <div class="g"><b>Motion</b><span id="sw-m"></span></div>
+  <div class="g"><b>Page</b><span id="sw-p"></span></div>
+  <div class="g"><button id="replay">↻ Replay</button></div>
+  <span class="hint">← → motion · ↑ ↓ page · mockup only, sample headlines</span>
+</div></div>
+<div class="desc"><div class="wrap" id="desc"></div></div>
+<div id="app"></div>
+<div class="toast" id="toast">▲ <b>1 new story</b> · Fed holds rates, signals two cuts</div>
+
+<script>
+const MOTIONS = [
+  ["1", "1. Snappy + live signals", "m-b f-live f-new", "B's rise-in, hover lift, star pop and count-up, plus C's pulsing LIVE dot and the new-story slide-in with a flash and pop-up note (wait 2 s on My News). No price tape, no shimmer. Movement only where something real happens."],
+  ["2", "2. Snappy + everything live", "m-b f-live f-new f-tape f-shim", "Option 1 plus C's scrolling price tape and slowly shimmering picture tiles. Most alive; the tape needs a live price source in the real build (extra work), and the shimmer is pure decoration."],
+  ["3", "3. Live first, snappy touches", "m-c f-live f-new f-tape", "C's calmer fade-in as the base (no rise), with the LIVE dot, price tape and new-story slide-in, plus B's hover lift, star pop and filling bars. Feels like a trading terminal more than an app."],
+];
+const PAGES = [["feed", "My News"], ["story", "Story"], ["settings", "Topics & watchlist"], ["login", "Login"]];
+const S = { m: "1", p: "feed", watch: ["NVDA", "AAPL", "PTT", "KBANK", "CPALL"], custom: [], saved: new Set([2]), q: "", pwShow: false };
+
+// sample content (made up for the mockup)
+const STORIES = [
+  { h: "Nvidia guides above estimates as data-centre demand stays hot", o: "Reuters", t: "2h", n: 7, imp: 9, tk: "NVDA", top: "Tech & chips", why: "Signals AI spending is still accelerating; chip suppliers and Thai electronics makers like DELTA could benefit." },
+  { h: "Bank of Thailand holds policy rate at 1.75%", o: "Bangkok Post", t: "3h", n: 5, imp: 7, tk: "SET", top: "Thai economy & BOT" },
+  { h: "Oil jumps 3% after OPEC+ extends output cuts", o: "CNBC", t: "4h", n: 6, imp: 7, tk: "PTT", top: "Energy & oil" },
+  { h: "KBANK posts record quarterly profit on lower bad-loan costs", o: "The Nation", t: "5h", n: 3, imp: 6, tk: "KBANK", top: "Banking" },
+  { h: "Apple shifts more iPhone assembly to India", o: "Bloomberg", t: "6h", n: 4, imp: 5, tk: "AAPL", top: "Tech & chips" },
+  { h: "Gold hits a new high as the dollar weakens", o: "Yahoo Finance", t: "7h", n: 4, imp: 5, tk: "GOLD", top: "Commodities & gold" },
+  { h: "China's factory activity shrinks for a third month", o: "BBC", t: "8h", n: 3, imp: 6, tk: "CHINA", top: "China economy" },
+  { h: "CP All expands 7-Eleven delivery to 20 more provinces", o: "Bangkok Post", t: "9h", n: 2, imp: 3, tk: "CPALL", top: "SET / Thai market" },
+  { h: "Bitcoin slips below $90k as ETF outflows grow", o: "CNBC", t: "10h", n: 3, imp: 4, tk: "BTC", top: "Crypto" },
+];
+const TOPICS = ["SET / Thai market", "Thai economy & BOT", "Global macro & Fed", "Big 4 / audit / IFRS", "AI in finance", "Tech & chips", "Energy & oil", "Banking", "Crypto", "Fintech", "China economy", "Commodities & gold"];
+const MINE = new Set(["SET / Thai market", "Global macro & Fed", "Tech & chips", "Energy & oil", "Banking"]);
+// pretend internet search results (the real build would look these up live)
+const UNIVERSE = [
+  ["TSLA", "Tesla, Inc.", "NASDAQ · US"], ["TSM", "Taiwan Semiconductor", "NYSE · US"], ["AMD", "Advanced Micro Devices", "NASDAQ · US"],
+  ["ASML", "ASML Holding", "NASDAQ · NL"], ["GULF", "Gulf Energy Development", "SET · TH"], ["AOT", "Airports of Thailand", "SET · TH"],
+  ["SCB", "SCB X", "SET · TH"], ["BABA", "Alibaba Group", "NYSE · CN"], ["7203.T", "Toyota Motor", "Tokyo · JP"], ["BTC-USD", "Bitcoin", "Crypto"],
+  ["NFLX", "Netflix, Inc.", "NASDAQ · US"], ["DELTA", "Delta Electronics (Thailand)", "SET · TH"], ["TTB", "TMBThanachart Bank", "SET · TH"],
+];
+const TAPE = [["SET", "1,412.6", "+0.4%"], ["NVDA", "182.40", "+2.1%"], ["AAPL", "231.05", "-0.6%"], ["PTT", "33.75", "+1.5%"], ["KBANK", "151.50", "+0.7%"], ["CPALL", "58.25", "-0.4%"], ["GOLD", "2,710", "+0.9%"], ["BRENT", "78.40", "+3.0%"], ["BTC", "89,600", "-1.8%"], ["USD/THB", "34.12", "-0.2%"]];
+
+const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const cls = (i) => (i >= 9 ? "imp-hi" : i >= 7 ? "imp-md" : i >= 5 ? "imp-lo" : "imp-min");
+const tile = (s, big) => `<div class="tile ${cls(s.imp)}"><small>Impact</small><div class="n"><b data-count="${s.imp}">${s.imp}</b><span>/10</span></div><div class="tk">${esc(s.tk)}</div></div>`;
+const star = (i) => `<button class="star ${S.saved.has(i) ? "on" : ""}" data-star="${i}">${S.saved.has(i) ? "★" : "☆"}</button>`;
+const EYE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M2 2l20 20"/></svg>`;
+
+function header(active) {
+  return `<header><div class="wrap nav">
+    <a class="logo anim">investment center</a>
+    <nav class="anim"><a class="${active ? "on" : ""}">My News</a><a class="soon">World Brief<small>SOON</small></a><a class="soon">Charts<small>SOON</small></a></nav>
+    <div class="r anim"><span class="live"><i></i>LIVE</span><a class="btn ghost" data-page="settings">Topics &amp; watchlist</a><button class="btn">Sign out</button></div>
+  </div></header>
+  <div class="tape"><div class="run">${[...TAPE, ...TAPE].map(([s, p, c]) => `<span>${s} ${p} <em class="${c[0] === "+" ? "u" : "d"}">${c}</em></span>`).join("")}</div></div>`;
+}
+
+function feed() {
+  const [h, ...rest] = STORIES, trend = rest.slice(0, 5), more = rest.slice(5).concat(STORIES.slice(1, 3));
+  return `${header(true)}<div class="wrap">
+    <div class="chips anim">${["All", ...MINE, "My watchlist", "Saved"].map((c, i) => `<button class="chip ${i ? "" : "on"}" data-chip>${esc(c)}</button>`).join("")}</div>
+    <div class="hero">
+      <div class="anim lead" style="cursor:pointer" data-page="story">${tile(h, true)}<h1>${esc(h.h)}</h1>
+        <div class="rowline"><div class="meta">${h.o} · ${h.t} ago · ▲ ${h.n} sources</div>${star(0)}</div>
+        <p class="why" style="margin-top:10px">${esc(h.why)}</p></div>
+      <div class="trend anim"><h2>Trending now</h2><ol id="trend">${trend.map((s, i) => `
+        <li class="anim" data-page="story"><span class="num">${i + 2}</span><div><div class="meta">${esc(s.top)} · ${s.t} ago</div><h3>${esc(s.h)}</h3><div class="vote">▲ ${s.n} sources · impact ${s.imp}</div></div></li>`).join("")}</ol></div>
+    </div>
+    <div class="sec anim">More stories</div>
+    <div class="grid">${more.map((s, i) => `<div class="card anim" data-page="story">${tile(s)}<h3>${esc(s.h)}</h3>
+      <div class="rowline"><div class="meta">${s.o} · ${s.t} ago · ▲ ${s.n}</div>${star(i + 6)}</div></div>`).join("")}</div>
+  </div>`;
+}
+
+function story() {
+  const s = STORIES[0];
+  const bar = (n, v) => `<div><span>${n}</span><i><em style="--w:${v * 10}%"></em></i><b data-count="${v}">${v}</b></div>`;
+  return `${header(true)}<div class="wrap"><a class="back anim" data-page="feed">← Back to My News</a>
+    <div class="detail"><div>
+      <div class="meta anim">${s.top} · ${s.t} ago · ▲ ${s.n} sources</div>
+      <h1 class="anim">${esc(s.h)}</h1>
+      <div class="anim" style="margin-bottom:18px"><span class="tag">Bullish</span><span class="tag">NVDA</span><span class="tag">TSM</span><span class="tag">DELTA</span></div>
+      <div class="box anim"><h4>Full detail</h4><ul><li>Revenue guidance for next quarter came in about 8% above analyst estimates.</li><li>Data-centre sales grew again, led by new AI chips.</li><li>Management said supply is still the limit, not demand.</li></ul></div>
+      <div class="box anim"><h4>What it means</h4><p>${esc(s.why)}</p></div>
+      <div class="box wl anim"><div class="w"><b>Who could win</b>TSM, DELTA, server makers</div><div class="l"><b>Who could lose</b>Short sellers, rival chip makers</div></div>
+      <div class="box anim"><h4>Watch next</h4><p>Big Tech capex plans in next month's earnings calls.</p></div>
+    </div>
+    <aside><div class="box anim side">${tile(s)}
+      <p style="margin-top:14px;font-weight:600">Moves the biggest AI stock and its whole supply chain.</p>
+      <div class="bars">${bar("Reach", 9)}${bar("Surprise", 6)}${bar("Size", 9)}${bar("Timing", 8)}</div>
+      <div style="margin-top:14px">${star(0)} <span class="meta">Save for later</span></div></div>
+      <div class="box anim"><h4>Sources (7)</h4><p class="note" style="margin:0">Reuters · CNBC · Bloomberg · Yahoo Finance · +3</p></div>
+    </aside></div></div>`;
+}
+
+function results() {
+  const q = S.q.trim().toLowerCase();
+  if (!q) return "";
+  const stocks = UNIVERSE.filter(([s, n]) => (s + " " + n).toLowerCase().includes(q) && !S.watch.includes(s)).slice(0, 4);
+  const topicName = S.q.trim().replace(/^./, (c) => c.toUpperCase());
+  let i = 0;
+  return `<div class="results">
+    <div class="head">STOCKS FOUND ONLINE</div>
+    ${stocks.length ? stocks.map(([s, n, x]) => `<div class="row" style="--i:${i++}" data-add="${esc(s)}"><span class="sym">${esc(s)}</span><span class="nm">${esc(n)}<small>${esc(x)}</small></span><span class="kind">+ WATCH</span></div>`).join("")
+      : `<div class="row" style="--i:0;cursor:default"><span class="sym">—</span><span class="nm">No stock matches “${esc(S.q)}”</span><span></span></div>`}
+    <div class="head">OR FOLLOW AS A TOPIC</div>
+    <div class="row" style="--i:${i}" data-topic-add="${esc(topicName)}"><span class="sym">#</span><span class="nm">${esc(topicName)}<small>Robot searches the news for this phrase</small></span><span class="kind t">+ TOPIC</span></div>
+  </div>`;
+}
+
+function settings() {
+  return `${header(false)}<div class="wrap"><div class="panel">
+    <a class="back anim" data-page="feed">← Back to My News</a>
+    <h1 class="anim">Topics &amp; watchlist</h1>
+    <p class="why anim">Search any stock or subject. Saved to your account; Telegram alerts follow these too.</p>
+    <div class="search anim"><span class="mag">⌕</span><input id="q" placeholder="Search stocks or topics, e.g. tesla, gulf, toyota, rare earths…" value="${esc(S.q)}" autocomplete="off"><div id="res">${results()}</div></div>
+    <h2 class="sec anim" style="margin-top:32px">My watchlist &amp; custom topics</h2>
+    <div class="wlist anim" id="wl">${S.watch.map((t) => `<span class="chip on" data-chip-id="${esc(t)}">${esc(t)}<button data-rm="${esc(t)}">×</button></span>`).join("")}${S.custom.map((t) => `<span class="chip topic" data-chip-id="${esc(t)}"># ${esc(t)}<button data-rm-t="${esc(t)}">×</button></span>`).join("")}</div>
+    <h2 class="sec anim" style="margin-top:32px">Suggested topics</h2>
+    <div class="checks">${TOPICS.map((t) => `<label class="anim"><input type="checkbox" ${MINE.has(t) ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div>
+    <div class="anim" style="margin-top:32px"><button class="btn">Save</button></div>
+    <p class="note anim">Mockup: search results here are a small made-up list. The real build would look stocks up online.</p>
+  </div></div>`;
+}
+
+function login() {
+  return `<div class="login"><div class="logo anim">investment center</div>
+    <p class="why anim" style="margin-top:10px">Sign in to your news.</p>
+    <form class="login-form" onsubmit="return false">
+      <input class="anim" type="email" placeholder="Email" value="me@example.com">
+      <div class="pw anim"><input id="pw" type="${S.pwShow ? "text" : "password"}" placeholder="Password" value="sample-pass-123">
+        <button type="button" class="eye ${S.pwShow ? "on" : ""}" id="eye" title="${S.pwShow ? "Hide password" : "Show password"}" aria-label="${S.pwShow ? "Hide password" : "Show password"}">${S.pwShow ? EYE_OFF : EYE}</button></div>
+      <label class="remember anim"><input type="checkbox" checked> Remember me</label>
+      <button class="btn anim">Sign in</button>
+    </form>
+    <button class="linkbtn anim">Email me a login link instead</button><br>
+    <span class="sample anim">Try the eye icon in the password box</span></div>`;
+}
+
+let timers = [];
+function render(keepScroll) {
+  timers.forEach(clearTimeout); timers = [];
+  document.body.className = MOTIONS.find((x) => x[0] === S.m)[2];
+  document.getElementById("sw-m").innerHTML = MOTIONS.map(([k, n]) => `<button class="${k === S.m ? "on" : ""}" data-m="${k}">${n}</button>`).join(" ");
+  document.getElementById("sw-p").innerHTML = PAGES.map(([k, n]) => `<button class="${k === S.p ? "on" : ""}" data-p="${k}">${n}</button>`).join(" ");
+  document.getElementById("desc").textContent = MOTIONS.find((x) => x[0] === S.m)[3];
+  const app = document.getElementById("app");
+  app.innerHTML = { feed, story, settings, login }[S.p]();
+  app.querySelectorAll(".anim").forEach((el, i) => el.style.setProperty("--i", Math.min(i, 14)));
+  document.getElementById("toast").style.display = "none";
+  if (!keepScroll) window.scrollTo(0, 0);
+  countUp();
+  if (S.p === "feed") timers.push(setTimeout(newStory, 2000));
+}
+
+function countUp() {
+  document.querySelectorAll("[data-count]").forEach((el) => {
+    const end = +el.dataset.count, t0 = performance.now(), dur = 700;
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur); el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+
+function newStory() {
+  const ol = document.getElementById("trend"); if (!ol) return;
+  const li = document.createElement("li");
+  li.className = "fresh-in fresh";
+  li.innerHTML = `<span class="num">2</span><div><div class="meta">Global macro &amp; Fed · just now</div><h3>Fed holds rates, signals two cuts next year</h3><div class="vote">▲ 6 sources · impact 8</div></div>`;
+  ol.prepend(li);
+  [...ol.children].forEach((x, i) => (x.querySelector(".num").textContent = i + 2));
+  if (ol.children.length > 5) ol.lastElementChild.remove();
+  const t = document.getElementById("toast"); t.style.display = "block"; t.style.animation = "toastin .4s cubic-bezier(.2,.8,.2,1) both";
+  timers.push(setTimeout(() => (t.style.display = "none"), 3500));
+}
+
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-m],[data-p],[data-page],[data-star],[data-chip],#eye,#replay,[data-add],[data-topic-add],[data-rm],[data-rm-t]");
+  if (!el) return;
+  if (el.dataset.m) { S.m = el.dataset.m; return render(); }
+  if (el.dataset.p) { S.p = el.dataset.p; return render(); }
+  if (el.id === "replay") return render();
+  if (el.dataset.star) {
+    e.stopPropagation();
+    const i = +el.dataset.star, on = !S.saved.has(i);
+    on ? S.saved.add(i) : S.saved.delete(i);
+    el.classList.toggle("on", on); el.textContent = on ? "★" : "☆";
+    el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+    if (false) for (let k = 0; k < 8; k++) { const b = document.createElement("i"); b.className = "burst"; const a = (k / 8) * Math.PI * 2; b.style.setProperty("--x", Math.cos(a) * 22 + "px"); b.style.setProperty("--y", Math.sin(a) * 22 + "px"); el.appendChild(b); setTimeout(() => b.remove(), 600); }
+    return;
+  }
+  if (el.dataset.page) { S.p = el.dataset.page; return render(); }
+  if (el.dataset.chip !== undefined) { document.querySelectorAll("[data-chip]").forEach((c) => c.classList.toggle("on", c === el)); return; }
+  if (el.id === "eye") {
+    S.pwShow = !S.pwShow;
+    const pw = document.getElementById("pw"); pw.type = S.pwShow ? "text" : "password";
+    el.innerHTML = S.pwShow ? EYE_OFF : EYE; el.classList.toggle("on", S.pwShow);
+    el.title = el.ariaLabel = S.pwShow ? "Hide password" : "Show password";
+    el.classList.remove("blink"); void el.offsetWidth; el.classList.add("blink");
+    return;
+  }
+  if (el.dataset.add) { S.watch.push(el.dataset.add); S.q = ""; return refreshSettings(el.dataset.add); }
+  if (el.dataset.topicAdd) { if (!S.custom.includes(el.dataset.topicAdd)) S.custom.push(el.dataset.topicAdd); S.q = ""; return refreshSettings(el.dataset.topicAdd); }
+  if (el.dataset.rm) { S.watch = S.watch.filter((t) => t !== el.dataset.rm); return refreshSettings(); }
+  if (el.dataset.rmT) { S.custom = S.custom.filter((t) => t !== el.dataset.rmT); return refreshSettings(); }
+});
+
+function refreshSettings(added) {
+  document.getElementById("q").value = "";
+  document.getElementById("res").innerHTML = "";
+  const wl = document.getElementById("wl");
+  wl.innerHTML = S.watch.map((t) => `<span class="chip on" data-chip-id="${esc(t)}">${esc(t)}<button data-rm="${esc(t)}">×</button></span>`).join("") +
+    S.custom.map((t) => `<span class="chip topic" data-chip-id="${esc(t)}"># ${esc(t)}<button data-rm-t="${esc(t)}">×</button></span>`).join("");
+  if (added) wl.querySelector(`[data-chip-id="${CSS.escape(added)}"]`)?.classList.add("new");
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "q") return;
+  S.q = e.target.value;
+  document.getElementById("res").innerHTML = results();
+});
+
+// Playful: cards tilt toward the mouse
+document.addEventListener("mousemove", (e) => {
+  if (S.m !== "d") return;
+  document.querySelectorAll(".m-d .card").forEach((c) => {
+    const r = c.getBoundingClientRect();
+    const inside = e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom;
+    if (!inside) { c.style.transform = ""; return; }
+    const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    c.style.transform = `perspective(700px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-4px)`;
+  });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const mi = MOTIONS.findIndex((x) => x[0] === S.m), pi = PAGES.findIndex((x) => x[0] === S.p);
+  if (e.key === "ArrowRight") S.m = MOTIONS[(mi + 1) % 3][0];
+  else if (e.key === "ArrowLeft") S.m = MOTIONS[(mi + 2) % 3][0];
+  else if (e.key === "ArrowDown") S.p = PAGES[(pi + 1) % 4][0];
+  else if (e.key === "ArrowUp") S.p = PAGES[(pi + 3) % 4][0];
+  else return;
+  e.preventDefault(); render();
+});
+
+// allow ?m=c&p=settings&q=to for screenshots
+const u = new URLSearchParams(location.search);
+if (u.get("m")) S.m = u.get("m"); if (u.get("p")) S.p = u.get("p"); if (u.get("q")) S.q = u.get("q"); if (u.get("pw")) S.pwShow = true;
+render();
+</script>
+</body>
+</html>

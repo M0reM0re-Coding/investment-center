@@ -32,4 +32,5 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           OWNER_USER_ID: ${{ secrets.OWNER_USER_ID }}
           SITE_URL: ${{ secrets.SITE_URL }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PYTHONIOENCODING: utf-8

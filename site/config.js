@@ -37,5 +37,19 @@ window.IC_CONFIG = {
     "GULF",
     "CPN",
     "BDMS"
-  ]
+  ],
+  "yahoo": {
+    "PTT": "PTT.BK",
+    "KBANK": "KBANK.BK",
+    "SCB": "SCB.BK",
+    "BBL": "BBL.BK",
+    "KTB": "KTB.BK",
+    "CPALL": "CPALL.BK",
+    "AOT": "AOT.BK",
+    "ADVANC": "ADVANC.BK",
+    "DELTA": "DELTA.BK",
+    "GULF": "GULF.BK",
+    "CPN": "CPN.BK",
+    "BDMS": "BDMS.BK"
+  }
 };

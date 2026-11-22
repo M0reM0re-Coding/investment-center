@@ -20,7 +20,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 import analyze as ai  # noqa: E402
 import db  # noqa: E402
 from fetch import collect  # noqa: E402
-from images import story_image  # noqa: E402
+from images import related_photo, story_image  # noqa: E402
+import prices  # noqa: E402
+import re  # noqa: E402
+from datetime import date, datetime, timedelta, timezone  # noqa: E402
 import notify  # noqa: E402
 
 GEMINI_DAILY_CAP = int(os.environ.get("GEMINI_DAILY_CAP", "120"))  # safety cap; free tier limits are separate
@@ -35,28 +38,92 @@ def db_counter():
     return n
 
 
-def to_row(s):
+NEW_COLUMNS = ("image_credit", "prices_at", "upcoming")  # added by supabase/005_reading.sql
+
+
+def clean_upcoming(items):
+    """Keep only well-formed future dates within a year (the AI is told never to guess dates)."""
+    today, out = date.today(), []
+    for u in items or []:
+        d, what = str(u.get("date", "")), str(u.get("what", "")).strip()[:80]
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) and what:
+            try:
+                day = date.fromisoformat(d)
+            except ValueError:
+                continue
+            if today <= day <= today + timedelta(days=365):
+                out.append({"date": d, "what": what})
+    return out[:3]
+
+
+def to_row(s, watchlist=()):
     a = s["ai"]
+    tickers = sorted(set(a["tickers"]) | set(s["tickers"]))
+    img, credit = story_image(s.get("image"), s["all_links"]), None
+    if not img:  # no publisher picture: a related free photo (Pexels), with the photographer's credit
+        img, credit = related_photo(a.get("photo_query"), s["topics"])
     return {
         "event": a["event"], "headline": a["headline"], "summary": a["summary"],
         "what_it_means": a["what_it_means"], "winners": a["winners"], "losers": a["losers"],
         "watch_next": a["watch_next"], "impact_score": max(1, min(10, a["impact_score"])),
         "impact_reason": a["impact_reason"], "impact_parts": a["impact_parts"], "sentiment": a["sentiment"],
-        "tickers": sorted(set(a["tickers"]) | set(s["tickers"])), "topics": s["topics"],
+        "tickers": tickers, "topics": s["topics"],
         "outlets": s["outlets"], "n_sources": s["n_sources"], "links": s["all_links"],
         "rule_score": s["score"], "published_at": s["published"],
-        "image_url": story_image(s.get("image"), s["all_links"]),
+        "image_url": img, "image_credit": credit,
+        "prices_at": prices.prices_now(prices.real_tickers(tickers, watchlist)),  # for "+1.6% since this news"
+        "upcoming": clean_upcoming(a.get("upcoming")),
     }
+
+
+def save_new(rows):
+    """Insert new stories. Before 005_reading.sql has been run, retry without the new columns."""
+    try:
+        return db.insert_stories(rows)
+    except RuntimeError as e:
+        if not any(c in str(e) for c in NEW_COLUMNS):
+            raise
+        print("  Note: run supabase/005_reading.sql to store photo credits, prices and events")
+        return db.insert_stories([{k: v for k, v in r.items() if k not in NEW_COLUMNS} for r in rows])
+
+
+def news_events(saved_rows):
+    """Dated events the AI found in new stories -> the Upcoming list."""
+    rows = [{"day": u["date"], "title": u["what"], "kind": "news", "story_id": r["id"]}
+            for r in saved_rows for u in (r.get("upcoming") or [])]
+    if rows:
+        try:
+            db.upsert_events(rows)
+        except RuntimeError as e:
+            print(f"  Events not saved: {str(e)[:120]}")
+
+
+def maybe_refresh_earnings(watchlist):
+    """Once a day: next earnings / ex-dividend dates for your watchlist (Yahoo)."""
+    marker = f"events:{date.today().isoformat()}"
+    try:
+        if db.seen_links([marker]):
+            return
+        today = date.today().isoformat()
+        rows = [e for e in prices.earnings_events(prices.real_tickers(watchlist, watchlist)) if e["day"] >= today]
+        if rows:
+            db.upsert_events(rows)
+        db.mark_seen({marker: None})
+        print(f"Upcoming events: {len(rows)} earnings/dividend dates saved")
+    except RuntimeError as e:
+        print(f"  Earnings dates not saved: {str(e)[:120]}")
 
 
 def backfill_images():
     """One-off: find pictures for saved stories that don't have one yet."""
-    rows = db._req("GET", "stories", params={"select": "id,links", "image_url": "is.null", "limit": "200"})
+    rows = db._req("GET", "stories", params={"select": "id,links,topics", "image_url": "is.null", "limit": "200"})
     found = 0
     for r in rows:
-        img = story_image(None, r["links"] or [])
+        img, credit = story_image(None, r["links"] or []), None
+        if not img:
+            img, credit = related_photo(None, r.get("topics"))
         if img:
-            db.update_story(r["id"], {"image_url": img})
+            db.update_story(r["id"], {"image_url": img, **({"image_credit": credit} if credit else {})})
             found += 1
     print(f"Backfill: pictures found for {found} of {len(rows)} stories without one")
 
@@ -79,7 +146,8 @@ def main():
     ai.COUNTER = db_counter
 
     settings = db.user_settings() or {}
-    _, stories = collect(watchlist=settings.get("watchlist"), verbose=False)
+    _, stories = collect(watchlist=settings.get("watchlist"), verbose=False,
+                         custom_topics=settings.get("custom_topics"), watch_names=settings.get("watch_names"))
 
     all_links = {l["link"] for s in stories for l in s["all_links"]}
     seen = db.seen_links(all_links)
@@ -123,10 +191,11 @@ def main():
                 link_to_story[l["link"]] = old["id"]
             updated += 1
         else:
-            new_rows.append((s, to_row(s)))
+            new_rows.append((s, to_row(s, settings.get("watchlist") or [])))
 
     if new_rows:
-        saved = db.insert_stories([row for _, row in new_rows])
+        saved = save_new([row for _, row in new_rows])
+        news_events(saved)
         ids = {r["event"]: r["id"] for r in saved}
         for s, row in new_rows:
             for l in s["all_links"]:
@@ -147,6 +216,7 @@ def main():
     # Telegram: alerts for new high-impact stories, then the morning brief if it's due
     notify.run_alerts()
     notify.maybe_brief()
+    maybe_refresh_earnings(settings.get("watchlist") or [])
 
 
 if __name__ == "__main__":

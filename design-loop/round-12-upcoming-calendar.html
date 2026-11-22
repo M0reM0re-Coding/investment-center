@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 12: Upcoming + Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;--earn:#2563eb;--div:#16a34a;--news:#ff4500}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9e9;color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.bar{position:sticky;top:0;z-index:50;background:#111;color:#fff;padding:12px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.bar b{font:800 15px 'Inter Tight'}
+.bar .tabs{display:flex;gap:6px}
+.bar .tabs button{border:1px solid #444;background:none;color:#ccc;border-radius:99px;padding:6px 14px;font-weight:700;font-size:13px}
+.bar .tabs button.on{background:#fff;color:#111;border-color:#fff}
+.bar small{color:#999;font-size:12px;margin-left:auto}
+.desc{max-width:1280px;margin:18px auto 0;padding:0 20px;font-size:14px;color:#333}
+.desc h2{font:800 22px 'Inter Tight'}
+.desc p{margin-top:4px;line-height:1.5}
+.frame{max-width:1280px;margin:14px auto 40px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.08);min-height:760px}
+.hdr{display:flex;align-items:center;gap:28px;padding:0 40px;height:66px;border-bottom:1px solid var(--line)}
+.hdr .logo{font:900 22px 'Inter Tight';letter-spacing:-.8px}
+.hdr nav{display:flex;gap:22px;font-weight:600;font-size:15px;color:var(--soft)}
+.hdr nav .on{color:var(--ink)}
+.body{padding:24px 40px 40px}
+/* feed context (faded) */
+.feedctx{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px}
+.ghost{opacity:.35;pointer-events:none}
+.gblock{background:#ececec;border-radius:16px}
+.trendmini h2{font:800 20px 'Inter Tight';margin-bottom:6px}
+.trendmini li{list-style:none;display:grid;grid-template-columns:36px 1fr;padding:12px 0;border-bottom:1px solid var(--line);font:700 15px/1.25 'Inter Tight'}
+.trendmini li span{font:900 24px 'Inter Tight';color:var(--accent)}
+.right{display:flex;flex-direction:column;gap:18px}
+.hint{font-size:12px;color:var(--accent);font-weight:700;margin-top:-10px}
+.back{font-weight:700;font-size:14px;color:var(--soft);border:0;background:none;padding:0}
+.ttl{font:800 40px/1 'Inter Tight';letter-spacing:-1.2px;margin:14px 0 6px}
+.sub{color:var(--muted);font-size:14px}
+.fchips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+.fchips button{border:1px solid #e5e5e5;border-radius:99px;padding:7px 14px;font-weight:600;font-size:13px;background:#fff}
+.fchips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:1px}
+.k-earnings{--c:var(--earn)}.k-dividend{--c:var(--div)}.k-news{--c:var(--news)}
+.up{color:var(--up)}.down{color:var(--down)}
+.src{font-size:11px;font-weight:600;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin-top:14px}
+
+/* ===== A. Agenda (editorial, matches site) ===== */
+.A .panel{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff;cursor:pointer;transition:box-shadow .2s,border-color .2s}
+.A .panel:hover{border-color:#ddd;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.A .panel h2{font:800 20px 'Inter Tight';display:flex;justify-content:space-between;align-items:baseline}
+.A .panel h2 a{font:700 13px Inter;color:var(--accent)}
+.A .ev{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.A .d{display:grid;place-items:center;align-content:center;border:1px solid var(--line);border-radius:10px;height:44px;font:700 10px Inter;text-transform:uppercase;color:var(--muted);line-height:1.1}
+.A .d b{font:800 17px 'Inter Tight';color:var(--ink)}
+.A .ev .t b{font:700 14px 'Inter Tight';display:block}
+.A .ev .t small{font:600 11px Inter;color:var(--muted)}
+.A .cd{font:700 11px Inter;color:var(--soft);background:var(--chip);border-radius:99px;padding:3px 8px;white-space:nowrap}
+.A .cd.soon{background:#fff1ea;color:var(--accent)}
+.A .page{max-width:900px}
+.A .wk{font:800 12px Inter;letter-spacing:1px;color:var(--muted);margin:28px 0 4px;text-transform:uppercase}
+.A .row{display:grid;grid-template-columns:64px minmax(0,1fr) 170px 90px;gap:18px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}
+.A .row .d{height:60px;border-radius:12px}.A .row .d b{font-size:24px}
+.A .row h3{font:700 18px 'Inter Tight'}
+.A .row p{font-size:13px;color:var(--soft);margin-top:3px}
+.A .row .px{font:700 13px Inter;text-align:right}
+.A .row .cd{justify-self:end}
+.A .row.link{cursor:pointer}.A .row.link:hover h3{text-decoration:underline}
+
+/* ===== B. Month grid ===== */
+.B .panel{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff;cursor:pointer}
+.B .panel:hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.B .mh{display:flex;justify-content:space-between;align-items:baseline}
+.B .mh h2{font:800 20px 'Inter Tight'}
+.B .mh small{font:700 13px Inter;color:var(--soft)}
+.B .mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px;text-align:center}
+.B .mini .w{font:700 10px Inter;color:var(--muted);padding:4px 0}
+.B .mini .c{height:38px;border-radius:9px;font:600 13px Inter;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink)}
+.B .mini .c.o{color:#ccc}
+.B .mini .c.today{background:var(--ink);color:#fff}
+.B .mini .c.has{background:#fafafa}
+.B .mini .c i{display:flex;gap:2px}.B .mini .c i em{width:5px;height:5px;border-radius:50%;background:var(--c)}
+.B .nx{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.B .nx div{display:flex;gap:8px;align-items:center;font:600 13px Inter;padding:4px 0}
+.B .nx div b{font:800 12px Inter;color:var(--muted);width:46px}
+.B .page{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;margin-top:18px}
+.B .mtop{display:flex;align-items:center;gap:10px}
+.B .mtop h2{font:800 26px 'Inter Tight';margin-right:auto}
+.B .mtop button{border:1px solid var(--line);background:#fff;border-radius:10px;width:36px;height:36px;font-weight:800}
+.B .big{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);margin-top:12px}
+.B .big .w{font:700 11px Inter;color:var(--muted);padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-transform:uppercase}
+.B .big .c{min-height:104px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s}
+.B .big .c:hover{background:#fafafa}
+.B .big .c.sel{background:#fff7f2;box-shadow:inset 0 0 0 2px var(--accent)}
+.B .big .c .n{font:700 13px Inter}
+.B .big .c.o .n{color:#ccc}
+.B .big .c.today .n{background:var(--ink);color:#fff;border-radius:99px;padding:1px 7px}
+.B .pill{display:block;margin-top:4px;font:700 11px Inter;border-radius:6px;padding:3px 6px;background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.B .side{border:1px solid var(--line);border-radius:16px;padding:18px;align-self:start;position:sticky;top:20px}
+.B .side h3{font:800 20px 'Inter Tight'}
+.B .side .it{border-top:1px solid var(--line);padding:12px 0}
+.B .side .it b{font:700 15px 'Inter Tight';display:block}
+.B .side .it p{font-size:13px;color:var(--soft);margin-top:4px}
+.B .legend{display:flex;gap:14px;font:600 12px Inter;color:var(--soft);margin-top:12px}
+
+/* ===== C. Countdown + lanes (bold) ===== */
+.C .panel{border-radius:18px;overflow:hidden;background:#111;color:#fff;cursor:pointer}
+.C .hero{padding:18px 18px 14px;background:linear-gradient(135deg,#2a2a2a,#111)}
+.C .hero small{font:800 11px Inter;letter-spacing:1px;color:#ff8a5c}
+.C .hero h2{font:900 28px/1 'Inter Tight';letter-spacing:-.6px;margin:8px 0 4px}
+.C .hero p{font-size:13px;color:#bbb}
+.C .hero .big{font:900 44px/1 'Inter Tight';color:#fff;float:right;text-align:right;margin-top:-4px}
+.C .hero .big span{display:block;font:700 11px Inter;color:#999;letter-spacing:1px}
+.C .strip{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;padding:12px 14px 14px;background:#181818}
+.C .strip div{height:46px;border-radius:7px;background:#232323;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 0;font:700 10px Inter;color:#888}
+.C .strip div.today{background:#fff;color:#111}
+.C .strip div em{width:7px;height:7px;border-radius:50%;background:var(--c);display:block}
+.C .strip div.has{background:#2b2b2b;color:#fff}
+.C .more{display:flex;justify-content:space-between;padding:10px 16px;border-top:1px solid #262626;font:700 13px Inter;color:#ccc}
+.C .more b{color:#ff8a5c}
+.C .lanes{margin-top:22px;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.C .lh,.C .lane{display:grid;grid-template-columns:150px repeat(28,minmax(0,1fr))}
+.C .lh div{font:700 10px Inter;color:var(--muted);text-align:center;padding:8px 0;border-left:1px solid #f4f4f4}
+.C .lh div.wkst{color:var(--ink);border-left-color:#ddd}
+.C .lh div.today,.C .lane div.today{background:#fff1ea}
+.C .lh .lab,.C .lane .lab{text-align:left;padding:14px 16px;font:800 15px 'Inter Tight';color:var(--ink);border-left:0;display:flex;flex-direction:column;justify-content:center}
+.C .lane .lab small{font:600 11px Inter;color:var(--muted)}
+.C .lane{border-top:1px solid var(--line);min-height:62px}
+.C .lane div{border-left:1px solid #f4f4f4;position:relative}
+.C .lane div.wkst{border-left-color:#ddd}
+.C .chipev{position:absolute;left:2px;top:50%;transform:translateY(-50%);z-index:2;white-space:nowrap;font:800 11px Inter;color:#fff;background:var(--c);border-radius:8px;padding:5px 8px;box-shadow:0 4px 12px rgba(0,0,0,.12);cursor:pointer}
+.C .chipev:hover{transform:translateY(-50%) scale(1.05)}
+.C .countrow{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.C .cnt{flex:1 1 200px;border-radius:16px;padding:16px;background:#111;color:#fff}
+.C .cnt small{font:800 11px Inter;letter-spacing:1px;color:#ff8a5c}
+.C .cnt b{display:block;font:900 34px 'Inter Tight';margin:6px 0 2px}
+.C .cnt p{font-size:13px;color:#bbb}
+
+/* ===== D. Terminal table (dark technical) ===== */
+.D .panel{background:#0d1117;color:#c9d1d9;border-radius:12px;padding:14px;cursor:pointer;font-family:'JetBrains Mono',monospace;border:1px solid #21262d}
+.D .panel h2{font:700 13px 'JetBrains Mono';letter-spacing:1px;color:#ff8a5c;display:flex;justify-content:space-between}
+.D .panel h2 span{color:#8b949e}
+.D table{width:100%;border-collapse:collapse}
+.D .panel td{font-size:12px;padding:7px 4px;border-top:1px solid #21262d;white-space:nowrap}
+.D .panel td.e{color:#8b949e}
+.D .tag{font:700 10px 'JetBrains Mono';padding:2px 6px;border-radius:4px;background:color-mix(in srgb,var(--c) 22%,#0d1117);color:color-mix(in srgb,var(--c) 70%,#fff)}
+.D .page{margin-top:18px;background:#0d1117;border-radius:14px;padding:20px;color:#c9d1d9;font-family:'JetBrains Mono',monospace}
+.D .page .fchips button{background:#161b22;border-color:#30363d;color:#c9d1d9;font-family:'JetBrains Mono'}
+.D .page .fchips button.on{background:#ff4500;border-color:#ff4500;color:#fff}
+.D .page th{font:700 11px 'JetBrains Mono';color:#8b949e;text-align:left;padding:10px 10px;border-bottom:1px solid #30363d;text-transform:uppercase;letter-spacing:.5px;cursor:pointer}
+.D .page th:hover{color:#fff}
+.D .page td{font-size:13px;padding:12px 10px;border-bottom:1px solid #21262d}
+.D .page tr:hover td{background:#161b22}
+.D .page td.r,.D .page th.r{text-align:right}
+.D .up{color:#3fb950}.D .down{color:#f85149}
+.D .t-sym{color:#fff;font-weight:700}
+.D .wkrow td{color:#ff8a5c;font-size:11px;font-weight:700;letter-spacing:1px;padding-top:18px;background:none!important}
+.D .ttl{color:#fff;font-family:'Inter Tight'}
+.D .sub{color:#8b949e}
+.D .back{color:#8b949e;font-family:Inter}
+</style></head><body>
+<div class="bar"><b>Round 12 · Upcoming + Calendar</b>
+  <div class="tabs" id="tabs"></div>
+  <div class="tabs" id="views"></div>
+  <small>← → switch option · click the panel to open the full calendar · sample dates</small></div>
+<div class="desc" id="desc"></div>
+<div class="frame" id="frame"></div>
+<script>
+const TODAY = new Date("2026-11-23T00:00:00");
+const EV = [
+  {day:"2026-11-24",kind:"earnings",ticker:"NVDA",title:"NVDA earnings",detail:"Q3 results · after US close (Thai time ~04:00 Wed)",est:"EPS est. 0.82",px:"125.53",ch:"+1.43%",src:"confirmed"},
+  {day:"2026-11-25",kind:"dividend",ticker:"AAPL",title:"AAPL ex-dividend",detail:"Own before this day to get $0.26/share",est:"$0.26",px:"342.56",ch:"+0.65%",src:"confirmed"},
+  {day:"2026-11-27",kind:"news",ticker:"BOT",title:"BOT rate decision",detail:"Bank of Thailand policy meeting · now 1.75%",est:"Hold expected",px:"",ch:"",src:"from the news",story:true},
+  {day:"2026-11-30",kind:"news",ticker:"OIL",title:"OPEC+ meeting",detail:"Output cuts review · moves PTT, oil prices",est:"",px:"",ch:"",src:"from the news",story:true},
+  {day:"2026-12-01",kind:"dividend",ticker:"PTT",title:"PTT ex-dividend",detail:"Own before this day to get ฿0.80/share",est:"฿0.80",px:"37.40",ch:"+1.22%",src:"confirmed"},
+  {day:"2026-12-04",kind:"news",ticker:"US",title:"US jobs report",detail:"November non-farm payrolls",est:"",px:"",ch:"",src:"from the news",story:true},
+  {day:"2026-12-09",kind:"earnings",ticker:"MDB",title:"MDB earnings",detail:"Q3 results · after US close",est:"EPS est. 0.71",px:"",ch:"",src:"estimated date"},
+  {day:"2026-12-10",kind:"news",ticker:"FED",title:"Fed rate decision",detail:"FOMC meeting + projections",est:"",px:"",ch:"",src:"from the news",story:true},
+  {day:"2026-12-15",kind:"dividend",ticker:"KBANK",title:"KBANK ex-dividend",detail:"Interim dividend",est:"฿2.00",px:"249.00",ch:"+0.81%",src:"estimated date"},
+];
+const ICON={earnings:"📊",dividend:"💰",news:"📰"};
+const KIND={earnings:"Earnings",dividend:"Dividend",news:"News event"};
+const d=(s)=>new Date(s+"T00:00:00");
+const days=(s)=>Math.round((d(s)-TODAY)/864e5);
+const cdTxt=(s)=>{const n=days(s);return n===0?"today":n===1?"tomorrow":`in ${n} days`;};
+const mon=(x)=>x.toLocaleString("en-US",{month:"short"});
+const wkd=(x)=>x.toLocaleString("en-US",{weekday:"short"});
+let opt="A", view="panel", filter="All", selDay="2026-11-24", sortKey="day";
+const OPTS={
+  A:["A. Agenda","Editorial · matches the site","Panel = today's list plus a countdown (\"tomorrow\", \"in 4 days\") and \"Full calendar →\". Full page = a week-by-week agenda with filters, price and estimate per row. Easiest to read; least visual."],
+  B:["B. Month grid","Classic calendar · familiar","Panel = mini month with coloured dots plus the next 3 events. Full page = Google-Calendar-style month grid; click a day to see its details on the right. Best for seeing \"how busy is next week\"; the cells get cramped on a phone."],
+  C:["C. Countdown + lanes","Bold · dark · eye-catching","Panel = big dark \"next event\" countdown plus a 14-day dot strip. Full page = one row (lane) per stock across 4 weeks, so you see each stock's dates at a glance. Most striking; less room for detail text."],
+  D:["D. Terminal table","Dark technical · data-dense","Panel = compact monospace table. Full page = sortable data table (date, symbol, event, estimate, price, today %), Bloomberg/Yahoo style. Fastest for numbers; feels like a different app from the rest of the site."],
+};
+function shell(inner){return `<div class="hdr"><span class="logo">investment center</span><nav><span class="on">My News</span><span>World Brief</span><span>Charts</span></nav></div><div class="body ${opt}">${inner}</div>`;}
+function feed(panel){return `<div class="feedctx"><div class="ghost"><div class="gblock" style="height:340px"></div><div class="gblock" style="height:40px;margin-top:18px;width:80%"></div><div class="gblock" style="height:16px;margin-top:12px;width:60%"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:40px"><div class="gblock" style="height:200px"></div><div class="gblock" style="height:200px"></div></div></div>
+  <div class="right"><div class="trendmini ghost"><h2>Trending now</h2><ol>${["Oil jumps 3% after OPEC+ extends output cuts","Bank of Thailand holds policy rate at 1.75%","KBANK posts record quarterly profit"].map((t,i)=>`<li><span>${i+2}</span>${t}</li>`).join("")}</ol></div>${panel}<p class="hint">↑ click the panel to open the full calendar</p></div></div>`;}
+const list=()=>EV.filter(e=>filter==="All"||(filter==="My watchlist"?["NVDA","AAPL","PTT","KBANK","MDB"].includes(e.ticker):KIND[e.kind].startsWith(filter.replace(/s$/,"").replace("News","News"))));
+const chips=()=>`<div class="fchips">${["All","My watchlist","Earnings","Dividends","News"].map(c=>`<button class="${c===filter?"on":""}" data-f="${c}">${c==="Earnings"?"📊 ":c==="Dividends"?"💰 ":c==="News"?"📰 ":""}${c}</button>`).join("")}</div>`;
+const pageTop=(t,s)=>`<button class="back" data-v="panel">← Back to My News</button><h1 class="ttl">${t}</h1><p class="sub">${s}</p>`;
+
+/* ---------- A ---------- */
+function A_panel(){const ev=EV.slice(0,5);return `<div class="panel" data-v="full"><h2>Upcoming <a>Full calendar →</a></h2>${ev.map(e=>{const x=d(e.day);return `<div class="ev k-${e.kind}"><span class="d"><b>${x.getDate()}</b>${mon(x)}</span><span class="t"><b>${ICON[e.kind]} ${e.title}</b><small>${e.src}</small></span><span class="cd ${days(e.day)<=2?"soon":""}">${cdTxt(e.day)}</span></div>`}).join("")}</div>`;}
+function A_full(){const L=list();const groups=[["This week",0,6],["Next week",7,13],["Later",14,99]];
+  return `<div class="page">${pageTop("Calendar","Earnings, dividends and news dates for the next 30 days · from Yahoo Finance and your news")}${chips()}
+  ${groups.map(([n,a,b])=>{const g=L.filter(e=>days(e.day)>=a&&days(e.day)<=b);return g.length?`<div class="wk">${n}</div>${g.map(e=>{const x=d(e.day);return `<div class="row ${e.story?"link":""}"><span class="d"><b>${x.getDate()}</b>${wkd(x)} ${mon(x)}</span>
+  <div><h3>${ICON[e.kind]} ${e.title}</h3><p>${e.detail}${e.est?` · <b>${e.est}</b>`:""}</p><span class="src">${e.src}${e.story?" · open story →":""}</span></div>
+  <span class="px">${e.px?`${e.ticker} ${e.px} <span class="up">${e.ch}</span>`:""}</span><span class="cd ${days(e.day)<=2?"soon":""}">${cdTxt(e.day)}</span></div>`}).join("")}`:""}).join("")}
+  <p class="note">"Confirmed" = company calendar on Yahoo Finance. "Estimated date" = Yahoo's guess until the company confirms. "From the news" = date mentioned in a story.</p></div>`;}
+
+/* ---------- B ---------- */
+function monthCells(y,m){const first=new Date(y,m,1),start=new Date(first);start.setDate(1-((first.getDay()+6)%7));const out=[];for(let i=0;i<42;i++){const x=new Date(start);x.setDate(start.getDate()+i);out.push(x);}return out;}
+const iso=(x)=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
+const WD=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+let bMonth=0;
+function B_panel(){const st=new Date(TODAY);st.setDate(TODAY.getDate()-((TODAY.getDay()+6)%7));const cells=[...Array(35)].map((_,i)=>{const x=new Date(st);x.setDate(st.getDate()+i);return x;});return `<div class="panel" data-v="full"><div class="mh"><h2>Upcoming</h2><small>next 5 weeks ›</small></div>
+  <div class="mini">${WD.map(w=>`<div class="w">${w[0]}</div>`).join("")}${cells.map(x=>{const ev=EV.filter(e=>e.day===iso(x));return `<div class="c ${x<TODAY?"o":""} ${iso(x)===iso(TODAY)?"today":""} ${ev.length?"has":""}">${x.getDate()}${ev.length?`<i>${ev.map(e=>`<em class="k-${e.kind}"></em>`).join("")}</i>`:""}</div>`}).join("")}</div>
+  <div class="nx">${EV.slice(0,3).map(e=>`<div><b>${d(e.day).getDate()} ${mon(d(e.day))}</b>${ICON[e.kind]} ${e.title}</div>`).join("")}</div></div>`;}
+function B_full(){const L=list();const st=new Date(TODAY);st.setDate(TODAY.getDate()-((TODAY.getDay()+6)%7)+bMonth*35);const cells=[...Array(35)].map((_,i)=>{const x=new Date(st);x.setDate(st.getDate()+i);return x;});const sel=L.filter(e=>e.day===selDay);const sd=d(selDay);
+  return `${pageTop("Calendar","Click a day to see what's happening")}${chips()}<div class="page"><div><div class="mtop"><h2>${cells[0].getDate()} ${mon(cells[0])} – ${cells[34].getDate()} ${mon(cells[34])} ${cells[34].getFullYear()}</h2><button data-m="-1">‹</button><button data-m="1">›</button></div>
+  <div class="big">${WD.map(w=>`<div class="w">${w}</div>`).join("")}${cells.map(x=>{const ev=L.filter(e=>e.day===iso(x));return `<div class="c ${x<TODAY?"o":""} ${iso(x)===iso(TODAY)?"today":""} ${iso(x)===selDay?"sel":""}" data-day="${iso(x)}"><span class="n">${x.getDate()===1?mon(x)+" ":""}${x.getDate()}</span>${ev.map(e=>`<span class="pill k-${e.kind}">${ICON[e.kind]} ${e.title}</span>`).join("")}</div>`}).join("")}</div>
+  <div class="legend"><span><i class="dot" style="background:var(--earn)"></i> Earnings</span><span><i class="dot" style="background:var(--div)"></i> Dividend</span><span><i class="dot" style="background:var(--news)"></i> News event</span></div></div>
+  <aside class="side"><h3>${wkd(sd)} ${sd.getDate()} ${mon(sd)}</h3><p class="sub">${days(selDay)>=0?cdTxt(selDay):""}</p>${sel.length?sel.map(e=>`<div class="it"><b>${ICON[e.kind]} ${e.title}</b><p>${e.detail}</p>${e.est?`<p><b>${e.est}</b></p>`:""}${e.px?`<p>${e.ticker} ${e.px} <span class="up">${e.ch}</span> today</p>`:""}<span class="src">${e.src}${e.story?" · open story →":""}</span></div>`).join(""):`<div class="it"><p>Nothing on this day.</p></div>`}</aside></div>`;}
+
+/* ---------- C ---------- */
+function C_panel(){const n=EV[0];const strip=[...Array(14)].map((_,i)=>{const x=new Date(TODAY);x.setDate(TODAY.getDate()+i);const ev=EV.filter(e=>e.day===iso(x));return `<div class="${i===0?"today":""} ${ev.length?"has":""}">${wkd(x)[0]}<span>${x.getDate()}</span>${ev.length?`<em class="k-${ev[0].kind}"></em>`:"<em style='background:none'></em>"}</div>`}).join("");
+  return `<div class="panel" data-v="full"><div class="hero"><div class="big">${days(n.day)}<span>DAY</span></div><small>NEXT UP</small><h2>${ICON[n.kind]} ${n.title}</h2><p>${n.detail}</p></div><div class="strip">${strip}</div><div class="more"><span>${EV.length-1} more in the next 30 days</span><b>Open calendar →</b></div></div>`;}
+function C_full(){const L=list();const lanesOrder=[];L.forEach(e=>{const k=e.kind==="news"?"Market & economy":e.ticker;if(!lanesOrder.includes(k))lanesOrder.push(k);});
+  const dates=[...Array(28)].map((_,i)=>{const x=new Date(TODAY);x.setDate(TODAY.getDate()+i);return x;});
+  const cell=(x,i)=>`${i===0?"today":""} ${x.getDay()===1?"wkst":""}`;
+  const nxt=L.slice(0,3);
+  return `${pageTop("Calendar","Each row is one stock (or the wider market). Next 4 weeks.")}${chips()}
+  <div class="countrow">${nxt.map(e=>`<div class="cnt"><small>${cdTxt(e.day).toUpperCase()}</small><b>${ICON[e.kind]} ${e.title}</b><p>${e.detail}</p></div>`).join("")}</div>
+  <div class="lanes"><div class="lh"><div class="lab">Stock</div>${dates.map((x,i)=>`<div class="${cell(x,i)}">${x.getDay()===1||i===0?`${x.getDate()} ${mon(x)}`:x.getDate()}</div>`).join("")}</div>
+  ${lanesOrder.map(k=>`<div class="lane"><div class="lab">${k}<small>${k==="Market & economy"?"from the news":"watchlist"}</small></div>${dates.map((x,i)=>{const ev=L.filter(e=>e.day===iso(x)&&(e.kind==="news"?"Market & economy":e.ticker)===k);return `<div class="${cell(x,i)}">${ev.map(e=>`<span class="chipev k-${e.kind}" style="background:var(--c)" title="${e.detail}">${ICON[e.kind]} ${e.kind==="news"?e.ticker:KIND[e.kind]}</span>`).join("")}</div>`}).join("")}</div>`).join("")}</div>
+  <p class="note">Hover a block for details; click to open the story (news) or the stock.</p>`;}
+
+/* ---------- D ---------- */
+function D_panel(){return `<div class="panel" data-v="full"><h2>UPCOMING <span>[ open ↗ ]</span></h2><table>${EV.slice(0,6).map(e=>`<tr class="k-${e.kind}"><td>${d(e.day).getDate()} ${mon(d(e.day)).toUpperCase()}</td><td style="color:#fff;font-weight:700">${e.ticker}</td><td><span class="tag">${e.kind.slice(0,4).toUpperCase()}</span></td><td class="e" style="text-align:right">${e.est.replace("EPS est. ","")||"—"}</td></tr>`).join("")}</table></div>`;}
+function D_full(){let L=list().slice();const sorters={day:(a,b)=>a.day<b.day?-1:1,ticker:(a,b)=>a.ticker<b.ticker?-1:1,kind:(a,b)=>a.kind<b.kind?-1:1};L.sort(sorters[sortKey]||sorters.day);
+  let lastWk=null;
+  return `<div class="page">${pageTop("Calendar","next 30 days · click a column to sort")}${chips()}<table><thead><tr><th data-s="day">Date ${sortKey==="day"?"↓":""}</th><th>In</th><th data-s="ticker">Symbol ${sortKey==="ticker"?"↓":""}</th><th data-s="kind">Event ${sortKey==="kind"?"↓":""}</th><th>Detail</th><th class="r">Est. / Amount</th><th class="r">Last</th><th class="r">Today</th><th>Source</th></tr></thead><tbody>
+  ${L.map(e=>{const wk=sortKey==="day"?(days(e.day)<7?"THIS WEEK":days(e.day)<14?"NEXT WEEK":"LATER"):null;const head=wk&&wk!==lastWk?`<tr class="wkrow"><td colspan="9">${wk}</td></tr>`:"";lastWk=wk;const x=d(e.day);
+  return `${head}<tr class="k-${e.kind}"><td>${wkd(x)} ${x.getDate()} ${mon(x)}</td><td>${days(e.day)}d</td><td class="t-sym">${e.ticker}</td><td><span class="tag">${KIND[e.kind].toUpperCase()}</span></td><td>${e.detail}</td><td class="r">${e.est||"—"}</td><td class="r">${e.px||"—"}</td><td class="r ${e.ch?"up":""}">${e.ch||"—"}</td><td style="color:#8b949e">${e.src}</td></tr>`}).join("")}</tbody></table></div>`;}
+
+const R={A:[A_panel,A_full],B:[B_panel,B_full],C:[C_panel,C_full],D:[D_panel,D_full]};
+function draw(){
+  document.getElementById("tabs").innerHTML=Object.keys(OPTS).map(k=>`<button class="${k===opt?"on":""}" data-o="${k}">${OPTS[k][0]}</button>`).join("");
+  document.getElementById("views").innerHTML=[["panel","Panel on My News"],["full","Full calendar page"]].map(([k,l])=>`<button class="${k===view?"on":""}" data-v="${k}">${l}</button>`).join("");
+  const o=OPTS[opt];document.getElementById("desc").innerHTML=`<h2>${o[0]} — ${o[1]}</h2><p>${o[2]}</p>`;
+  document.getElementById("frame").innerHTML=shell(view==="panel"?feed(R[opt][0]()):R[opt][1]());
+}
+document.addEventListener("click",(e)=>{const t=e.target.closest("[data-o],[data-v],[data-f],[data-day],[data-m],[data-s]");if(!t)return;
+  if(t.dataset.o){opt=t.dataset.o;}
+  if(t.dataset.v){view=t.dataset.v;window.scrollTo(0,0);}
+  if(t.dataset.f){filter=t.dataset.f;}
+  if(t.dataset.day){selDay=t.dataset.day;}
+  if(t.dataset.m){bMonth=Math.min(1,Math.max(0,bMonth+Number(t.dataset.m)));}
+  if(t.dataset.s){sortKey=t.dataset.s;}
+  draw();});
+document.addEventListener("keydown",(e)=>{const k=Object.keys(OPTS),i=k.indexOf(opt);if(e.key==="ArrowRight")opt=k[(i+1)%4];else if(e.key==="ArrowLeft")opt=k[(i+3)%4];else return;draw();});
+draw();
+</script></body></html>

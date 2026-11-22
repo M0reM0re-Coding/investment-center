@@ -196,6 +196,9 @@ ANALYSIS_SCHEMA = {
                 "required": ["reach", "surprise", "size", "timing"]},
             "sentiment": {"type": "STRING", "enum": ["Bullish", "Bearish", "Neutral", "Mixed"]},
             "tickers": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "photo_query": {"type": "STRING"},
+            "upcoming": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {
+                "date": {"type": "STRING"}, "what": {"type": "STRING"}}, "required": ["date", "what"]}},
         },
         "required": ["id", "event", "headline", "summary", "what_it_means", "winners", "losers", "watch_next",
                      "impact_score", "impact_reason", "impact_parts", "sentiment", "tickers"],
@@ -229,6 +232,10 @@ FIELDS
 - impact_reason: one sentence explaining the score.
 - sentiment: market mood for the main asset involved.
 - tickers: stock tickers clearly involved (e.g. NVDA, KBANK). Empty list if none.
+- photo_query: 2-4 plain words for a generic stock photo that fits the story: objects or places only,
+  no people's names, no company names or logos. e.g. "oil refinery", "semiconductor wafer", "bangkok skyline", "gold bars".
+- upcoming: future events with a FULL date (day and month) written in the headlines/snippets, as
+  {"date": "YYYY-MM-DD", "what": "max 8 words"}. Never guess a date. Empty list if none.
 """
 
 

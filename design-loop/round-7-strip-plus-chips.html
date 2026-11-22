@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 7: Strip + news prices</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;--upbg:#dcfce7;--downbg:#fee2e2}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:80px}
+a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+.num{font-variant-numeric:tabular-nums}
+
+/* mockup switcher (not part of the site) */
+.sw{background:#111;color:#fff;font:600 13px Inter;position:sticky;top:0;z-index:60}
+.sw .wrap{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding-top:10px;padding-bottom:10px}
+.sw b{color:#aaa;font-weight:700}
+.sw button{border:1px solid #444;background:#222;color:#ddd;border-radius:99px;padding:5px 12px;font-weight:700;font-size:12px}
+.sw button.on{background:#ff4500;border-color:#ff4500;color:#fff}
+.sw .hint{color:#888;font-weight:500;margin-left:auto}
+.desc{background:#fff7f2;border-bottom:1px solid #ffe0cc;font-size:14px;color:#7a3b17}
+.desc .wrap{padding-top:10px;padding-bottom:10px;line-height:1.5}
+
+/* site header (live Digg style) */
+header{border-bottom:1px solid var(--line);background:#fff;position:relative;z-index:20}
+.nav{display:flex;align-items:center;gap:32px;height:68px}
+.logo{font:900 24px 'Inter Tight';letter-spacing:-1px}
+.nav nav{display:flex;gap:24px;font-weight:600;font-size:15px;color:var(--soft)}
+.nav nav a{padding:23px 0 21px;border-bottom:2px solid transparent}
+.nav nav a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.nav nav a.soon{color:#bbb}.nav nav small{font-size:10px;font-weight:700;margin-left:4px}
+.nav .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{border:0;border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px;background:var(--ink);color:#fff}
+.btn.ghost{background:var(--chip);color:var(--ink)}
+.live{display:flex;align-items:center;gap:6px;font:800 11px Inter;letter-spacing:1px;color:var(--accent);margin-right:6px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-out infinite}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.chip{border:1px solid #e5e5e5;border-radius:99px;padding:7px 16px;font-weight:600;font-size:14px;background:#fff}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.meta{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.why{color:var(--soft);font-size:16px;line-height:1.5}
+.tile{border-radius:16px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:18px;overflow:hidden}
+.tile small{font:700 11px Inter;letter-spacing:1px;text-transform:uppercase;opacity:.9}
+.tile .n{font:900 72px/.9 'Inter Tight';letter-spacing:-3px}.tile .n span{font:700 14px Inter;letter-spacing:1px;margin-left:8px}
+.tile .tk{font:800 15px 'Inter Tight'}
+.imp-hi{background:linear-gradient(135deg,#ff416c,#ff4b2b)}.imp-md{background:linear-gradient(135deg,#f7971e,#ff6a00)}
+.imp-lo{background:linear-gradient(135deg,#f6b93b,#e8a33d)}.imp-min{background:linear-gradient(135deg,#9aa0a6,#6b7280)}
+.hero{display:grid;grid-template-columns:1.6fr 1fr;gap:40px;margin-top:24px}
+.hero .tile{height:320px}.hero .tile .n{font-size:130px}
+.hero h1{font:800 34px/1.1 'Inter Tight';letter-spacing:-1px;margin:18px 0 10px}
+.trend h2,.sec{font:800 20px 'Inter Tight';margin-bottom:6px}
+.sec{font-size:24px;margin:48px 0 18px}
+.trend ol{list-style:none}
+.trend li{display:grid;grid-template-columns:40px 1fr;padding:14px 0;border-bottom:1px solid var(--line)}
+.trend .rank{font:900 28px 'Inter Tight';color:var(--accent)}
+.trend h3{font:700 17px/1.25 'Inter Tight'}
+.vote{font-size:13px;font-weight:700;margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.card .tile{height:160px}
+.card h3{font:700 20px/1.2 'Inter Tight';margin:12px 0 8px;letter-spacing:-.3px}
+.card{transition:transform .2s cubic-bezier(.2,.8,.2,1)}.card:hover{transform:translateY(-4px)}
+.enter .a{animation:rise .42s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+
+/* shared price bits */
+.up{color:var(--up)}.down{color:var(--down)}
+.pill{display:inline-block;min-width:66px;text-align:right;font:800 13px Inter;padding:4px 8px;border-radius:6px;color:#fff}
+.pill.up{background:var(--up);color:#fff}.pill.down{background:var(--down);color:#fff}
+.spark{display:block;overflow:visible}
+.spark path{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.spark .area{stroke:none;opacity:.12}
+.spark.draw path.ln{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.1s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0) * 60ms + .2s)}
+.tick-up{animation:fup 1.1s ease-out}.tick-down{animation:fdown 1.1s ease-out}
+.delay{font-size:11px;color:var(--muted);font-weight:600}
+
+/* ===== A. Market strip (Yahoo-style card row) ===== */
+.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:20px}
+.mk{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto auto;gap:2px 8px;cursor:pointer;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s;background:#fff}
+.mk:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.07)}
+.mk .nm{font:800 14px 'Inter Tight'}.mk .sub{font-size:11px;color:var(--muted);font-weight:600;grid-column:1}
+.mk .px{font:700 16px Inter;grid-column:1;margin-top:6px;border-radius:4px;padding:0 2px;margin-left:-2px;justify-self:start}
+.mk .ch{font:700 12px Inter;grid-column:1}
+.mk svg{grid-column:2;grid-row:1/4;align-self:center}
+.strip-head{display:flex;justify-content:space-between;align-items:baseline;margin-top:22px}
+.strip-head h2{font:800 18px 'Inter Tight'}
+.tabs{display:flex;gap:4px}.tabs button{border:0;background:none;font-weight:700;font-size:13px;color:var(--muted);padding:4px 10px;border-radius:99px}
+.tabs button.on{background:var(--chip);color:var(--ink)}
+
+/* ===== B. Watchlist sidebar (Yahoo "My watchlist" panel) ===== */
+.side-wl{border:1px solid var(--line);border-radius:16px;padding:6px 16px 10px;margin-bottom:22px}
+.side-wl h2{font:800 18px 'Inter Tight';display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 6px}
+.wrow{display:grid;grid-template-columns:1fr 64px 86px 74px;gap:10px;align-items:center;height:52px;border-top:1px solid var(--line);cursor:pointer;transition:background .15s}
+.wrow:hover{background:#fafafa}
+.wrow .s{font:800 14px 'Inter Tight'}.wrow .s small{display:block;font:600 11px Inter;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow .px{font:700 14px Inter;text-align:right;border-radius:4px;padding:2px 4px}
+.wrow .pill{justify-self:end}
+
+/* ===== C. Ticker tape ===== */
+.tape{border-bottom:1px solid var(--line);background:#fafafa;overflow:hidden;white-space:nowrap;position:sticky;top:46px;z-index:15}
+.tape .run{display:inline-flex;animation:tape 50s linear infinite;padding:0}
+.tape:hover .run{animation-play-state:paused}
+.tk-item{display:inline-flex;gap:8px;align-items:center;padding:10px 18px;font:700 13px Inter;border-right:1px solid var(--line);cursor:pointer;position:relative}
+.tk-item:hover{background:#fff}
+.tk-item .px{border-radius:4px;padding:0 3px}
+.pop{position:fixed;width:300px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.14);padding:16px;z-index:70;animation:drop .22s cubic-bezier(.2,.8,.2,1);white-space:normal}
+.pop .t{display:flex;justify-content:space-between;align-items:baseline}
+.pop .t b{font:800 18px 'Inter Tight'}.pop .t span{font-size:12px;color:var(--muted);font-weight:600}
+.pop .big{font:800 28px Inter;margin-top:6px}
+.pop .rel{font-size:13px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);color:var(--soft);line-height:1.4}
+
+/* ===== D. Prices on the news + dock ===== */
+.pchip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:99px;padding:3px 10px 3px 8px;font:700 12px Inter;background:#fff;transition:background .3s}
+.pchip b{font:800 12px 'Inter Tight'}
+.hero-chart{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:14px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.hero-chart .big{font:800 24px Inter}.hero-chart .nm{font:800 15px 'Inter Tight'}.hero-chart .nm small{display:block;font:600 11px Inter;color:var(--muted)}
+.dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);width:min(1216px,calc(100vw - 32px));background:#111;color:#fff;border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.25);z-index:50;animation:dockin .5s cubic-bezier(.2,.8,.2,1) .4s backwards;overflow:hidden}
+.dock .bar{display:flex;align-items:center;gap:0;height:56px;padding:0 8px 0 18px}
+.dock .lbl{font:800 12px Inter;letter-spacing:1px;color:#ff8a5c;margin-right:14px;white-space:nowrap}
+.dock .items{display:flex;overflow:hidden;flex:1}
+.dock .it{display:flex;gap:6px;align-items:center;padding:0 11px;border-left:1px solid #2a2a2a;font:700 13px Inter;white-space:nowrap}
+.dock .it .px{border-radius:4px;padding:0 3px}
+.dock .tg{border:0;background:#222;color:#ddd;border-radius:99px;padding:6px 12px;font-weight:700;font-size:12px;margin-left:8px;white-space:nowrap}
+.dock .more{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:0 16px;max-height:0;transition:max-height .4s cubic-bezier(.2,.8,.2,1),padding .4s}
+.dock.open .more{max-height:260px;padding:4px 16px 16px}
+.dock .cell{background:#1b1b1b;border-radius:12px;padding:10px 12px}
+.dock .cell b{font:800 14px 'Inter Tight'}.dock .cell div{font:700 13px Inter;margin-top:2px}
+.dock .up{color:#4ade80}.dock .down{color:#f87171}
+
+/* option 3: pinned strip that folds into a slim bar while you scroll */
+.stripwrap.sticky{position:sticky;top:var(--swh,46px);z-index:15;background:#fff;padding-bottom:10px;transition:box-shadow .3s}
+.stripwrap.sticky .strip-head{transition:opacity .25s,margin .3s,max-height .3s;max-height:40px;overflow:hidden}
+.stripwrap.sticky .mk{transition:padding .3s cubic-bezier(.2,.8,.2,1),transform .2s,box-shadow .2s}
+.stripwrap.sticky .mk svg{transition:width .3s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.stripwrap.sticky .mk .sub{transition:max-height .3s,opacity .2s;max-height:16px;overflow:hidden}
+.shrunk .stripwrap.sticky{box-shadow:0 8px 16px -12px rgba(0,0,0,.25)}
+.shrunk .stripwrap.sticky .strip-head{opacity:0;max-height:0;margin-top:0}
+.shrunk .stripwrap.sticky .strip{margin-top:8px}
+.shrunk .stripwrap.sticky .mk{padding:7px 12px;display:flex;gap:8px;align-items:baseline;white-space:nowrap;overflow:hidden}
+.shrunk .stripwrap.sticky .mk .sub,.shrunk .stripwrap.sticky .mk svg{display:none}
+.shrunk .stripwrap.sticky .mk svg{width:0;opacity:0}
+.shrunk .stripwrap.sticky .mk .px{margin-top:0}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-6px)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,69,0,.6)}100%{box-shadow:0 0 0 10px rgba(255,69,0,0)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fup{0%{background:rgba(22,163,74,.28)}100%{background:transparent}}
+@keyframes fdown{0%{background:rgba(239,68,68,.28)}100%{background:transparent}}
+@keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes dockin{from{opacity:0;transform:translate(-50%,30px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.spark.draw path.ln{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="sw"><div class="wrap">
+  <b>Price tracking</b><span id="sw"></span>
+  <button id="replay">↻ Replay</button>
+  <span class="hint">← → switch · prices are made up and tick every 2 s to show the motion</span>
+</div></div>
+<div class="desc"><div class="wrap" id="desc"></div></div>
+<div id="app"></div>
+
+<script>
+const OPTS = [
+  ["1", "1. Strip + price chips", "A's card strip (toggle Markets / My watchlist) above the news, and D's live price chips on every story plus a chart on the top story. No dock. Motion: charts draw in, prices flash green/red on each update, cards lift on hover."],
+  ["2", "2. Markets strip + watchlist dock", "The strip shows Markets only (SET, S&P 500, Nasdaq, Gold, BTC, USD/THB); your own stocks live in D's dark dock at the bottom, always in view (▲ expands it). Price chips on every story. Motion: dock slides up, flashes everywhere. Most info on screen; the dock covers a strip of the page."],
+  ["3", "3. Shrinking sticky strip + chips", "Like option 1, but the strip stays pinned when you scroll down and folds into a slim one-line bar (the mini charts fold away), then opens again at the top. Scroll down to see it. Prices always visible without a dock; the bar takes ~50 px while reading."],
+];
+const ASSETS = [
+  // symbol, name, price, kind
+  ["^SET.BK", "SET Index", 1412.6, "m"], ["^GSPC", "S&P 500", 6011.2, "m"], ["^IXIC", "Nasdaq", 19620.5, "m"], ["GC=F", "Gold", 2710.4, "m"], ["BTC-USD", "Bitcoin", 89600, "m"], ["THB=X", "USD/THB", 34.12, "m"],
+  ["NVDA", "NVIDIA Corp", 182.4, "w"], ["AAPL", "Apple Inc.", 231.05, "w"], ["PTT", "PTT PCL", 33.75, "w"], ["KBANK", "Kasikornbank", 151.5, "w"], ["CPALL", "CP All", 58.25, "w"], ["TM", "Toyota Motor", 178.9, "w"],
+];
+const SHORT = { "^SET.BK": "SET", "^GSPC": "S&P 500", "^IXIC": "Nasdaq", "GC=F": "Gold", "BTC-USD": "BTC", "THB=X": "USD/THB" };
+// made-up intraday history per asset (seeded so it looks the same every load)
+let seed = 7; const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+const P = {};
+ASSETS.forEach(([s, n, p, k]) => {
+  const pts = []; let v = p * (1 - (rnd() - 0.45) * 0.04);
+  for (let i = 0; i < 41; i++) { v *= 1 + (rnd() - 0.48) * 0.006; pts.push(v); }
+  const scale = p / pts[pts.length - 1]; pts.forEach((x, i) => (pts[i] = x * scale)); // history ends exactly at today's price
+  P[s] = { s, n, k, open: pts[0], px: p, pts };
+});
+const STORIES = [
+  ["Nvidia guides above estimates as data-centre demand stays hot", 9, ["NVDA"], "Tech & chips", 7],
+  ["Bank of Thailand holds policy rate at 1.75%", 7, ["KBANK"], "Thai economy & BOT", 5],
+  ["Oil jumps 3% after OPEC+ extends output cuts", 7, ["PTT"], "Energy & oil", 6],
+  ["Apple shifts more iPhone assembly to India", 5, ["AAPL"], "Tech & chips", 4],
+  ["Toyota recalls 300,000 cars over airbag issue", 5, ["TM"], "Autos", 4],
+  ["Gold hits a new high as the dollar weakens", 5, ["GC=F"], "Commodities & gold", 4],
+  ["CP All expands 7-Eleven delivery to 20 more provinces", 3, ["CPALL"], "SET / Thai market", 2],
+  ["China's factory activity shrinks for a third month", 6, ["^SET.BK"], "China economy", 3],
+  ["Bitcoin slips as ETF outflows grow", 4, ["BTC-USD"], "Crypto", 3],
+];
+const S = { o: "1", tab: "m", dockOpen: false };
+
+const fmt = (v) => v >= 10000 ? v.toLocaleString("en-US", { maximumFractionDigits: 0 }) : v >= 1000 ? v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : v.toFixed(2);
+const chg = (a) => (a.px - a.open) / a.open * 100;
+const dir = (a) => (chg(a) >= 0 ? "up" : "down");
+const pct = (a) => `${chg(a) >= 0 ? "+" : ""}${chg(a).toFixed(2)}%`;
+const nameOf = (s) => SHORT[s] || s;
+const cls = (i) => (i >= 8 ? "imp-hi" : i >= 6 ? "imp-md" : i >= 4 ? "imp-lo" : "imp-min");
+
+function spark(a, w = 90, h = 32, i = 0) {
+  const lo = Math.min(...a.pts), hi = Math.max(...a.pts), n = a.pts.length - 1;
+  const xy = a.pts.map((v, k) => [(k / n) * w, h - ((v - lo) / (hi - lo || 1)) * h]);
+  const d = xy.map(([x, y], k) => `${k ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join("");
+  const col = chg(a) >= 0 ? "var(--up)" : "var(--down)";
+  const base = h - ((a.open - lo) / (hi - lo || 1)) * h;
+  return `<svg class="spark draw" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="--len:${w * 3};--i:${i}" data-spark="${a.s}">
+    <line x1="0" x2="${w}" y1="${base}" y2="${base}" stroke="#ccc" stroke-dasharray="2 3"/>
+    <path class="area" d="${d}L${w},${h}L0,${h}Z" fill="${col}"/><path class="ln" d="${d}" stroke="${col}"/></svg>`;
+}
+const px = (a, extra = "") => `<span class="px num ${extra}" data-px="${a.s}">${fmt(a.px)}</span>`;
+const ch = (a) => `<span class="ch num ${dir(a)}" data-ch="${a.s}">${pct(a)}</span>`;
+
+function header() {
+  return `<header><div class="wrap nav"><a class="logo">investment center</a>
+    <nav><a class="on">My News</a><a class="soon">World Brief<small>SOON</small></a><a class="soon">Charts<small>SOON</small></a></nav>
+    <div class="r"><span class="live"><i></i>LIVE</span><a class="btn ghost">Topics &amp; watchlist</a><button class="btn">Sign out</button></div></div></header>`;
+}
+function tickerChips(st) {
+  return st[2].map((t) => { const a = P[t]; return `<span class="pchip" data-chip="${t}"><b>${nameOf(t)}</b>${px(a)}<span class="ch num ${dir(a)}" data-ch="${t}">${pct(a)}</span></span>`; }).join("") + `<span>▲ ${st[4]} sources</span>`;
+}
+function tile(st) { return `<div class="tile ${cls(st[1])}"><small>${st[3]}</small><div class="n">${st[1]}<span>IMPACT</span></div><div class="tk">${st[2].map(nameOf).join(" · ")}</div></div>`; }
+
+function moduleA() {
+  const tab = S.o === "2" ? "m" : S.tab;
+  const list = Object.values(P).filter((a) => a.k === tab);
+  return `<div class="stripwrap ${S.o === "3" ? "sticky" : ""}"><div class="strip-head a"><h2>${tab === "m" ? "Markets" : "My watchlist"} <span class="delay">· prices may be delayed ~15 min</span></h2>
+    <div class="tabs" ${S.o === "2" ? 'style="display:none"' : ""}><button class="${S.tab === "m" ? "on" : ""}" data-tab="m">Markets</button><button class="${S.tab === "w" ? "on" : ""}" data-tab="w">My watchlist</button></div></div>
+    <div class="strip">${list.map((a, i) => `<div class="mk a"><span class="nm">${nameOf(a.s)}</span><span class="sub">${a.n}</span>${px(a)}${ch(a)}${spark(a, 74, 40, i)}</div>`).join("")}</div></div>`;
+}
+function moduleB() {
+  const list = Object.values(P).filter((a) => a.k === "w").concat([P["^SET.BK"]]);
+  return `<div class="side-wl a"><h2>My watchlist <span class="delay">may be ~15 min delayed</span></h2>
+    ${list.map((a, i) => `<div class="wrow a"><span class="s">${nameOf(a.s)}<small>${a.n}</small></span>${spark(a, 64, 26, i)}${px(a)}<span class="pill num ${dir(a)}" data-pill="${a.s}">${pct(a)}</span></div>`).join("")}</div>`;
+}
+function tape() {
+  const items = Object.values(P).map((a) => `<span class="tk-item" data-pop="${a.s}"><b>${nameOf(a.s)}</b>${px(a)}<span class="num ${dir(a)}" data-ch="${a.s}">${pct(a)}</span></span>`).join("");
+  return `<div class="tape"><div class="run">${items}${items}</div></div>`;
+}
+function dock() {
+  const list = Object.values(P).filter((a) => a.k === "w");
+  return `<div class="dock ${S.dockOpen ? "open" : ""}"><div class="bar"><span class="lbl">MY WATCHLIST</span><div class="items">${list.slice(0, 5).map((a) => `<span class="it"><b>${nameOf(a.s)}</b>${px(a)}<span class="num ${dir(a)}" data-ch="${a.s}">${pct(a)}</span></span>`).join("")}</div>
+    <button class="tg" data-dock>${S.dockOpen ? "▼ Less" : "▲ Markets"}</button></div>
+    <div class="more">${[...list.slice(5), ...Object.values(P).filter((a) => a.k === "m")].slice(0, 10).map((a) => `<div class="cell"><b>${nameOf(a.s)}</b><div>${px(a)} <span class="num ${dir(a)}" data-ch="${a.s}">${pct(a)}</span></div></div>`).join("")}</div></div>`;
+}
+
+function feed() {
+  const [h, ...rest] = STORIES, trend = rest.slice(0, S.o === "b" ? 3 : 5), more = rest.slice(S.o === "b" ? 3 : 5);
+  const lead = P[h[2][0]];
+  return `${header()}<div class="wrap">
+    <div class="chips a">${["All", "SET / Thai market", "Global macro & Fed", "Tech & chips", "Energy & oil", "Banking", "My watchlist", "Saved"].map((c, i) => `<button class="chip ${i ? "" : "on"}">${c}</button>`).join("")}</div>
+    ${moduleA()}
+    <div class="hero">
+      <div class="a">${tile(h)}<h1>${h[0]}</h1><div class="meta">Reuters · 2 hr ago · ▲ ${h[4]} sources</div>
+        ${true ? `<div class="hero-chart"><span class="nm">${nameOf(lead.s)}<small>${lead.n} · today</small></span>${spark(lead, 360, 44)}<span style="text-align:right"><span class="big">${px(lead)}</span><br>${ch(lead)}</span></div>` : `<p class="why" style="margin-top:10px">Signals AI spending is still accelerating; chip suppliers could benefit.</p>`}</div>
+      <div><div class="trend a"><h2>Trending now</h2><ol>${trend.map((s, i) => `
+        <li class="a"><span class="rank">${i + 2}</span><div><div class="meta">${s[3]} · ${i + 3} hr ago</div><h3>${s[0]}</h3><div class="vote">${tickerChips(s)}</div></div></li>`).join("")}</ol></div></div>
+    </div>
+    <div class="sec a">More stories</div>
+    <div class="grid">${more.map((s) => `<div class="card a">${tile(s)}<h3>${s[0]}</h3><div class="vote">${tickerChips(s)}</div></div>`).join("")}</div>
+  </div>${S.o === "2" ? dock() : ""}`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  document.getElementById("sw").innerHTML = OPTS.map(([k, n]) => `<button class="${k === S.o ? "on" : ""}" data-o="${k}">${n}</button>`).join(" ");
+  document.getElementById("desc").textContent = OPTS.find((x) => x[0] === S.o)[2];
+  app.className = "enter";
+  document.documentElement.style.setProperty("--swh", document.querySelector(".sw").offsetHeight + "px");
+  app.innerHTML = feed();
+  app.querySelectorAll(".a").forEach((el, i) => el.style.setProperty("--i", Math.min(i, 14)));
+  document.querySelector(".pop")?.remove();
+}
+
+// Simulated price ticks: a few assets move every 2 s, their numbers flash green/red
+function tick() {
+  const all = Object.values(P);
+  for (let k = 0; k < 4; k++) {
+    const a = all[Math.floor(Math.random() * all.length)];
+    const old = a.px; a.px = a.px * (1 + (Math.random() - 0.49) * 0.004);
+    a.pts.push(a.px); a.pts.shift();
+    const up = a.px >= old;
+    document.querySelectorAll(`[data-px="${CSS.escape(a.s)}"]`).forEach((el) => { el.textContent = fmt(a.px); el.classList.remove("tick-up", "tick-down"); void el.offsetWidth; el.classList.add(up ? "tick-up" : "tick-down"); });
+    document.querySelectorAll(`[data-ch="${CSS.escape(a.s)}"]`).forEach((el) => { el.textContent = pct(a); el.classList.remove("up", "down"); el.classList.add(dir(a)); });
+    document.querySelectorAll(`[data-pill="${CSS.escape(a.s)}"]`).forEach((el) => { el.textContent = pct(a); el.classList.remove("up", "down"); el.classList.add(dir(a)); });
+    document.querySelectorAll(`[data-spark="${CSS.escape(a.s)}"]`).forEach((svg) => {
+      const w = +svg.getAttribute("width"), h = +svg.getAttribute("height");
+      const tmp = document.createElement("div"); tmp.innerHTML = spark(a, w, h);
+      const fresh = tmp.firstElementChild; fresh.classList.remove("draw"); svg.replaceWith(fresh);
+    });
+  }
+}
+setInterval(tick, 2000);
+const setSw = () => document.documentElement.style.setProperty("--swh", document.querySelector(".sw").offsetHeight + "px");
+addEventListener("scroll", () => { setSw(); document.body.classList.toggle("shrunk", S.o === "3" && scrollY > 200); });
+addEventListener("resize", setSw); document.fonts?.ready.then(setSw);
+
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-o],[data-tab],[data-dock],[data-pop],#replay");
+  if (!el) { document.querySelector(".pop")?.remove(); return; }
+  if (el.id === "replay") return render();
+  if (el.dataset.o) { S.o = el.dataset.o; return render(); }
+  if (el.dataset.tab) { S.tab = el.dataset.tab; return render(); }
+  if (el.dataset.dock !== undefined) { S.dockOpen = !S.dockOpen; document.querySelector(".dock").classList.toggle("open", S.dockOpen); el.textContent = S.dockOpen ? "▼ Less" : "▲ Markets"; return; }
+  if (el.dataset.pop) {
+    document.querySelector(".pop")?.remove();
+    const a = P[el.dataset.pop], r = el.getBoundingClientRect();
+    const st = STORIES.find((s) => s[2].includes(a.s));
+    const d = document.createElement("div"); d.className = "pop";
+    d.style.left = Math.min(r.left, innerWidth - 320) + "px"; d.style.top = r.bottom + 8 + "px";
+    d.innerHTML = `<div class="t"><b>${nameOf(a.s)}</b><span>${a.n}</span></div><div class="big">${px(a)} ${ch(a)}</div>${spark(a, 268, 60)}
+      ${st ? `<div class="rel"><b>Related:</b> ${st[0]}</div>` : ""}`;
+    document.body.appendChild(d);
+  }
+});
+document.addEventListener("keydown", (e) => {
+  const i = OPTS.findIndex((x) => x[0] === S.o);
+  if (e.key === "ArrowRight") S.o = OPTS[(i + 1) % 3][0]; else if (e.key === "ArrowLeft") S.o = OPTS[(i + 2) % 3][0]; else return;
+  render();
+});
+const u = new URLSearchParams(location.search); if (u.get("o")) S.o = u.get("o"); if (u.get("dock")) S.dockOpen = true;
+render();
+</script>
+</body>
+</html>

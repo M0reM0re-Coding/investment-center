@@ -61,7 +61,11 @@ def update_story(story_id, fields):
 
 
 def user_settings():
-    rows = _req("GET", "user_settings", params={"select": "topics,watchlist", "limit": "1"})
+    """The owner's settings. select=* so it still works before 003_search.sql adds the new columns."""
+    params = {"select": "*", "limit": "1"}
+    if os.environ.get("OWNER_USER_ID"):
+        params["user_id"] = f"eq.{os.environ['OWNER_USER_ID']}"
+    rows = _req("GET", "user_settings", params=params)
     return rows[0] if rows else None
 
 
@@ -75,3 +79,8 @@ def bump_usage(field, limit):
     row[field] += 1
     _req("POST", "robot_usage", row, params={"on_conflict": "day"}, prefer="resolution=merge-duplicates")
     return row[field]
+
+
+def upsert_events(rows):
+    """Upcoming events; the same day + title is stored once."""
+    _req("POST", "events", rows, params={"on_conflict": "day,title"}, prefer="resolution=merge-duplicates")

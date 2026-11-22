@@ -42,7 +42,7 @@ def e(s):
 
 def owner_settings():
     uid = os.environ.get("OWNER_USER_ID")
-    params = {"select": "topics,watchlist"}
+    params = {"select": "*"}
     if uid:
         params["user_id"] = f"eq.{uid}"
     rows = db._req("GET", "user_settings", params=params)
@@ -50,8 +50,15 @@ def owner_settings():
 
 
 def relevant(story, settings):
-    return bool(set(story.get("topics") or []) & set(settings["topics"])) or \
-           bool(set(story.get("tickers") or []) & set(settings["watchlist"]))
+    mine = set(settings.get("topics") or []) | set(settings.get("custom_topics") or [])
+    watch = bool(set(story.get("tickers") or []) & set(settings.get("watchlist") or []))
+    # "Show less like this": skip stories only about muted topics or only from muted sources (watchlist news still counts)
+    topics, outlets = set(story.get("topics") or []), set(story.get("outlets") or [])
+    if not watch and topics and topics <= set(settings.get("muted_topics") or []):
+        return False
+    if outlets and outlets <= set(settings.get("muted_sources") or []):
+        return False
+    return bool(topics & mine) or watch
 
 
 def story_link(story):

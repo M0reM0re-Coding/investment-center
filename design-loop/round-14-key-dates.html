@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 14: Key dates</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;
+  --key:#e11d48;--keybg:#fff1f2;--mid:#f59e0b;--midbg:#fffbeb;--low:#9ca3af;--lowbg:#f9fafb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9e9;color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.bar{position:sticky;top:0;z-index:50;background:#111;color:#fff;padding:12px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.bar b{font:800 15px 'Inter Tight'}
+.bar .tabs{display:flex;gap:6px}
+.bar .tabs button{border:1px solid #444;background:none;color:#ccc;border-radius:99px;padding:6px 14px;font-weight:700;font-size:13px}
+.bar .tabs button.on{background:#fff;color:#111;border-color:#fff}
+.bar small{color:#999;font-size:12px;margin-left:auto}
+.desc{max-width:1280px;margin:18px auto 0;padding:0 20px;font-size:14px;color:#333}
+.desc h2{font:800 22px 'Inter Tight'}.desc p{margin-top:4px;line-height:1.5}
+.frame{max-width:1280px;margin:14px auto 40px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.08)}
+.hdr{display:flex;align-items:center;gap:28px;padding:0 40px;height:66px;border-bottom:1px solid var(--line)}
+.hdr .logo{font:900 22px 'Inter Tight';letter-spacing:-.8px}
+.hdr nav{display:flex;gap:22px;font-weight:600;font-size:15px;color:var(--soft)}.hdr nav .on{color:var(--ink)}
+.body{padding:24px 40px 40px}
+.feedctx{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px}
+.ghost{opacity:.35;pointer-events:none}.gblock{background:#ececec;border-radius:16px}
+.trendmini h2{font:800 20px 'Inter Tight';margin-bottom:6px}
+.trendmini li{list-style:none;display:grid;grid-template-columns:36px 1fr;padding:12px 0;border-bottom:1px solid var(--line);font:700 15px/1.25 'Inter Tight'}
+.trendmini li span{font:900 24px 'Inter Tight';color:var(--accent)}
+.right{display:flex;flex-direction:column;gap:18px}
+.hint{font-size:12px;color:var(--accent);font-weight:700;margin-top:-10px}
+.back{font-weight:700;font-size:14px;color:var(--soft);border:0;background:none;padding:0}
+.ttl{font:800 40px/1 'Inter Tight';letter-spacing:-1.2px;margin:14px 0 6px}
+.sub{color:var(--muted);font-size:14px}
+.fchips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+.fchips button{border:1px solid #e5e5e5;border-radius:99px;padding:7px 14px;font-weight:600;font-size:13px;background:#fff}
+.fchips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* logos */
+.lg{display:inline-grid;place-items:center;flex:none;width:var(--s,20px);height:var(--s,20px);border-radius:50%;background:#fff;border:1px solid #e5e5e5;overflow:hidden;vertical-align:middle}
+.lg img{width:78%;height:78%;object-fit:contain}
+.lg.txt{background:#1f2937;border-color:#1f2937;color:#fff;font:800 calc(var(--s,20px)*.32) Inter;letter-spacing:-.2px}
+/* panel shared */
+.panel{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff;cursor:pointer;transition:box-shadow .2s}
+.panel:hover{box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.mh{display:flex;justify-content:space-between;align-items:baseline}
+.mh h2{font:800 20px 'Inter Tight'}.mh small{font:700 13px Inter;color:var(--accent)}
+.mini{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:10px;text-align:center}
+.mini .w{font:700 10px Inter;color:var(--muted);padding:4px 0}
+.mini .c{height:44px;border-radius:10px;font:600 12px Inter;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative}
+.mini .c.o{color:#ccc}
+.mini .c.today{outline:2px solid var(--ink);outline-offset:-2px;font-weight:800}
+.nx{margin-top:12px;border-top:1px solid var(--line);padding-top:6px}
+.nx .r{display:flex;gap:10px;align-items:center;font:600 13px Inter;padding:6px 0}
+.nx .r .dt{font:800 12px Inter;color:var(--muted);width:44px}
+.nx .r .nm{flex:1}
+.lvl{font:800 10px Inter;letter-spacing:.6px;border-radius:99px;padding:2px 7px;white-space:nowrap}
+.lvl.key{background:var(--key);color:#fff}.lvl.mid{background:var(--midbg);color:#b45309}.lvl.low{background:var(--chip);color:var(--muted)}
+.legend{display:flex;gap:16px;font:600 12px Inter;color:var(--soft);margin-top:12px;flex-wrap:wrap;align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
+/* full page shared */
+.page{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;margin-top:14px}
+.mtop{display:flex;align-items:center;gap:10px}
+.mtop h2{font:800 26px 'Inter Tight';margin-right:auto}
+.mtop button{border:1px solid var(--line);background:#fff;border-radius:10px;width:36px;height:36px;font-weight:800}
+.big{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);margin-top:12px}
+.big .w{font:700 11px Inter;color:var(--muted);padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-transform:uppercase}
+.big .c{min-height:112px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s;position:relative;min-width:0}
+.big .c:hover{filter:brightness(.98)}
+.big .c.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.big .c .n{font:700 13px Inter}
+.big .c.o .n{color:#ccc}
+.big .c.today .n{background:var(--ink);color:#fff;border-radius:99px;padding:1px 7px}
+.side{border:1px solid var(--line);border-radius:16px;padding:18px;align-self:start;position:sticky;top:70px}
+.side h3{font:800 20px 'Inter Tight'}
+.side .it{border-top:1px solid var(--line);padding:14px 0;display:grid;grid-template-columns:40px 1fr;gap:12px}
+.side .it b{font:700 15px 'Inter Tight';display:block}
+.side .it p{font-size:13px;color:var(--soft);margin-top:4px}
+.side .it .src{font-size:11px;font-weight:600;color:var(--muted)}
+.side .why{font-size:12px;margin-top:6px;color:var(--key);font-weight:700}
+
+/* ===== B1 Traffic-light pills ===== */
+.B1 .mini .c em{display:flex;gap:1px;margin-top:1px}
+.B1 .mini .c.k{background:var(--keybg);color:var(--key);font-weight:800}
+.B1 .mini .c.m{background:var(--midbg)}
+.B1 .pill{display:flex;align-items:center;gap:5px;margin-top:5px;font:700 11px Inter;border-radius:7px;padding:3px 6px 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--pc);background:var(--pb);color:#222}
+.B1 .pill span{overflow:hidden;text-overflow:ellipsis}
+.B1 .pill.key{--pc:var(--key);--pb:var(--keybg)}.B1 .pill.mid{--pc:var(--mid);--pb:var(--midbg)}.B1 .pill.low{--pc:#d1d5db;--pb:var(--lowbg);color:var(--muted)}
+.B1 .big .c.k{background:linear-gradient(#fff,#fff)}
+.B1 .big .c.k::after{content:"KEY";position:absolute;top:6px;right:6px;font:800 9px Inter;letter-spacing:.8px;color:#fff;background:var(--key);border-radius:4px;padding:2px 5px}
+
+/* ===== B2 Heat-map days ===== */
+.B2 .mini .c.k{background:var(--key);color:#fff;font-weight:800}
+.B2 .mini .c.m{background:#fecdd3;color:#881337}
+.B2 .mini .c.l{background:#ffe4e6;color:#9f1239}
+.B2 .mini .c .lgrow{display:flex;gap:1px}
+.B2 .big .c.k{background:#ffe4e6}
+.B2 .big .c.m{background:#fff1f2}
+.B2 .big .c.l{background:#fffafa}
+.B2 .big .c.k .n{color:var(--key)}
+.B2 .pill{display:flex;align-items:center;gap:5px;margin-top:5px;font:700 11px Inter;border-radius:99px;padding:2px 8px 2px 2px;background:#fff;border:1px solid #f0f0f0;white-space:nowrap;overflow:hidden}
+.B2 .pill span{overflow:hidden;text-overflow:ellipsis}
+.B2 .pill.key{border-color:var(--key);color:var(--key);font-weight:800;box-shadow:0 2px 8px rgba(225,29,72,.15)}
+.B2 .pill.low{color:var(--muted)}
+.B2 .heat{display:inline-flex;gap:3px;align-items:center}
+.B2 .heat i{width:14px;height:14px;border-radius:4px;display:inline-block}
+
+/* ===== B3 Spotlight ===== */
+.B3 .mini .c{height:48px}
+.B3 .mini .c .lg{--s:20px}
+.B3 .mini .c.k .lg{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--key)}
+.B3 .mini .c.k{font-weight:800;color:var(--key)}
+.B3 .keylist{margin-top:12px;border-radius:12px;background:var(--keybg);padding:10px 12px}
+.B3 .keylist small{font:800 10px Inter;letter-spacing:1px;color:var(--key)}
+.B3 .keylist .r{display:flex;gap:10px;align-items:center;padding:6px 0;font:700 13px 'Inter Tight'}
+.B3 .keylist .r .cd{margin-left:auto;font:800 11px Inter;color:var(--key)}
+.B3 .big .c{min-height:150px}
+.B3 .big .c.k{background:#fff}
+.B3 .smalls.corner{position:absolute;top:5px;right:6px;margin:0}.B3 .smalls.corner .lg{--s:22px}
+.B3 .spot{margin-top:6px;border-radius:10px;padding:8px;background:var(--ink);color:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 6px 16px rgba(0,0,0,.18);border-top:3px solid var(--key)}
+.B3 .spot .lg{--s:30px}
+.B3 .spot b{font:800 12px/1.15 'Inter Tight'}
+.B3 .spot small{font:800 9px Inter;letter-spacing:.8px;color:#fda4af}
+.B3 .smalls{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.B3 .smalls .lg{--s:26px}
+.B3 .smalls .lg.mid{box-shadow:0 0 0 2px var(--mid)}
+.B3 .tip{font:600 10px Inter;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== round 14: key dates ===== */
+.sidecol{display:flex;flex-direction:column;gap:18px;align-self:start;position:sticky;top:70px}
+.sidecol .side{position:static}
+.kd{margin-top:14px;border-radius:16px}
+.sidecol .kd{margin-top:0}
+.kh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.kh span{font:800 11px Inter;letter-spacing:1.4px;color:var(--key)}
+.kh small{font:600 12px Inter;color:var(--muted)}
+.kt{min-width:0;flex:1}
+.kt b{display:block;font:800 15px/1.2 'Inter Tight';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt small{font:600 12px Inter;color:var(--muted)}
+.kd [data-day]{cursor:pointer}
+/* K1 countdown cards */
+.k1{background:linear-gradient(160deg,#fff1f2,#fff 70%);border:1px solid #ffe4e6;padding:14px}
+.k1 .kc{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.03),0 4px 14px rgba(225,29,72,.06);margin-top:8px;transition:transform .2s,box-shadow .2s}
+.k1 .kc:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(225,29,72,.14)}
+.k1 .kn{text-align:center;min-width:44px}
+.k1 .kn b{display:block;font:900 26px/1 'Inter Tight';color:var(--key)}
+.k1 .kn small{font:800 9px Inter;letter-spacing:1px;color:#fb7185}
+.k1 .kc.first{background:linear-gradient(135deg,#262626,#111);padding:14px;margin-top:0}
+.k1 .kc.first .kt b{color:#fff;font-size:17px}
+.k1 .kc.first .kt small{color:#a3a3a3}
+.k1 .kc.first .kn b{color:#fff;font-size:34px}
+.k1 .kc.first .kn small{color:#fda4af}
+.k1 .kc.first .lg{border:0;box-shadow:0 0 0 3px rgba(255,255,255,.14)}
+/* K2 ticket stubs */
+.k2 .tk{display:flex;margin-top:10px;border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.1);transition:transform .2s}
+.k2 .tk:hover{transform:translateX(3px)}
+.k2 .stub{flex:none;width:64px;background:#be123c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;position:relative}
+.k2 .stub b{font:900 26px/1 'Inter Tight'}
+.k2 .stub small{font:800 10px Inter;letter-spacing:1px;margin-top:2px}
+.k2 .stub em{font:700 9px Inter;font-style:normal;opacity:.75;letter-spacing:1px;margin-top:3px}
+.k2 .stub::after{content:"";position:absolute;right:-1px;top:6px;bottom:6px;border-right:2px dashed rgba(255,255,255,.85)}
+.k2 .tb{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:12px;background:#111;color:#fff}
+.k2 .tb .kt small{color:#a3a3a3}
+.k2 .kt b{white-space:normal}
+.k2 .pillcd{font:800 12px Inter;color:#fda4af}
+.k2 .kh+.tk{margin-top:0}
+.k2 .kh+.tk .stub{background:linear-gradient(160deg,#f43f5e,#e11d48)}
+/* K3 countdown timeline */
+.k3{background:#fff;border:1px solid #ffe4e6;padding:14px 14px 6px}
+.k3 .tl{position:relative}
+.k3 .tl::before{content:"";position:absolute;left:17px;top:18px;bottom:30px;width:2px;background:linear-gradient(#e11d48,#fecdd3)}
+.k3 .ti{display:flex;gap:14px;padding:8px 0 12px;position:relative}
+.k3 .node{position:relative;z-index:1;border-radius:50%;height:34px;box-shadow:0 0 0 4px #fff,0 0 0 6px #fecdd3}
+.k3 .ti:first-child .node{box-shadow:0 0 0 4px #fff,0 0 0 6px var(--key)}
+.k3 .row1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.k3 .when{font:800 12px Inter;color:var(--key);white-space:nowrap}
+.k3 .prog{height:5px;border-radius:99px;background:#ffe4e6;margin-top:7px;overflow:hidden}
+.k3 .prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#fb7185,#e11d48)}
+</style></head><body>
+<div class="bar"><b>Round 14 · B2 calendar + Key dates</b>
+  <div class="tabs" id="tabs"></div><div class="tabs" id="views"></div>
+  <small>← → switch · click the panel to open the full calendar · sample dates · logos load from the internet</small></div>
+<div class="desc" id="desc"></div>
+<div class="frame" id="frame"></div>
+<script>
+const TODAY=new Date("2026-11-23T00:00:00");
+const FMP=(t)=>`https://financialmodelingprep.com/image-stock/${t}.png`;
+const FAV=(d)=>`https://www.google.com/s2/favicons?domain=${d}&sz=64`;
+// logo source per symbol: stock logo service, an institution's site icon, or a text badge
+const LOGO={NVDA:FMP("NVDA"),AAPL:FMP("AAPL"),PTT:FMP("PTT.BK"),KBANK:FMP("KBANK.BK"),MDB:FMP("MDB"),FED:FAV("federalreserve.gov"),OPEC:FAV("opec.org")};
+// lvl: key = very important, mid = worth knowing, low = minor
+const EV=[
+ {day:"2026-11-24",t:"NVDA",title:"NVDA earnings",kind:"Earnings",lvl:"key",why:"Watchlist stock reports results",detail:"Q3 results · EPS est. 0.82",src:"confirmed"},
+ {day:"2026-11-25",t:"AAPL",title:"AAPL ex-dividend",kind:"Dividend",lvl:"mid",why:"",detail:"Own before today to get $0.26/share",src:"confirmed"},
+ {day:"2026-11-27",t:"BOT",title:"BOT rate decision",kind:"Central bank",lvl:"key",why:"Interest-rate decision moves all Thai stocks",detail:"Policy rate now 1.75%",src:"from the news"},
+ {day:"2026-11-30",t:"OPEC",title:"OPEC+ meeting",kind:"News",lvl:"mid",why:"",detail:"Output cuts review · affects PTT",src:"from the news"},
+ {day:"2026-12-01",t:"PTT",title:"PTT ex-dividend",kind:"Dividend",lvl:"mid",why:"",detail:"Own before today to get ฿0.80/share",src:"confirmed"},
+ {day:"2026-12-04",t:"US",title:"US jobs report",kind:"Economy",lvl:"mid",why:"",detail:"November non-farm payrolls",src:"from the news"},
+ {day:"2026-12-09",t:"MDB",title:"MDB earnings",kind:"Earnings",lvl:"low",why:"",detail:"Not in your watchlist · estimated date",src:"estimated date"},
+ {day:"2026-12-10",t:"FED",title:"Fed rate decision",kind:"Central bank",lvl:"key",why:"US interest-rate decision moves global markets",detail:"FOMC meeting + projections",src:"from the news"},
+ {day:"2026-12-10",t:"AAPL",title:"AAPL shareholder meeting",kind:"Company",lvl:"low",why:"",detail:"Annual meeting",src:"from the news"},
+ {day:"2026-12-15",t:"KBANK",title:"KBANK ex-dividend",kind:"Dividend",lvl:"low",why:"",detail:"Interim dividend ฿2.00 · estimated",src:"estimated date"},
+];
+const RANK={key:3,mid:2,low:1},CL={key:"k",mid:"m",low:"l"},LBL={key:"KEY",mid:"WORTH KNOWING",low:"MINOR"};
+const d=(s)=>new Date(s+"T00:00:00"),days=(s)=>Math.round((d(s)-TODAY)/864e5);
+const cd=(s)=>{const n=days(s);return n===0?"today":n===1?"tomorrow":`in ${n} days`;};
+const mon=(x)=>x.toLocaleString("en-US",{month:"short"}),wkd=(x)=>x.toLocaleString("en-US",{weekday:"short"});
+const iso=(x)=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
+const logo=(t,s=20,cls="")=>LOGO[t]?`<span class="lg ${cls}" style="--s:${s}px"><img src="${LOGO[t]}" alt="${t}" onerror="this.parentNode.classList.add('txt');this.parentNode.textContent='${t}'"></span>`:`<span class="lg txt ${cls}" style="--s:${s}px">${t}</span>`;
+const WD=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+let opt="K1",view="panel",filter="All",selDay="2026-11-24",wk=0;
+const OPTS={
+ K1:["K1. Countdown cards","Each key date is a soft card: big logo, title, and a large countdown number on the right. The nearest one is bigger and dark, so the next thing is obvious."],
+ K2:["K2. Ticket stubs","Each key date looks like an event ticket: a red date stub, a dashed tear line, then logo, title and countdown on dark. Feels premium; very scannable."],
+ K3:["K3. Countdown timeline","A vertical red timeline. Each key date has a logo bubble and a bar that fills up as the day gets closer (full bar = tomorrow). Shows how close each date is."],
+};
+const evOn=(x)=>list().filter(e=>e.day===iso(x));
+const topLvl=(x)=>x.reduce((a,e)=>RANK[e.lvl]>RANK[a]?e.lvl:a,"low");
+const list=()=>EV.filter(e=>filter==="All"||(filter==="Key only"?e.lvl==="key":filter==="My watchlist"?["NVDA","AAPL","PTT","KBANK"].includes(e.t):e.kind===filter.replace(/s$/,"")));
+const weeks=(n,off)=>{const st=new Date(TODAY);st.setDate(TODAY.getDate()-((TODAY.getDay()+6)%7)+off*7);return [...Array(n*7)].map((_,i)=>{const x=new Date(st);x.setDate(st.getDate()+i);return x;});};
+function shell(inner){return `<div class="hdr"><span class="logo">investment center</span><nav><span class="on">My News</span><span>World Brief</span><span>Charts</span></nav></div><div class="body B2 ${opt}">${inner}</div>`;}
+function feed(panel){return `<div class="feedctx"><div class="ghost"><div class="gblock" style="height:340px"></div><div class="gblock" style="height:40px;margin-top:18px;width:80%"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:40px"><div class="gblock" style="height:200px"></div><div class="gblock" style="height:200px"></div></div></div>
+ <div class="right"><div class="trendmini ghost"><h2>Trending now</h2><ol>${["Oil jumps 3% after OPEC+ extends output cuts","Bank of Thailand holds policy rate at 1.75%"].map((t,i)=>`<li><span>${i+2}</span>${t}</li>`).join("")}</ol></div>${panel}<p class="hint">↑ click the panel to open the full calendar</p></div></div>`;}
+const legend=()=>true?`<div class="legend"><span class="heat"><i style="background:#fffafa;border:1px solid #eee"></i><i style="background:#fff1f2"></i><i style="background:#ffe4e6"></i><i style="background:var(--key)"></i></span> quiet → key day</div>`
+ :`<div class="legend"><span><i style="background:var(--key)"></i>Key</span><span><i style="background:var(--mid)"></i>Worth knowing</span><span><i style="background:#d1d5db"></i>Minor</span></div>`;
+
+/* ----- key dates box ----- */
+function keyBox(){
+ const ks=EV.filter(e=>e.lvl==="key"&&days(e.day)>=0).sort((a,b)=>a.day<b.day?-1:1);
+ const dd=(e)=>d(e.day);
+ const head=(r)=>`<div class="kh"><span>KEY DATES</span><small>${r}</small></div>`;
+ if(opt==="K1") return `<div class="kd k1">${head(ks.length+" coming up")}${ks.map((e,i)=>`<div class="kc ${i===0?"first":""}" data-day="${e.day}">${logo(e.t,i===0?44:36)}<div class="kt"><b>${e.title}</b><small>${wkd(dd(e))} ${dd(e).getDate()} ${mon(dd(e))} · ${e.kind}</small></div><div class="kn"><b>${days(e.day)}</b><small>${days(e.day)===1?"DAY":"DAYS"}</small></div></div>`).join("")}</div>`;
+ if(opt==="K2") return `<div class="kd k2">${head(ks.length+" coming up")}${ks.map((e)=>`<div class="tk" data-day="${e.day}"><div class="stub"><b>${dd(e).getDate()}</b><small>${mon(dd(e)).toUpperCase()}</small><em>${wkd(dd(e)).toUpperCase()}</em></div><div class="tb">${logo(e.t,34)}<div class="kt"><b>${e.title}</b><small>${e.kind} · <span class="pillcd">${cd(e.day)}</span></small></div></div></div>`).join("")}</div>`;
+ return `<div class="kd k3">${head("next 30 days")}<div class="tl">${ks.map((e)=>{const pct=Math.max(6,Math.round(100-(days(e.day)-1)/29*100));return `<div class="ti" data-day="${e.day}"><span class="node">${logo(e.t,34)}</span><div class="kt"><div class="row1"><b>${e.title}</b><span class="when">${cd(e.day)}</span></div><small>${wkd(dd(e))} ${dd(e).getDate()} ${mon(dd(e))} · ${e.kind}</small><div class="prog"><i style="width:${pct}%"></i></div></div></div>`}).join("")}</div></div>`;
+}
+
+/* ----- panels ----- */
+function panel(){
+ const cells=weeks(5,0);
+ const cell=(x)=>{const ev=evOn(x),l=ev.length?topLvl(ev):"";const past=x<TODAY;
+  let inner=`${x.getDate()}`;
+  if(ev.length){ if(false) inner+=`<em>${ev.slice(0,2).map(e=>logo(e.t,14)).join("")}</em>`;
+   if(true) inner+=`<span class="lgrow">${ev.slice(0,2).map(e=>logo(e.t,13)).join("")}</span>`;
+   if(false) inner=`${logo(ev.sort((a,b)=>RANK[b.lvl]-RANK[a.lvl])[0].t,20)}<span style="font-size:10px">${x.getDate()}</span>`; }
+  return `<div class="c ${past?"o":""} ${iso(x)===iso(TODAY)?"today":""} ${ev.length?CL[l]:""}">${inner}</div>`;};
+ const next=EV.slice().filter(e=>days(e.day)>=0);
+ const listHtml=keyBox();
+ return `<div class="panel" data-v="full"><div class="mh"><h2>Upcoming</h2><small>Full calendar →</small></div>
+  <div class="mini">${WD.map(w=>`<div class="w">${w[0]}</div>`).join("")}${cells.map(cell).join("")}</div>${listHtml}</div>`;}
+
+/* ----- full page ----- */
+function full(){
+ const cells=weeks(5,wk*5);
+ const cell=(x)=>{const ev=evOn(x).sort((a,b)=>RANK[b.lvl]-RANK[a.lvl]),l=ev.length?topLvl(ev):"";
+  let inner="";
+  if(false){const k=ev.filter(e=>e.lvl==="key"),rest=ev.filter(e=>e.lvl!=="key");
+   inner=k.map(e=>`<div class="spot">${logo(e.t,30)}<small>KEY · ${e.kind.toUpperCase()}</small><b>${e.title}</b></div>`).join("")
+    +(rest.length?`<div class="smalls${k.length?" corner":""}">${rest.map(e=>logo(e.t,26,e.lvl)).join("")}</div>${!k.length?`<div class="tip">${rest.map(e=>e.title).join(", ")}</div>`:""}`:"");}
+  else inner=ev.map(e=>`<span class="pill ${e.lvl}">${logo(e.t,18)}<span>${e.title}</span></span>`).join("");
+  return `<div class="c ${x<TODAY?"o":""} ${iso(x)===iso(TODAY)?"today":""} ${iso(x)===selDay?"sel":""} ${ev.length?CL[l]:""}" data-day="${iso(x)}"><span class="n">${x.getDate()===1?mon(x)+" ":""}${x.getDate()}</span>${inner}</div>`;};
+ const sel=evOn(d(selDay)).sort((a,b)=>RANK[b.lvl]-RANK[a.lvl]),sd=d(selDay);
+ return `<button class="back" data-v="panel">← Back to My News</button><h1 class="ttl">Calendar</h1><p class="sub">Click a day to see what's happening. Red = the dates that matter most.</p>
+ <div class="fchips">${["All","Key only","My watchlist","Earnings","Dividends"].map(c=>`<button class="${c===filter?"on":""}" data-f="${c}">${c}</button>`).join("")}</div>
+ <div class="page"><div><div class="mtop"><h2>${cells[0].getDate()} ${mon(cells[0])} – ${cells[34].getDate()} ${mon(cells[34])} ${cells[34].getFullYear()}</h2><button data-w="-1">‹</button><button data-w="1">›</button></div>
+ <div class="big">${WD.map(w=>`<div class="w">${w}</div>`).join("")}${cells.map(cell).join("")}</div>${legend()}</div>
+ <aside class="sidecol">${keyBox()}<div class="side"><h3>${wkd(sd)} ${sd.getDate()} ${mon(sd)}</h3><p class="sub">${days(selDay)>=0?cd(selDay):"past"}</p>
+ ${sel.length?sel.map(e=>`<div class="it">${logo(e.t,40)}<div><span class="lvl ${e.lvl}">${LBL[e.lvl]}</span><b style="margin-top:6px">${e.title}</b><p>${e.detail}</p>${e.why?`<p class="why">Why key: ${e.why}</p>`:""}<span class="src">${e.src}</span></div></div>`).join(""):`<div class="it"><span></span><p>Nothing on this day.</p></div>`}</div></aside></div>`;}
+
+function draw(){
+ document.getElementById("tabs").innerHTML=Object.keys(OPTS).map(k=>`<button class="${k===opt?"on":""}" data-o="${k}">${OPTS[k][0]}</button>`).join("");
+ document.getElementById("views").innerHTML=[["panel","Panel on My News"],["full","Full calendar page"]].map(([k,l])=>`<button class="${k===view?"on":""}" data-v="${k}">${l}</button>`).join("");
+ document.getElementById("desc").innerHTML=`<h2>${OPTS[opt][0]}</h2><p>${OPTS[opt][1]}</p>`;
+ document.getElementById("frame").innerHTML=shell(view==="panel"?feed(panel()):full());}
+document.addEventListener("click",(e)=>{const t=e.target.closest("[data-o],[data-v],[data-f],[data-day],[data-w]");if(!t)return;
+ if(t.dataset.o)opt=t.dataset.o; if(t.dataset.v){view=t.dataset.v;scrollTo(0,0);} if(t.dataset.f)filter=t.dataset.f;
+ if(t.dataset.day)selDay=t.dataset.day; if(t.dataset.w)wk=Math.max(0,Math.min(1,wk+Number(t.dataset.w))); draw();});
+document.addEventListener("keydown",(e)=>{const k=Object.keys(OPTS),i=k.indexOf(opt);if(e.key==="ArrowRight")opt=k[(i+1)%3];else if(e.key==="ArrowLeft")opt=k[(i+2)%3];else return;draw();});
+draw();
+</script></body></html>

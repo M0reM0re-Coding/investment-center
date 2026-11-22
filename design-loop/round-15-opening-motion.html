@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 15: Opening motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;--key:#e11d48}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9e9;color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.bar{position:sticky;top:0;z-index:100;background:#111;color:#fff;padding:12px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.bar b{font:800 15px 'Inter Tight'}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{border:1px solid #444;background:none;color:#ccc;border-radius:99px;padding:6px 14px;font-weight:700;font-size:13px}
+.tabs button.on{background:#fff;color:#111;border-color:#fff}
+.replay{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}
+.bar small{color:#999;font-size:12px;margin-left:auto}
+.desc{max-width:1200px;margin:18px auto 0;padding:0 20px;font-size:14px;color:#333}
+.desc h2{font:800 22px 'Inter Tight'}.desc p{margin-top:4px;line-height:1.5}
+/* stage = a browser-sized window */
+.stage{position:relative;max-width:1200px;height:640px;margin:14px auto 0;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.1)}
+/* fake site behind the intro */
+.site{position:absolute;inset:0;padding:0 36px}
+.site .hd{display:flex;align-items:center;gap:26px;height:60px;border-bottom:1px solid var(--line);margin:0 -36px;padding:0 36px}
+.site .logo{font:900 21px 'Inter Tight';letter-spacing:-.8px}
+.site nav{display:flex;gap:20px;font:600 14px Inter;color:var(--soft)}
+.site .live{margin-left:auto;font:800 12px Inter;color:var(--accent);display:flex;align-items:center;gap:6px}
+.site .live i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.site .brief{margin-top:18px;border-radius:16px;background:#111;color:#fff;padding:16px 20px;display:flex;align-items:center;gap:16px}
+.site .brief h3{font:800 19px 'Inter Tight'}.site .brief p{font:600 13px Inter;color:#ffb38f;margin-top:3px}
+.site .brief .go{margin-left:auto;background:var(--accent);border-radius:99px;padding:10px 18px;font:800 13px Inter}
+.site .row{display:grid;grid-template-columns:1fr 320px;gap:30px;margin-top:18px}
+.site .lead{height:250px;border-radius:16px;background:linear-gradient(135deg,#ff3d6e,#ff5a1f);color:#fff;padding:20px;display:flex;flex-direction:column;justify-content:space-between}
+.site .lead b{font:900 90px/1 'Inter Tight'}
+.site h1{font:800 26px/1.1 'Inter Tight';margin-top:12px;letter-spacing:-.6px}
+.site .trend h4{font:800 18px 'Inter Tight'}
+.site .trend div{display:grid;grid-template-columns:30px 1fr;padding:10px 0;border-bottom:1px solid var(--line);font:700 14px/1.25 'Inter Tight'}
+.site .trend div span{font:900 22px 'Inter Tight';color:var(--accent)}
+.site .s{opacity:0;transform:translateY(18px)}
+.stage.revealed .site .s{animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i)*70ms)}
+@keyframes rise{to{opacity:1;transform:none}}
+/* intro layer */
+.intro{position:absolute;inset:0;z-index:5;pointer-events:none}
+.skip{position:absolute;right:16px;bottom:14px;z-index:9;font:700 11px Inter;color:rgba(255,255,255,.55);letter-spacing:.5px}
+.skip.dark{color:#aaa}
+
+/* ===== A. Chart line ===== */
+.A{background:#fff;display:grid;place-items:center}
+.A svg{width:70%;height:200px;overflow:visible}
+.A .ln{fill:none;stroke:var(--up);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 1.1s cubic-bezier(.6,0,.2,1) forwards}
+.A .area{fill:url(#ga);opacity:0;animation:fade .5s .9s forwards}
+.A .dot{fill:var(--up);opacity:0;animation:fade .1s 1.05s forwards}
+.A .ring{fill:none;stroke:var(--up);stroke-width:2;opacity:0;transform-origin:center;transform-box:fill-box;animation:ring 1s 1.1s ease-out infinite}
+.A .brand{position:absolute;left:50%;top:calc(50% + 120px);transform:translateX(-50%);font:900 34px 'Inter Tight';letter-spacing:-1.4px;white-space:nowrap;clip-path:inset(0 100% 0 0);animation:type .6s 1.15s steps(18) forwards}
+.A .brand em{font-style:normal;color:var(--up);font:800 15px 'JetBrains Mono';letter-spacing:0;margin-left:10px;vertical-align:6px}
+.A.out{animation:upaway .55s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+@keyframes ring{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(4)}}
+@keyframes type{to{clip-path:inset(0 0 0 0)}}
+@keyframes upaway{to{transform:translateY(-100%)}}
+
+/* ===== B. Candles ===== */
+.B{background:#0b0b0b;display:flex;align-items:flex-end;justify-content:center;gap:14px;padding-bottom:170px}
+.B .cdl{width:26px;position:relative;transform:scaleY(0);transform-origin:bottom;animation:grow .32s cubic-bezier(.2,.9,.3,1.3) forwards;animation-delay:calc(var(--k)*55ms)}
+.B .cdl i{position:absolute;left:50%;width:2px;transform:translateX(-50%);background:inherit;top:-14px;bottom:-14px;opacity:.7}
+.B .cdl.u{background:#22c55e}.B .cdl.d{background:#ef4444}
+.B .cdl.last{background:var(--accent);transition:transform .7s cubic-bezier(.7,0,.2,1)}
+.B .brand{position:absolute;left:0;right:0;bottom:80px;text-align:center;color:#fff;font:900 38px 'Inter Tight';letter-spacing:-1.5px;opacity:0;animation:fade .4s 1s forwards}
+.B .brand small{display:block;font:700 12px 'JetBrains Mono';color:#22c55e;letter-spacing:2px;margin-top:6px}
+.B .fill{position:absolute;inset:0;background:var(--accent);transform:scaleY(0);transform-origin:bottom}
+.B.out .fill{animation:fillup .45s cubic-bezier(.7,0,.3,1) forwards}
+.B.gone{animation:fadeout .4s forwards}
+@keyframes grow{to{transform:scaleY(1)}}
+@keyframes fillup{to{transform:scaleY(1)}}
+@keyframes fadeout{to{opacity:0}}
+
+/* ===== C. Split-flap board ===== */
+.C{background:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.C .rowf{display:flex;gap:5px}
+.C .f{width:46px;height:62px;border-radius:6px;background:linear-gradient(#262626 50%,#1d1d1d 50%);color:#f5f5f5;font:800 36px/62px 'JetBrains Mono';text-align:center;position:relative;box-shadow:inset 0 -1px 0 rgba(255,255,255,.05)}
+.C .f::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#000}
+.C .f.acc{color:var(--accent)}
+.C .tick{display:flex;gap:26px;margin-top:18px;font:700 15px 'JetBrains Mono';color:#bbb}
+.C .tick b{color:#fff}.C .tick .u{color:#22c55e}.C .tick .d{color:#ef4444}
+.C.out{animation:flipaway .6s cubic-bezier(.7,0,.3,1) forwards;transform-origin:top}
+@keyframes flipaway{to{transform:perspective(900px) rotateX(-90deg);opacity:0}}
+
+/* ===== D. Ticker tape ===== */
+.D{background:var(--accent);overflow:hidden;display:grid;place-items:center}
+.D .tape{position:absolute;left:-20%;right:-20%;height:58px;display:flex;align-items:center;white-space:nowrap;font:800 22px 'JetBrains Mono';color:#fff}
+.D .tape span{margin-right:44px}.D .tape .u{color:#bbf7d0}.D .tape .d{color:#111}
+.D .t1{top:18%;transform:rotate(-8deg);background:#111}
+.D .t2{top:calc(50% - 29px);background:#fff;color:#111;z-index:2}
+.D .t2 .u{color:var(--up)}.D .t2 .d{color:var(--down)}
+.D .t3{bottom:18%;transform:rotate(-8deg);background:#111}
+.D .inner{display:flex;animation:scrollx 2.2s cubic-bezier(.3,0,.2,1) forwards}
+.D .t1 .inner,.D .t3 .inner{animation:scrollx2 2.4s linear forwards}
+.D .brandbox{position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;background:#111;color:#fff;font:900 34px 'Inter Tight';letter-spacing:-1.4px;padding:14px 26px;border-radius:14px;animation:pop .45s 1.3s cubic-bezier(.2,.9,.3,1.4) forwards;white-space:nowrap}
+.D.out{animation:zoomthru .55s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes scrollx{from{transform:translateX(0)}to{transform:translateX(-900px)}}
+@keyframes scrollx2{from{transform:translateX(-600px)}to{transform:translateX(200px)}}
+@keyframes pop{to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes zoomthru{to{transform:scale(2.4);opacity:0}}
+
+/* ===== in-site motion gallery ===== */
+.gal{max-width:1200px;margin:34px auto 60px;padding:0 20px}
+.gal>h2{font:800 26px 'Inter Tight'}.gal>p{color:#444;font-size:14px;margin-top:4px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.mc{background:#fff;border-radius:14px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.05);display:flex;flex-direction:column}
+.mc h3{font:800 16px 'Inter Tight';display:flex;justify-content:space-between;align-items:center}
+.mc h3 button{border:1px solid #ddd;background:#fff;border-radius:99px;padding:3px 10px;font:700 11px Inter;color:var(--soft)}
+.mc p{font-size:12.5px;color:var(--soft);margin-top:4px;line-height:1.45}
+.mc .demo{margin-top:12px;height:120px;border-radius:12px;background:#fafafa;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;position:relative}
+.mc .where{margin-top:8px;font:700 11px Inter;color:var(--accent)}
+/* 1 odometer */
+.odo{display:flex;font:800 40px/1 'Inter Tight';letter-spacing:-1px}
+.odo .col{height:40px;overflow:hidden}
+.odo .col span{display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.odo .col span i{display:block;height:40px;font-style:normal}
+.odo .st{display:block}
+.odoch{font:800 14px Inter;margin-left:10px;align-self:flex-end;padding-bottom:4px;transition:color .3s}
+/* 2 sparkline */
+.spk{width:80%;height:70px;overflow:visible}
+.spk path{fill:none;stroke:var(--up);stroke-width:3;stroke-linecap:round;stroke-dasharray:500;stroke-dashoffset:500}
+.spk.go path{animation:draw 1.2s cubic-bezier(.6,0,.2,1) forwards}
+.spk circle{fill:var(--up);opacity:0}.spk.go circle.d{animation:fade .1s 1.15s forwards}
+.spk.go circle.r{animation:ring 1.4s 1.2s ease-out infinite;fill:none;stroke:var(--up);stroke-width:2;transform-origin:center;transform-box:fill-box}
+/* 3 impact fill */
+.imp{width:80%}
+.imp .big{font:900 46px/1 'Inter Tight';color:var(--key)}
+.imp .big small{font:800 12px Inter;color:var(--muted);margin-left:6px}
+.imp .b{height:8px;border-radius:9px;background:#eee;margin-top:8px;overflow:hidden}
+.imp .b i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,#fb923c,var(--key));transition:width 1s cubic-bezier(.2,.8,.2,1)}
+/* 4 heartbeat live */
+.hb{display:flex;align-items:center;gap:10px;font:800 14px Inter;color:var(--accent)}
+.hb svg{width:120px;height:40px}
+.hb path{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60 300;animation:beat 1.6s linear infinite}
+@keyframes beat{from{stroke-dashoffset:360}to{stroke-dashoffset:0}}
+/* 5 ticker tape dock */
+.dock{width:100%;height:46px;background:#111;color:#fff;display:flex;align-items:center;overflow:hidden;border-radius:10px;margin:0 12px}
+.dock .lbl{flex:none;background:#111;color:var(--accent);font:800 11px Inter;letter-spacing:1px;padding:0 12px;z-index:1;height:100%;display:flex;align-items:center}
+.dock .run{display:flex;white-space:nowrap;animation:marq 14s linear infinite;font:700 13px Inter}
+.dock:hover .run{animation-play-state:paused}
+.dock .run span{margin-right:26px}.dock .run b{margin-right:6px}.dock .u{color:#4ade80}.dock .d{color:#f87171}
+@keyframes marq{to{transform:translateX(-50%)}}
+/* 6 chart wipe transition */
+.wipe{position:absolute;inset:0;pointer-events:none}
+.wipe svg{position:absolute;inset:0;width:100%;height:100%}
+.wipe path{fill:none;stroke:var(--accent);stroke-width:5;stroke-dasharray:900;stroke-dashoffset:900}
+.wipe .cover{position:absolute;inset:0;background:#fff;clip-path:inset(0 100% 0 0)}
+.wipe.go path{animation:draw .55s cubic-bezier(.6,0,.2,1) forwards,fadeout .3s .55s forwards}
+.wipe.go .cover{animation:cov .55s cubic-bezier(.6,0,.2,1) forwards}
+@keyframes cov{to{clip-path:inset(0 0 0 0)}}
+.pg{font:800 18px 'Inter Tight';text-align:center;padding:0 14px}
+.pg small{display:block;font:600 12px Inter;color:var(--muted);margin-top:4px}
+/* 7 flip countdown */
+.flip{display:flex;gap:10px;align-items:center}
+.flip .card{width:64px;height:76px;border-radius:10px;background:#111;color:#fff;font:900 44px/76px 'Inter Tight';text-align:center;perspective:400px;position:relative}
+.flip .card.flp{animation:flp .5s ease-in-out}
+.flip small{font:800 11px Inter;color:var(--key);letter-spacing:1px}
+@keyframes flp{0%{transform:rotateX(0)}50%{transform:rotateX(-90deg)}100%{transform:rotateX(0)}}
+/* 8 hover lift with chart glint */
+.hov{width:78%;height:86px;border-radius:12px;background:#fff;border:1px solid var(--line);padding:12px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.hov b{font:800 14px 'Inter Tight';display:block}.hov small{font:600 11px Inter;color:var(--muted)}
+.hov svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:34px}
+.hov svg path{fill:none;stroke:var(--up);stroke-width:2;stroke-dasharray:400;stroke-dashoffset:400;transition:stroke-dashoffset .7s cubic-bezier(.6,0,.2,1)}
+.hov:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.1)}
+.hov:hover svg path{stroke-dashoffset:0}
+/* 9 market open glow */
+.mo{display:flex;align-items:center;gap:10px;font:800 13px Inter}
+.mo .pill{display:inline-flex;align-items:center;gap:7px;border-radius:99px;padding:7px 14px;background:#dcfce7;color:#166534}
+.mo .pill i{width:9px;height:9px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:glow 1.6s infinite}
+.mo .pill.cl{background:#f3f4f6;color:#6b7280}.mo .pill.cl i{background:#9ca3af;animation:none}
+@keyframes glow{70%{box-shadow:0 0 0 10px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+.tagrec{display:inline-block;font:800 9px Inter;letter-spacing:.8px;border-radius:99px;padding:2px 7px;background:#dcfce7;color:#166534;margin-left:6px;vertical-align:2px}
+</style></head><body>
+<div class="bar"><b>Round 15 · Opening motion</b>
+  <div class="tabs" id="tabs"></div>
+  <div class="tabs"><button class="replay" id="replay">↻ Replay</button></div>
+  <small>← → switch · click the intro to skip · plays once per visit on the real site</small></div>
+<div class="desc" id="desc"></div>
+<div class="stage" id="stage">
+  <div class="site">
+    <div class="hd s" style="--i:0"><span class="logo">investment center</span><nav><span style="color:#111">My News</span><span>World Brief</span><span>Charts</span></nav><span class="live"><i></i>LIVE</span></div>
+    <div class="brief s" style="--i:1"><div><h3>3 must-reads waiting</h3><p>Since you were away: 3 new · 3 high-impact · NVDA +1.43% today</p></div><span class="go">▶ Start briefing</span></div>
+    <div class="row"><div><div class="lead s" style="--i:2"><b>9</b><span style="font:800 13px Inter">NVDA</span></div><h1 class="s" style="--i:3">Nvidia guides above estimates as data-centre demand stays hot</h1></div>
+      <div class="trend s" style="--i:3"><h4>Trending now</h4><div><span>2</span>Oil jumps 3% after OPEC+ extends output cuts</div><div><span>3</span>Bank of Thailand holds policy rate at 1.75%</div><div><span>4</span>KBANK posts record quarterly profit</div></div></div>
+  </div>
+  <div class="intro" id="intro"></div>
+</div>
+
+<div class="gal">
+  <h2>Motion inside the site</h2>
+  <p>Pick any you like (several can be combined). Each card shows where it would go. <span class="tagrec">MY PICK</span> = my recommendation.</p>
+  <div class="cards">
+    <div class="mc"><h3>1. Rolling price digits <span class="tagrec">MY PICK</span><button data-r="odo">↻</button></h3><p>When a price updates, each digit rolls like a stock-exchange board instead of just changing.</p><div class="demo"><div style="display:flex"><div class="odo" id="odo"></div><span class="odoch" id="odoch"></span></div></div><div class="where">Price strip, dock, story chips</div></div>
+    <div class="mc"><h3>2. Chart draws itself <span class="tagrec">MY PICK</span><button data-r="spk">↻</button></h3><p>Sparklines draw from left to right on load, ending with a pulsing "now" dot.</p><div class="demo"><svg class="spk" id="spk" viewBox="0 0 300 70"><path d="M0 55 L30 50 L60 52 L90 40 L120 44 L150 30 L180 34 L210 22 L240 26 L270 12 L300 8"/><circle class="r" cx="300" cy="8" r="5"/><circle class="d" cx="300" cy="8" r="5"/></svg></div><div class="where">Lead-story chart, Markets tab</div></div>
+    <div class="mc"><h3>3. Impact score fills up<button data-r="imp">↻</button></h3><p>The impact number counts up and its bar fills, like a gauge loading.</p><div class="demo"><div class="imp"><div class="big" id="impn">0<small>/10 IMPACT</small></div><div class="b"><i id="impb"></i></div></div></div><div class="where">Story page, cards</div></div>
+    <div class="mc"><h3>4. Heartbeat LIVE <span class="tagrec">MY PICK</span><button data-r="">·</button></h3><p>The LIVE dot becomes a tiny price-line heartbeat, showing the robot is watching the market.</p><div class="demo"><div class="hb"><svg viewBox="0 0 120 40"><path d="M0 22 L30 22 L38 22 L44 8 L52 34 L58 16 L64 22 L120 22"/></svg>LIVE</div></div><div class="where">Header</div></div>
+    <div class="mc"><h3>5. Ticker tape dock<button data-r="">·</button></h3><p>The bottom watchlist bar scrolls slowly like a stock-exchange ticker; pauses when you point at it.</p><div class="demo" style="background:#fafafa"><div class="dock"><span class="lbl">MY WATCHLIST</span><div class="run" id="run"></div></div></div><div class="where">Bottom dock</div></div>
+    <div class="mc"><h3>6. Chart-line page wipe<button data-r="wipe">↻</button></h3><p>Opening a story: an orange price line sweeps across and wipes to the new page (0.5 s).</p><div class="demo"><div class="pg">Nvidia guides above estimates<small>story page</small></div><div class="wipe" id="wipe"><div class="cover"></div><svg viewBox="0 0 400 120" preserveAspectRatio="none"><path d="M0 100 L60 80 L110 88 L170 50 L230 62 L290 30 L340 38 L400 10"/></svg></div></div><div class="where">Between pages</div></div>
+    <div class="mc"><h3>7. Countdown flip <span class="tagrec">MY PICK</span><button data-r="flip">↻</button></h3><p>Key-date countdown numbers flip like a calendar card when the day changes or the page opens.</p><div class="demo"><div class="flip"><div class="card" id="flipc">2</div><small>DAYS TO<br>NVDA EARNINGS</small></div></div><div class="where">Key dates, calendar</div></div>
+    <div class="mc"><h3>8. Card lift + chart glint<button data-r="">·</button></h3><p>Point at a story card: it lifts and a thin green chart line draws along its bottom edge.</p><div class="demo"><div class="hov"><b>Bank of Thailand holds rate at 1.75%</b><small>point at me</small><svg viewBox="0 0 300 34" preserveAspectRatio="none"><path d="M0 30 L40 26 L80 28 L120 18 L160 22 L200 12 L240 16 L300 4"/></svg></div></div><div class="where">News cards</div></div>
+    <div class="mc"><h3>9. Market open / closed glow<button data-r="">·</button></h3><p>A small badge glows green while a market is open (SET, NYSE), grey when closed.</p><div class="demo"><div class="mo"><span class="pill"><i></i>SET open</span><span class="pill cl"><i></i>NYSE closed</span></div></div><div class="where">Price strip header</div></div>
+  </div>
+</div>
+
+<script>
+const OPTS={
+ A:["A. Chart line","Minimal · light · calm","A green price line draws across a white screen, a \"now\" dot pulses, the name types in, then the screen slides up to the page. ~1.8 s. Matches the current clean look best."],
+ B:["B. Candles rise","Bold · dark · dramatic","On black, a row of green/red candlesticks pops up one by one; the last orange candle floods the screen and the page appears. ~2 s. Most \"trading\" feeling."],
+ C:["C. Departure board","Terminal · retro · data","A split-flap board (like an old stock exchange) clatters through letters and settles on INVESTMENT CENTER with live ticks underneath, then flips away. ~2.2 s. Most unusual."],
+ D:["D. Ticker tape","Energetic · playful · loud","Orange screen, three ticker tapes race across with prices, slow down, the name pops in the middle, then it zooms through into the site. ~2 s. Most energetic."],
+};
+let opt="A",timers=[];
+const intro=document.getElementById("intro"),stage=document.getElementById("stage");
+const T=(f,ms)=>timers.push(setTimeout(f,ms));
+const TICK=[["NVDA","125.53","+1.43%",1],["AAPL","342.56","+0.65%",1],["PTT","37.40","+1.22%",1],["SET","1,412.8","-0.31%",0],["KBANK","249.00","+0.81%",1],["S&P 500","6,804","-0.18%",0],["GOLD","2,701","+0.42%",1],["USD/THB","33.42","-0.10%",0]];
+function reveal(){stage.classList.add("revealed");}
+function play(){
+  timers.forEach(clearTimeout);timers=[];stage.classList.remove("revealed");intro.className="intro";intro.innerHTML="";void intro.offsetWidth;
+  const end=(ms,outMs)=>{T(()=>intro.classList.add("out"),ms);T(()=>{reveal();},ms+outMs*0.5);T(()=>{intro.innerHTML="";intro.className="intro";},ms+outMs+50);};
+  if(opt==="A"){intro.classList.add("A");
+    intro.innerHTML=`<svg viewBox="0 0 700 200" preserveAspectRatio="none"><defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#16a34a" stop-opacity=".18"/><stop offset="1" stop-color="#16a34a" stop-opacity="0"/></linearGradient></defs>
+    <path class="area" d="M0 160 L70 150 L130 156 L190 120 L250 130 L320 92 L380 104 L450 70 L510 80 L580 44 L640 52 L700 20 L700 200 L0 200Z"/>
+    <path class="ln" d="M0 160 L70 150 L130 156 L190 120 L250 130 L320 92 L380 104 L450 70 L510 80 L580 44 L640 52 L700 20"/>
+    <circle class="ring" cx="700" cy="20" r="7"/><circle class="dot" cx="700" cy="20" r="7"/></svg><div class="brand">investment center<em>▲ live</em></div><span class="skip dark">click to skip</span>`;
+    end(1850,550);}
+  if(opt==="B"){intro.classList.add("B");
+    const hs=[60,90,70,120,100,150,130,110,170,150,200,180,230];
+    intro.innerHTML=hs.map((h,k)=>`<div class="cdl ${k%4===2||k===6?"d":"u"}" style="height:${h}px;--k:${k}"><i></i></div>`).join("")+`<div class="cdl last" id="lastc" style="height:280px;--k:13"><i></i></div><div class="brand">investment center<small>MARKETS · NEWS · ALERTS</small></div><div class="fill"></div><span class="skip">click to skip</span>`;
+    T(()=>intro.classList.add("out"),1600);T(()=>{reveal();intro.classList.add("gone");},2000);T(()=>{intro.innerHTML="";intro.className="intro";},2450);}
+  if(opt==="C"){intro.classList.add("C");
+    const words=["INVESTMENT","  CENTER  "],CH="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$%";
+    intro.innerHTML=words.map((w,r)=>`<div class="rowf">${[...w.padEnd(10," ")].map((c,k)=>`<div class="f ${r===1?"acc":""}" data-c="${c}" data-k="${k+r*3}"></div>`).join("")}</div>`).join("")+`<div class="tick">${TICK.slice(0,4).map(t=>`<span><b>${t[0]}</b> ${t[1]} <span class="${t[3]?"u":"d"}">${t[2]}</span></span>`).join("")}</div><span class="skip">click to skip</span>`;
+    intro.querySelectorAll(".f").forEach(f=>{const target=f.dataset.c,stop=300+Number(f.dataset.k)*90;let n=0;const iv=setInterval(()=>{n+=60;f.textContent=n>=stop?target:CH[Math.floor(Math.random()*CH.length)];if(n>=stop)clearInterval(iv);},60);timers.push(iv);});
+    end(2200,600);}
+  if(opt==="D"){intro.classList.add("D");
+    const tape=(cls)=>`<div class="tape ${cls}"><div class="inner">${[...TICK,...TICK,...TICK].map(t=>`<span>${t[0]} ${t[1]} <span class="${t[3]?"u":"d"}">${t[3]?"▲":"▼"} ${t[2]}</span></span>`).join("")}</div></div>`;
+    intro.innerHTML=tape("t1")+tape("t2")+tape("t3")+`<div class="brandbox">investment center</div><span class="skip">click to skip</span>`;
+    end(2050,550);}
+}
+stage.addEventListener("click",()=>{if(!intro.innerHTML)return;timers.forEach(clearTimeout);intro.innerHTML="";intro.className="intro";reveal();});
+function draw(){document.getElementById("tabs").innerHTML=Object.keys(OPTS).map(k=>`<button class="${k===opt?"on":""}" data-o="${k}">${OPTS[k][0]}</button>`).join("");
+  document.getElementById("desc").innerHTML=`<h2>${OPTS[opt][0]} — ${OPTS[opt][1]}</h2><p>${OPTS[opt][2]}</p>`;play();}
+document.addEventListener("click",(e)=>{const b=e.target.closest("[data-o]");if(b){opt=b.dataset.o;draw();}});
+document.getElementById("replay").onclick=play;
+document.addEventListener("keydown",(e)=>{const k=Object.keys(OPTS),i=k.indexOf(opt);if(e.key==="ArrowRight")opt=k[(i+1)%4];else if(e.key==="ArrowLeft")opt=k[(i+3)%4];else return;draw();});
+
+/* gallery demos */
+const G={};
+// 1 odometer
+let price=125.53;
+function odoSet(v,prev){const s=v.toFixed(2),el=document.getElementById("odo");
+  if(!el.children.length||el.dataset.len!=s.length){el.dataset.len=s.length;el.innerHTML=[...s].map(c=>/\d/.test(c)?`<span class="col"><span>${[...Array(10)].map((_,d)=>`<i>${d}</i>`).join("")}</span></span>`:`<span class="st">${c}</span>`).join("");}
+  [...el.querySelectorAll(".col")].forEach((col,k)=>{const digits=s.replace(".","");col.firstChild.style.transform=`translateY(${-Number(digits[k])*40}px)`;});
+  const ch=document.getElementById("odoch");const p=((v-123.76)/123.76*100);ch.textContent=(p>=0?"+":"")+p.toFixed(2)+"%";ch.style.color=v>=(prev??v)?"var(--up)":"var(--down)";}
+G.odo=()=>{const prev=price;price=+(price+(Math.random()-.4)*3).toFixed(2);odoSet(price,prev);};
+odoSet(price);setInterval(G.odo,2200);
+// 2 spark
+G.spk=()=>{const s=document.getElementById("spk");s.classList.remove("go");void s.getBBox();requestAnimationFrame(()=>s.classList.add("go"));};
+// 3 impact
+G.imp=()=>{const n=document.getElementById("impn"),b=document.getElementById("impb");b.style.transition="none";b.style.width="0";void b.offsetWidth;b.style.transition="";let v=0;const iv=setInterval(()=>{v++;n.firstChild.textContent=v;if(v>=9)clearInterval(iv);},90);setTimeout(()=>b.style.width="90%",30);};
+// 5 dock
+document.getElementById("run").innerHTML=[...TICK,...TICK].map(t=>`<span><b>${t[0]}</b>${t[1]} <span class="${t[3]?"u":"d"}">${t[2]}</span></span>`).join("");
+// 6 wipe
+G.wipe=()=>{const w=document.getElementById("wipe");w.classList.remove("go");void w.offsetWidth;w.classList.add("go");setTimeout(()=>w.classList.remove("go"),1500);};
+// 7 flip
+let fv=2;G.flip=()=>{const c=document.getElementById("flipc");c.classList.remove("flp");void c.offsetWidth;c.classList.add("flp");setTimeout(()=>{fv=fv===1?3:fv-1;c.textContent=fv;},250);};
+setInterval(G.flip,3000);
+document.addEventListener("click",(e)=>{const b=e.target.closest("[data-r]");if(b&&G[b.dataset.r])G[b.dataset.r]();});
+setTimeout(()=>{G.spk();G.imp();},400);
+draw();
+</script></body></html>

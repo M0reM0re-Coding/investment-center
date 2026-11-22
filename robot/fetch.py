@@ -28,6 +28,7 @@ OUT = HERE.parent / "out"
 USER_AGENT = "Mozilla/5.0 (compatible; InvestmentCenterBot/0.1)"
 MAX_AGE_HOURS = 48          # ignore stories older than this
 GROUP_SIMILARITY = 0.34     # how alike two headlines must be to count as the same story
+QUOTE_PAGE = re.compile(r"stock price,? news,? quote|quote (&|and) history|stock price today|stock quote", re.I)  # price pages, not news
 STOPWORDS = set("""a an the of to in on for and or as at by with from is are was be been after
 over into its it this that new says say said amid vs will could may than more most up down""".split())
 
@@ -87,7 +88,7 @@ def fetch_feed(src):
         if source_tag is not None and source_tag.text:
             outlet = source_tag.text.strip()
             title = re.sub(r"\s+-\s+" + re.escape(outlet) + r"$", "", title)
-        if title and link:
+        if title and link and not QUOTE_PAGE.search(title):
             items.append({
                 "title": title,
                 "link": link,
@@ -166,12 +167,69 @@ def score_group(g, topic_rx, ticker_rx, now, watchlist):
     }
 
 
-def collect(watchlist=None, verbose=True):
+MAX_CUSTOM_TOPICS = 5   # each one adds a Google News search per run, so keep it small
+MAX_EXTRA_TICKERS = 5   # same for stocks added from search that the catalog doesn't know
+LEGAL_WORDS = re.compile(r"[,.]|\b(inc|incorporated|corp|corporation|co|company|ltd|limited|plc|pcl|public|holdings?|group|sa|ag|nv|se|adr)\b", re.I)
+
+
+def google_news(query):
+    from urllib.parse import quote_plus
+    return f"https://news.google.com/rss/search?q={quote_plus(query)}+when:2d&hl=en-US&gl=US&ceid=US:en"
+
+
+def company_name(name):
+    """'TOYOTA MOTOR CORP' -> 'Toyota Motor'. Used to find news about stocks you added from search."""
+    name = re.sub(r"^[A-Z0-9&.-]+_", "", name or "")  # Yahoo's Thai names look like "PTT_PTT" or "OR_PTT OIL ..."
+    n = re.sub(r"\s+", " ", LEGAL_WORDS.sub(" ", name)).strip()
+    return n.title() if n.isupper() else n
+
+
+def personal_feeds(custom_topics, extra_tickers, watch_names):
+    """Extra Google News searches for your own topics and stocks (capped).
+    They only bring in more articles; a story is tagged with your topic/stock only if its text mentions it."""
+    feeds = [{"name": f"Google News: {t}", "url": google_news(f'"{t}"'), "trust": 1} for t in custom_topics]
+    for t in extra_tickers:
+        name = company_name(watch_names.get(t, "")) or t
+        feeds.append({"name": f"Google News: {t}", "url": google_news(f'"{name}"'), "trust": 1})
+    return feeds
+
+
+# Words too common to identify a company on their own ("Taiwan Semiconductor" must not match every "Taiwan" story)
+GENERIC_FIRST = set("""taiwan china chinese thai thailand bangkok japan american america general united international
+national global first new delta gulf energy bank siam asia asian pacific royal central digital advanced""".split())
+
+
+def ticker_aliases(symbol, name):
+    rxs = [matcher(symbol)] if len(symbol) >= 3 and symbol.isalpha() else []
+    name = company_name(name)
+    if len(name) >= 4:
+        rxs.append(word_rx(name))
+        first = name.split()[0]
+        if len(name.split()) > 1 and len(first) >= 5 and first.lower() not in GENERIC_FIRST:
+            rxs.append(word_rx(first))  # "Toyota Motor" -> also "Toyota"
+    return rxs
+
+
+def word_rx(phrase):
+    return re.compile(r"(?<![A-Za-z0-9])" + re.escape(phrase) + r"(?![A-Za-z0-9])", re.I)
+
+
+def collect(watchlist=None, verbose=True, custom_topics=None, watch_names=None):
     """Fetch all feeds and return (articles, ranked stories). Used by fetch.py and run.py."""
     sources = load("sources.json")
     catalog = load("catalog.json")
+    watch_names = watch_names or {}
+    custom_topics = [t for t in (custom_topics or []) if t and t not in catalog["topics"]][:MAX_CUSTOM_TOPICS]
+    extra_tickers = [t for t in (watchlist or []) if t not in catalog["tickers"]][:MAX_EXTRA_TICKERS]
+    sources = sources + personal_feeds(custom_topics, extra_tickers, watch_names)
     topic_rx = {t: [matcher(k) for k in kws] for t, kws in catalog["topics"].items()}
+    for t in custom_topics:
+        topic_rx[t] = [word_rx(t)]
     ticker_rx = {t: [matcher(k) for k in kws] for t, kws in catalog["tickers"].items()}
+    for t in extra_tickers:
+        rxs = ticker_aliases(t, watch_names.get(t, ""))
+        if rxs:
+            ticker_rx[t] = rxs
     now = datetime.now(timezone.utc)
 
     watchlist = set(watchlist or catalog["default_watchlist"])
