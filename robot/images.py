@@ -89,45 +89,58 @@ def pexels_photo(query):
 UNSPLASH_MAX_PER_RUN = 20   # free (demo) plan allows 50 searches per hour; the robot runs every 30 minutes
 _unsplash_calls = [0]
 
-def unsplash_photo(query):
-    """Return (image_url, credit) for the best landscape photo on Unsplash, or (None, None). Cached per run."""
+def _unsplash_results(query):
+    """Up to 10 landscape photos for a search, as [(image_url, credit, download_location)]. Cached per run."""
     key = os.environ.get("UNSPLASH_ACCESS_KEY", "").strip()
     query = (query or "").strip()
     if not key or not query:
-        return None, None
+        return []
     cache_key = "u:" + query
     if cache_key in _photo_cache:
         return _photo_cache[cache_key]
     if _unsplash_calls[0] >= UNSPLASH_MAX_PER_RUN:
-        return None, None
+        return []
     _unsplash_calls[0] += 1
-    headers = {"Authorization": f"Client-ID {key}", "Accept-Version": "v1", "User-Agent": USER_AGENT}
     url = "https://api.unsplash.com/search/photos?" + urllib.parse.urlencode(
-        {"query": query, "orientation": "landscape", "per_page": 5, "content_filter": "high"})
-    result = (None, None)
+        {"query": query, "orientation": "landscape", "per_page": 10, "content_filter": "high"})
+    out = []
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=15) as r:
-            photos = json.loads(r.read()).get("results", [])
-        if photos:
-            p = photos[0]
-            img = (p.get("urls") or {}).get("regular")   # Unsplash asks apps to use these links as given (hotlinking)
-            if img and img.startswith("https://"):
-                result = (img, f"Photo: {(p.get('user') or {}).get('name', 'Unsplash')} / Unsplash")
-                # Unsplash's rule: tell them when a photo is used (counts the download for the photographer)
-                dl = (p.get("links") or {}).get("download_location")
-                if dl and dl.startswith("https://api.unsplash.com/"):
-                    try:
-                        urllib.request.urlopen(urllib.request.Request(dl, headers=headers), timeout=10).read()
-                    except Exception:
-                        pass
+        with urllib.request.urlopen(urllib.request.Request(url, headers=_unsplash_headers(key)), timeout=15) as r:
+            for p in json.loads(r.read()).get("results", []):
+                img = (p.get("urls") or {}).get("regular")   # Unsplash asks apps to use these links as given (hotlinking)
+                if img and img.startswith("https://"):
+                    out.append((img, f"Photo: {(p.get('user') or {}).get('name', 'Unsplash')} / Unsplash",
+                                (p.get("links") or {}).get("download_location") or ""))
     except Exception as e:
         print(f"  Unsplash search failed for '{query}': {str(e)[:80]}")
-    _photo_cache[cache_key] = result
-    return result
+    _photo_cache[cache_key] = out
+    return out
+
+def _unsplash_headers(key):
+    return {"Authorization": f"Client-ID {key}", "Accept-Version": "v1", "User-Agent": USER_AGENT}
+
+def unsplash_photo(query, pick=0):
+    """(image_url, credit) — pick chooses a different result, so stories with the same search don't share a photo."""
+    res = _unsplash_results(query)
+    if not res:
+        return None, None
+    img, credit, dl = res[pick % len(res)]
+    # Unsplash's rule: tell them when a photo is used (counts the download for the photographer)
+    if dl.startswith("https://api.unsplash.com/"):
+        try:
+            key = os.environ.get("UNSPLASH_ACCESS_KEY", "").strip()
+            urllib.request.urlopen(urllib.request.Request(dl, headers=_unsplash_headers(key)), timeout=10).read()
+        except Exception:
+            pass
+    return img, credit
+
+_picks = {}
 
 def stock_photo(query):
-    """Unsplash first (if its key is set), then Pexels (if its key is set)."""
-    img, credit = unsplash_photo(query)
+    """Unsplash first (if its key is set), then Pexels. Each repeat of the same search gets the next photo."""
+    n = _picks.get(query, 0)
+    _picks[query] = n + 1
+    img, credit = unsplash_photo(query, n)
     if not img:
         img, credit = pexels_photo(query)
     return img, credit
