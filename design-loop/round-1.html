@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Investment Center — Round 1 styles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Space+Grotesk:wght@500;700&family=DM+Sans:wght@400;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#e9e9ee;font-family:Inter,system-ui,sans-serif;color:#111;padding:24px 16px 60px}
+  .page-head{max-width:1700px;margin:0 auto 20px}
+  .page-head h1{font-size:22px}
+  .page-head p{font-size:13px;color:#555;margin-top:4px}
+  .grid{max-width:1700px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,375px);gap:32px 28px;justify-content:center}
+  .slot{width:375px}
+  .label{height:76px;margin-bottom:10px}
+  .label b{font-size:15px}
+  .label span{display:block;font-size:12px;color:#555;line-height:1.4;margin-top:3px}
+  .phone{width:375px;height:740px;overflow-y:auto;overflow-x:hidden;border-radius:30px;border:8px solid #111;background:#fff;box-shadow:0 10px 30px #0002;scrollbar-width:none}
+  .phone::-webkit-scrollbar{display:none}
+  .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+
+  /* A — Front Page (Digg-like) */
+  .A{background:#fff;font-family:Inter}
+  .A .top{background:#000;color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+  .A .logo{font-weight:800;font-size:22px;letter-spacing:-1px}
+  .A .tabs{padding:12px 16px;border-bottom:1px solid #eee}
+  .A .tab{font-size:13px;font-weight:600;padding:6px 12px;border-radius:99px;background:#f2f2f2;white-space:nowrap}
+  .A .tab.on{background:#000;color:#fff}
+  .A .item{display:grid;grid-template-columns:44px 1fr;gap:4px;padding:16px;border-bottom:1px solid #eee}
+  .A .rank{font-size:30px;font-weight:800;color:#ddd;line-height:1}
+  .A .item.h3 .rank{color:#ff4500}
+  .A .meta{font-size:11px;font-weight:600;text-transform:uppercase;color:#888;letter-spacing:.5px}
+  .A h3{font-size:17px;line-height:1.25;font-weight:800;margin:4px 0 6px;letter-spacing:-.3px}
+  .A .why{font-size:13px;color:#555}
+  .A .cnt{font-size:12px;font-weight:600;margin-top:8px}
+
+  /* B — Terminal */
+  .B{background:#0a0a0a;color:#ffb000;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .B .bar{background:#ffb000;color:#000;padding:6px 10px;font-weight:600;display:flex;justify-content:space-between}
+  .B .tick{display:flex;gap:14px;padding:8px 10px;border-bottom:1px solid #333;white-space:nowrap;overflow:hidden}
+  .B .dn{color:#ff5c5c}.B .up{color:#3ddc84}
+  .B .tabs{padding:8px 10px;border-bottom:1px solid #333}
+  .B .tab{padding:2px 6px;border:1px solid #ffb00066}
+  .B .tab.on{background:#ffb000;color:#000}
+  .B .row{display:grid;grid-template-columns:40px 48px 1fr;gap:6px;padding:8px 10px;border-bottom:1px dashed #2a2a2a}
+  .B .t{color:#888}
+  .B .tp{color:#4fc3f7}
+  .B .hl{color:#eee}
+  .B .imp{color:#ff5c5c}
+  .B .w{grid-column:3;color:#9a7a30;font-size:11px}
+
+  /* C — Morning Brief (editorial) */
+  .C{background:#f6f1e7;color:#1f1b16;font-family:'Source Serif 4',Georgia,serif}
+  .C .mast{text-align:center;padding:22px 16px 12px;border-bottom:3px double #1f1b16;margin:0 16px}
+  .C .mast h2{font-family:Fraunces;font-size:34px;font-weight:700;letter-spacing:-1px}
+  .C .mast small{font-size:11px;letter-spacing:2px;text-transform:uppercase}
+  .C .sec{margin:18px 16px 0}
+  .C .sec h4{font-family:Inter;font-size:10px;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid #1f1b1633;padding-bottom:4px;margin-bottom:10px}
+  .C .story{margin-bottom:14px}
+  .C .story h3{font-family:Fraunces;font-size:19px;line-height:1.2;font-weight:700}
+  .C .story.lead h3{font-size:24px}
+  .C .story p{font-size:14px;font-style:italic;margin-top:4px;color:#4a4238}
+  .C .story small{font-family:Inter;font-size:11px;color:#8a7f70}
+
+  /* D — Clusters (Techmeme-like) */
+  .D{background:#fff;font-family:Georgia,serif;color:#222}
+  .D .top{padding:12px 14px;border-bottom:2px solid #1a0dab;display:flex;justify-content:space-between;align-items:baseline}
+  .D .top b{font-family:Inter;font-size:18px;color:#1a0dab}
+  .D .top small{font-family:Inter;font-size:11px;color:#777}
+  .D .cl{padding:12px 14px;border-bottom:1px solid #eee}
+  .D .src{font-family:Inter;font-size:11px;font-weight:600;color:#666}
+  .D h3{font-size:16px;line-height:1.3;color:#1a0dab;text-decoration:underline;font-weight:700;margin:3px 0}
+  .D .why{font-size:13px;color:#444}
+  .D .more{font-family:Inter;font-size:11px;color:#777;margin-top:5px}
+  .D .more a{color:#1a0dab}
+  .D .tagd{font-family:Inter;font-size:10px;font-weight:700;color:#fff;background:#c00;padding:1px 5px;border-radius:3px;margin-right:4px}
+
+  /* E — Swipe stack (Robinhood-like) */
+  .E{background:#000;color:#fff;font-family:DM Sans;height:100%;display:flex;flex-direction:column}
+  .E .top{padding:16px;display:flex;justify-content:space-between;font-size:13px;color:#999}
+  .E .stack{position:relative;margin:8px 16px 0;height:470px}
+  .E .card{position:absolute;inset:0;border-radius:24px;padding:22px;background:#111;border:1px solid #222}
+  .E .card.c2{transform:translateY(14px) scale(.95);opacity:.5}
+  .E .card.c3{transform:translateY(28px) scale(.9);opacity:.25}
+  .E .card.c1{z-index:3;background:linear-gradient(160deg,#0f2a16,#111 60%)}
+  .E .pill{display:inline-block;background:#00c805;color:#000;font-weight:700;font-size:12px;padding:4px 10px;border-radius:99px}
+  .E .big{font-size:56px;font-weight:700;color:#ff5000;margin:26px 0 6px;letter-spacing:-2px}
+  .E h3{font-size:24px;line-height:1.2;font-weight:700}
+  .E .why{font-size:15px;color:#aaa;margin-top:14px;line-height:1.4}
+  .E .foot{position:absolute;bottom:22px;left:22px;font-size:12px;color:#777}
+  .E .btns{display:flex;gap:12px;padding:40px 16px 16px}
+  .E .btns div{flex:1;text-align:center;padding:14px;border-radius:99px;font-weight:700}
+  .E .skip{background:#222}.E .save{background:#00c805;color:#000}
+
+  /* F — Neo-brutalist */
+  .F{background:#fffbe6;font-family:'Space Grotesk';color:#000;padding-bottom:20px}
+  .F .top{background:#ffe14d;border-bottom:3px solid #000;padding:14px 16px;font-size:24px;font-weight:700}
+  .F .tabs{padding:14px 16px 4px}
+  .F .tab{border:2px solid #000;padding:4px 10px;font-weight:700;font-size:13px;background:#fff;white-space:nowrap}
+  .F .tab.on{background:#3d5afe;color:#fff}
+  .F .card{margin:14px 16px 0;border:3px solid #000;background:#fff;box-shadow:5px 5px 0 #000;padding:14px}
+  .F .card.h3{background:#ff6b6b}
+  .F .tag{display:inline-block;border:2px solid #000;background:#ffe14d;font-size:11px;font-weight:700;padding:1px 6px;transform:rotate(-2deg)}
+  .F h3{font-size:19px;line-height:1.15;margin:8px 0 6px}
+  .F .why{font-size:13px;font-weight:500}
+
+  /* G — Radar (glass) */
+  .G{min-height:100%;background:radial-gradient(circle at 30% 0%,#3b2a8f,#0b1030 55%,#05070f);color:#e8eaff;font-family:Inter}
+  .G .top{padding:16px;display:flex;justify-content:space-between;align-items:center}
+  .G .top b{font-size:18px}
+  .G .radar{display:block;margin:0 auto}
+  .G .card{margin:12px 16px 0;padding:14px;border-radius:18px;background:#ffffff14;border:1px solid #ffffff26;backdrop-filter:blur(12px)}
+  .G .meta{font-size:11px;color:#9aa3ff;display:flex;justify-content:space-between}
+  .G h3{font-size:15px;line-height:1.3;margin:6px 0 4px}
+  .G .why{font-size:12px;color:#b9bde6}
+  .G .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+  /* H — Soft pastel */
+  .H{background:#f5f3ff;font-family:DM Sans;color:#2b2540;padding-bottom:20px}
+  .H .top{padding:20px 18px 8px}
+  .H .top small{color:#8a83a8;font-size:13px}
+  .H .top h2{font-size:26px;font-weight:700}
+  .H .tabs{padding:8px 18px}
+  .H .tab{padding:8px 14px;border-radius:99px;background:#fff;font-size:13px;font-weight:600;white-space:nowrap}
+  .H .tab.on{background:#2b2540;color:#fff}
+  .H .card{margin:12px 18px 0;border-radius:24px;padding:16px}
+  .H .meta{font-size:12px;font-weight:600;opacity:.7}
+  .H h3{font-size:17px;line-height:1.3;margin:6px 0}
+  .H .why{font-size:13px;background:#ffffffaa;border-radius:12px;padding:8px 10px}
+
+  /* I — Coverage bars (Ground News-like) */
+  .I{background:#f3f4f6;font-family:Inter;color:#111}
+  .I .top{background:#fff;padding:14px 16px;border-bottom:1px solid #e5e7eb}
+  .I .top b{font-size:18px}
+  .I .top small{display:block;font-size:12px;color:#6b7280}
+  .I .card{background:#fff;margin:10px 12px 0;border-radius:12px;padding:14px;border:1px solid #e5e7eb}
+  .I .meta{font-size:11px;color:#6b7280;display:flex;justify-content:space-between}
+  .I h3{font-size:15px;line-height:1.3;margin:6px 0 10px}
+  .I .bar{height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+  .I .fill{height:100%;background:#0d9488}
+  .I .bl{display:flex;justify-content:space-between;font-size:11px;color:#374151;margin-top:5px}
+  .I .why{font-size:12px;color:#374151;border-left:3px solid #0d9488;padding-left:8px;margin-top:10px}
+
+  /* J — Timeline */
+  .J{background:#111827;color:#e5e7eb;font-family:Inter;min-height:100%;padding-bottom:20px}
+  .J .top{padding:16px;font-size:18px;font-weight:800}
+  .J .grp{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#6b7280;padding:14px 16px 6px 46px}
+  .J .ev{position:relative;padding:6px 16px 12px 46px}
+  .J .ev:before{content:'';position:absolute;left:24px;top:0;bottom:0;width:2px;background:#374151}
+  .J .pt{position:absolute;left:25px;top:10px;transform:translateX(-50%);border-radius:50%;border:2px solid #111827}
+  .J .t{font-size:11px;color:#9ca3af}
+  .J h3{font-size:15px;line-height:1.3;margin:2px 0 4px}
+  .J .why{font-size:12px;color:#9ca3af}
+  .J .tp{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="page-head">
+  <h1>Investment Center · Round 1: pick a direction</h1>
+  <p>10 phone-size mockups, all with the same <b>sample headlines (not real news)</b>. Each frame scrolls. Assumed topics: SET, Macro, Audit, AI.</p>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+const N=[
+ {t:'Foreign investors net-sell ฿4.2bn as SET drops 1.8%',tp:'SET',imp:3,src:'Bangkok Post',ago:'12m',hr:'09:48',n:14,why:'Your watchlist is mostly SET50, so a broad sell-off hits it directly.',chg:'−1.8%'},
+ {t:'Bank of Thailand holds policy rate at 1.50%, hints at Q1 cut',tp:'Macro',imp:3,src:'Reuters',ago:'38m',hr:'09:22',n:22,why:'A cut would lift bond prices; bank margins could narrow.',chg:'1.50%'},
+ {t:'US Fed signals pause; baht firms to 34.1 per dollar',tp:'Macro',imp:2,src:'Bloomberg',ago:'1h',hr:'09:00',n:31,why:'A stronger baht trims returns on USD holdings.',chg:'34.10'},
+ {t:'Regulator fines audit network over quality-control lapses',tp:'Audit',imp:2,src:'Financial Times',ago:'2h',hr:'08:02',n:9,why:'Audit-quality enforcement is rising, a likely Big 4 interview topic.'},
+ {t:'Startup launches AI agent that automates month-end close',tp:'AI',imp:2,src:'TechCrunch',ago:'3h',hr:'07:15',n:6,why:'Overlaps your accounting + automation interest.'},
+ {t:'Thai bank stocks rally after Q3 earnings beat estimates',tp:'SET',imp:1,src:'The Nation',ago:'4h',hr:'06:10',n:7,why:'Sector context for bank holdings.'},
+ {t:'IFRS 18 explained: what changes in the income statement',tp:'Audit',imp:1,src:'IFRS Foundation',ago:'6h',hr:'04:00',n:3,why:'A new standard you would audit against from 2027.'},
+ {t:'Survey: 7 in 10 audit firms now use generative AI tools',tp:'AI',imp:1,src:'Accounting Today',ago:'8h',hr:'02:05',n:5,why:'Shows the skills employers will expect.'}
+];
+const TOP=['All','SET','Macro','Audit','AI'];
+const tabs=(c='tab')=>`<div class="tabs">${TOP.map((x,i)=>`<span class="${c}${i?'':' on'}">${x}</span>`).join('')}</div>`;
+const ord=[...N]; // already sorted by time
+const byImp=[...N].sort((a,b)=>b.imp-a.imp||b.n-a.n);
+const impTxt=i=>['','Low','Medium','High'][i];
+
+const S=[
+ {k:'A',name:'Front Page',mood:'Bold, ranked, scannable',ref:'Inspired by Digg / Reddit front page',trade:'Fast to scan, heavy type. Ranks by importance; little room for detail.',
+  r:()=>`<div class="top"><span class="logo">radar</span><span>☰</span></div>${tabs()}${byImp.map((x,i)=>`<div class="item h${x.imp}"><div class="rank">${i+1}</div><div><div class="meta">${x.tp} · ${x.src} · ${x.ago}</div><h3>${x.t}</h3><div class="why">${x.why}</div><div class="cnt">▲ ${x.n} sources covering</div></div></div>`).join('')}`},
+ {k:'B',name:'Terminal',mood:'Dense, pro, data-first',ref:'Inspired by the Bloomberg Terminal',trade:'Most news per screen, feels "pro". Hard to read on a phone at night.',
+  r:()=>`<div class="bar"><span>RADAR &lt;GO&gt;</span><span>09:52 ICT</span></div><div class="tick"><span>SET 1,412.30 <i class="dn">−1.80%</i></span><span>USDTHB 34.10 <i class="up">−0.4%</i></span><span>GOLD 2,684 <i class="up">+0.6%</i></span></div>${tabs()}${ord.map(x=>`<div class="row"><span class="t">${x.hr}</span><span class="tp">${x.tp.toUpperCase()}</span><span class="hl"><span class="imp">${'█'.repeat(x.imp)}${'░'.repeat(3-x.imp)}</span> ${x.t}</span><span class="w">› ${x.why}</span></div>`).join('')}`},
+ {k:'C',name:'Morning Brief',mood:'Calm, editorial, digest',ref:'Inspired by newspaper digests (Morning Brew, FT)',trade:'Pleasant daily read, grouped by topic. Feels slower; not built for urgent alerts.',
+  r:()=>`<div class="mast"><small>Monday · 17 November 2026</small><h2>The Radar Brief</h2><small>8 stories · 3 that matter</small></div>${['SET','Macro','Audit','AI'].map(tp=>`<div class="sec"><h4>${tp}</h4>${N.filter(x=>x.tp==tp).map((x,i)=>`<div class="story ${x.imp==3&&i==0?'lead':''}"><h3>${x.t}</h3><p>${x.why}</p><small>${x.src} · ${x.ago} ago</small></div>`).join('')}</div>`).join('')}`},
+ {k:'D',name:'Clusters',mood:'Plain, link-dense, fast',ref:'Inspired by Techmeme / Google News',trade:'Groups many outlets under one story. Very plain; looks dated to some.',
+  r:()=>`<div class="top"><b>Radar</b><small>updated 09:52</small></div>${byImp.map(x=>`<div class="cl"><div class="src">${x.imp==3?'<span class="tagd">TOP</span>':''}${x.src} · ${x.tp}</div><h3>${x.t}</h3><div class="why">${x.why}</div><div class="more">More: <a>Reuters</a>, <a>Kaohoon</a>, <a>CNBC</a> +${x.n-3}</div></div>`).join('')}`},
+ {k:'E',name:'Swipe Stack',mood:'Dark, one-at-a-time, punchy',ref:'Inspired by Robinhood / Tinder-style cards',trade:'Forces a decision on each story (skip or save). Slow for browsing many.',
+  r:()=>{const x=N[0];return `<div class="top"><span>Today</span><span>1 of 8</span></div><div class="stack"><div class="card c3"></div><div class="card c2"></div><div class="card c1"><span class="pill">HIGH · ${x.tp}</span><div class="big">${x.chg}</div><h3>${x.t}</h3><div class="why">${x.why}</div><div class="foot">${x.src} · ${x.ago} ago · ${x.n} sources</div></div></div><div class="btns"><div class="skip">Skip</div><div class="save">Save</div></div>`}},
+ {k:'F',name:'Brutalist',mood:'Loud, playful, flat',ref:'Neo-brutalist web trend (Gumroad-like)',trade:'Memorable and fun, strong portfolio piece. Can feel noisy for serious finance.',
+  r:()=>`<div class="top">RADAR!!</div>${tabs()}${byImp.map(x=>`<div class="card h${x.imp}"><span class="tag">${x.tp} · ${impTxt(x.imp)}</span><h3>${x.t}</h3><div class="why">${x.why}</div></div>`).join('')}`},
+ {k:'G',name:'Radar Glass',mood:'Futuristic, layered, visual',ref:'Glassmorphism + radar chart',trade:'The radar shows importance at a glance. Looks great; less text per screen.',
+  r:()=>{const col={SET:'#ff6b9d',Macro:'#ffd166',Audit:'#06d6a0',AI:'#7aa2ff'};const dots=N.map((x,i)=>{const a=i*0.8+0.4,rr=(4-x.imp)*36;return `<circle cx="${150+Math.cos(a)*rr}" cy="${130+Math.sin(a)*rr}" r="${3+x.imp*2}" fill="${col[x.tp]}"/>`}).join('');
+  return `<div class="top"><b>Radar</b><span>●  live</span></div><svg class="radar" width="300" height="260">${[36,72,108].map(r=>`<circle cx="150" cy="130" r="${r}" fill="none" stroke="#ffffff22"/>`).join('')}<line x1="150" y1="130" x2="250" y2="60" stroke="#9aa3ff66" stroke-width="2"/>${dots}<text x="150" y="134" fill="#fff" font-size="10" text-anchor="middle">YOU</text></svg>${byImp.map(x=>`<div class="card"><div class="meta"><span><i class="dot" style="background:${col[x.tp]}"></i>${x.tp}</span><span>${x.ago}</span></div><h3>${x.t}</h3><div class="why">${x.why}</div></div>`).join('')}`}},
+ {k:'H',name:'Soft Pastel',mood:'Friendly, rounded, light',ref:'Same family as Quest Alarm',trade:'Easy on the eyes and approachable. Less "serious finance" feel.',
+  r:()=>{const bg={SET:'#ffd9e4',Macro:'#fff1c2',Audit:'#d4f5e6',AI:'#dfe4ff'};return `<div class="top"><small>Good morning</small><h2>3 things matter today</h2></div>${tabs()}${byImp.map(x=>`<div class="card" style="background:${bg[x.tp]}"><div class="meta">${x.tp} · ${x.src} · ${x.ago}</div><h3>${x.t}</h3><div class="why">💡 ${x.why}</div></div>`).join('')}`}},
+ {k:'I',name:'Coverage',mood:'Analytical, trustworthy, clean',ref:'Inspired by Ground News',trade:'Shows how many outlets report each story, so hype is easier to spot. Adds a bar to every card.',
+  r:()=>`<div class="top"><b>Radar</b><small>Sorted by how widely it's covered</small></div>${[...N].sort((a,b)=>b.n-a.n).map(x=>`<div class="card"><div class="meta"><span>${x.tp} · ${x.src}</span><span>${x.ago}</span></div><h3>${x.t}</h3><div class="bar"><div class="fill" style="width:${x.n/31*100}%"></div></div><div class="bl"><span>${x.n} sources</span><span>Importance: ${impTxt(x.imp)}</span></div><div class="why">${x.why}</div></div>`).join('')}`},
+ {k:'J',name:'Timeline',mood:'Dark, chronological, calm',ref:'Inspired by live blogs / activity feeds',trade:'Clear "what happened when". Important items are bigger dots, not ranked first.',
+  r:()=>{const col={SET:'#f472b6',Macro:'#fbbf24',Audit:'#34d399',AI:'#60a5fa'};const g=[['Last hour',N.slice(0,3)],['This morning',N.slice(3,6)],['Overnight',N.slice(6)]];
+  return `<div class="top">Radar timeline</div>${g.map(([h,xs])=>`<div class="grp">${h}</div>${xs.map(x=>{const s=6+x.imp*4;return `<div class="ev"><span class="pt" style="width:${s}px;height:${s}px;background:${col[x.tp]}"></span><div class="t">${x.hr}<span class="tp" style="background:${col[x.tp]}33;color:${col[x.tp]}">${x.tp}</span></div><h3>${x.t}</h3><div class="why">${x.why}</div></div>`}).join('')}`).join('')}`}}
+];
+document.getElementById('grid').innerHTML=S.map(s=>`<div class="slot"><div class="label"><b>${s.k}. ${s.name}</b> — ${s.mood}<span>${s.trade}</span><span><i>${s.ref}</i></span></div><div class="phone"><div class="${s.k}" style="min-height:100%">${s.r()}</div></div></div>`).join('');
+</script>
+</body>
+</html>

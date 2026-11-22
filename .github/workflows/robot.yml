@@ -1,0 +1,35 @@
+# The news robot: every 30 minutes, 24/7. Keys come from GitHub Secrets (never stored in the code).
+name: News robot
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"     # every 30 minutes (GitHub may start it a few minutes late)
+  workflow_dispatch:           # "Run workflow" button for manual runs
+
+concurrency:
+  group: news-robot            # never run two copies at once
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Fetch, analyse, save, alert
+        run: python robot/run.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OWNER_USER_ID: ${{ secrets.OWNER_USER_ID }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          PYTHONIOENCODING: utf-8

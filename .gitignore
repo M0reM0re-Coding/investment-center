@@ -1,0 +1,11 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Local test output and Python cache
+out/
+__pycache__/
+
+# Personal planning notes: keep on this PC only
+FEATURES.md

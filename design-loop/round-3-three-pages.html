@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Investment Center — Round 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@500;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:#fff}
+a{color:inherit;text-decoration:none;cursor:pointer}
+button{cursor:pointer}
+/* switcher */
+#sw{position:sticky;top:0;z-index:99;background:#111;color:#fff;display:flex;align-items:center;gap:6px;padding:8px 14px;font:500 13px Inter;flex-wrap:wrap}
+#sw b{margin:0 8px 0 4px;color:#aaa;font-weight:600}
+#sw button{font:600 12px Inter;border:0;border-radius:6px;padding:7px 11px;background:#2a2a2a;color:#ddd}
+#sw button.on{background:#fff;color:#111}
+#sw .sep{width:1px;height:22px;background:#444;margin:0 8px}
+#sw .note{margin-left:auto;color:#aaa;font-size:12px}
+#desc{background:#fffbe6;border-bottom:1px solid #eee;padding:8px 14px;font:13px Inter;color:#333}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+.img{border-radius:inherit;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:16px;color:#fff;font:800 28px 'Inter Tight'}
+.img small{position:absolute;top:14px;left:16px;font:700 11px Inter;letter-spacing:1px;text-transform:uppercase;opacity:.85}
+.faded{opacity:.38}
+.taste h4{margin-bottom:8px}
+.taste p{line-height:1.45}
+.taste .tg{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700;margin:2px 4px 2px 0}
+
+/* ============ 1 DIGG ============ */
+.s1{background:#fff;color:#111;padding-bottom:60px}
+.s1 header{border-bottom:1px solid #eee}
+.s1 .nav{display:flex;align-items:center;gap:32px;height:68px}
+.s1 .logo{font:900 24px 'Inter Tight';letter-spacing:-1px}
+.s1 .nav nav{display:flex;gap:24px;font-weight:600;font-size:15px;color:#555}
+.s1 .nav nav .on{color:#111;border-bottom:2px solid #111;padding-bottom:22px;margin-bottom:-24px}
+.s1 .nav .r{margin-left:auto;display:flex;gap:12px;align-items:center}
+.s1 .srch{background:#f3f3f3;border-radius:99px;padding:9px 16px;width:240px;color:#999;font-size:14px}
+.s1 .btn{background:#111;color:#fff;border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px}
+.s1 .chips{display:flex;gap:8px;margin-top:24px}
+.s1 .chip{border:1px solid #e5e5e5;border-radius:99px;padding:7px 16px;font-weight:600;font-size:14px}
+.s1 .chip.on{background:#111;color:#fff;border-color:#111}
+.s1 .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:40px;margin-top:24px}
+.s1 .hero .img{height:400px;border-radius:16px;font-size:64px}
+.s1 .hero h1{font:800 38px/1.1 'Inter Tight';letter-spacing:-1px;margin:18px 0 10px}
+.s1 .meta{font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.s1 .why{color:#555;font-size:16px;line-height:1.5}
+.s1 .trend h2{font:800 20px 'Inter Tight';margin-bottom:6px}
+.s1 .trend li{list-style:none;display:grid;grid-template-columns:40px 1fr;padding:16px 0;border-bottom:1px solid #eee}
+.s1 .trend .n{font:900 28px 'Inter Tight';color:#ff4500}
+.s1 .trend h3{font:700 17px/1.25 'Inter Tight'}
+.s1 .vote{font-size:13px;font-weight:700;margin-top:6px}
+.s1 .sec{font:800 24px 'Inter Tight';margin:56px 0 18px}
+.s1 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.s1 .card .img{height:190px;border-radius:12px;font-size:34px}
+.s1 .card h3{font:700 20px/1.2 'Inter Tight';margin:12px 0 8px;letter-spacing:-.3px}
+.s1 .two{display:grid;grid-template-columns:1fr 340px;gap:48px;margin-top:32px;align-items:start}
+.s1 .pt{font:800 44px/1.05 'Inter Tight';letter-spacing:-1.5px;margin:10px 0 10px}
+.s1 .wrow{display:grid;grid-template-columns:56px 1fr;padding:22px 0;border-bottom:1px solid #eee}
+.s1 .wrow .n{font:900 34px 'Inter Tight';color:#ff4500;line-height:1}
+.s1 .wrow h3{font:700 22px/1.2 'Inter Tight';letter-spacing:-.3px;margin:6px 0 6px}
+.s1 .wrow .sum{color:#555;font-size:15px;line-height:1.5}
+.s1 .rate{display:flex;gap:8px;margin-top:12px}
+.s1 .rb{border:1px solid #ddd;border-radius:99px;padding:6px 14px;font:700 13px Inter;background:#fff;color:#111}
+.s1 .rb.rw.on{background:#ff4500;border-color:#ff4500;color:#fff}
+.s1 .rb.rn.on{background:#111;border-color:#111;color:#fff}
+.s1 .side{background:#f6f6f6;border-radius:16px;padding:24px;position:sticky;top:110px}
+.s1 .side h4{font:800 18px 'Inter Tight'}
+.s1 .side p{font-size:14px;color:#555}
+.s1 .side small{display:block;margin-top:14px;font-size:12px;color:#999}
+.s1 .tg.more{background:#ffe3d6;color:#c33600}.s1 .tg.less{background:#e9e9e9;color:#555}
+.s1 .cc{border:1px solid #eee;border-radius:16px;padding:22px}
+.s1 .qh{display:flex;align-items:baseline;gap:12px}
+.s1 .qh .sx{font:800 26px 'Inter Tight'}
+.s1 .qh .nm{color:#888;font-weight:600}
+.s1 .qp{display:flex;align-items:baseline;gap:14px;margin:6px 0 14px}
+.s1 .qp b{font:800 40px 'Inter Tight';letter-spacing:-1px}
+.s1 .qp span{font-weight:700;font-size:16px}
+.s1 .qp em{font-style:normal;margin-left:auto;font-size:12px;color:#aaa}
+.s1 .rng{display:flex;gap:6px;margin-bottom:10px}
+.s1 .rng button{border:0;background:#f3f3f3;border-radius:99px;padding:6px 14px;font:700 13px Inter;color:#555}
+.s1 .rng button.on{background:#111;color:#fff}
+.s1 .wl h2{font:800 20px 'Inter Tight';margin-bottom:8px}
+.s1 .wl li{list-style:none;display:grid;grid-template-columns:1fr 90px 92px;align-items:center;gap:10px;padding:13px 12px;border-radius:12px;cursor:pointer}
+.s1 .wl li.on{background:#f6f6f6}
+.s1 .wl small{display:block;font-size:12px;color:#999;font-weight:600}
+.s1 .wl .r{text-align:right;font-size:14px}
+.s1 .wl .r span{display:block;font-weight:700;font-size:13px}
+.s1 .ks{width:100%;border-collapse:collapse;font-size:14px}
+.s1 .ks td{padding:11px 12px;border-bottom:1px solid #eee;color:#555}
+.s1 .ks td+td{text-align:right;font-weight:700;color:#111}
+.s3 .ks td+td{text-align:right;font-weight:600}
+.s3 .ks tr{cursor:default}
+.s1 .rc{border:1px solid #eee;border-radius:12px;padding:20px}
+.s1 .rc h3{font:700 19px/1.25 'Inter Tight';margin-top:8px}
+
+/* ============ 3 MAGAZINE ============ */
+.s3{background:#fff;color:#121212;padding-bottom:60px;font-family:'Source Serif 4'}
+.s3 .redbar{height:6px;background:#e3120b}
+.s3 .mast{display:flex;align-items:flex-end;justify-content:space-between;padding:22px 0 14px;border-bottom:1px solid #121212}
+.s3 .mast h1{font:900 50px Fraunces;letter-spacing:-2px}
+.s3 .mast nav{display:flex;gap:24px;font:600 14px Inter;padding-bottom:8px}
+.s3 .mast nav .on{color:#e3120b;box-shadow:0 2px 0 #e3120b}
+.s3 .date{font:500 13px Inter;color:#666;padding:10px 0;border-bottom:1px solid #ddd}
+.s3 .lay{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-top:28px}
+.s3 .lead{grid-row:span 2}
+.s3 .lead .img{height:380px;font-size:72px}
+.s3 .kick{font:700 12px Inter;color:#e3120b;text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px}
+.s3 .lead h2{font:900 42px/1.05 Fraunces;letter-spacing:-1px}
+.s3 h3{font:700 22px/1.15 Fraunces}
+.s3 p{font-size:16px;line-height:1.5;color:#444;margin-top:8px;font-style:italic}
+.s3 .art{border-top:1px solid #121212;padding-top:4px}
+.s3 .src{font:500 12px Inter;color:#888;margin-top:8px}
+.s3 .row{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:44px;border-top:4px solid #121212;padding-top:4px}
+.s3 .two{display:grid;grid-template-columns:1fr 300px;gap:48px;margin-top:28px;align-items:start}
+.s3 .pt{font:900 46px/1.02 Fraunces;letter-spacing:-1.5px;margin-top:6px}
+.s3 .wg{display:grid;grid-template-columns:1fr 1fr;gap:28px 32px;margin-top:24px}
+.s3 .wg .art h3{font-size:25px}
+.s3 .rate{margin-top:10px;font:600 13px Inter;display:flex;gap:16px}
+.s3 .rb{background:none;border:0;font:600 13px Inter;color:#888;padding:0;border-bottom:1px solid #ccc}
+.s3 .rb.rw.on{color:#e3120b;border-color:#e3120b}
+.s3 .rb.rn.on{color:#121212;border-color:#121212}
+.s3 .side{border-top:4px solid #121212;padding-top:10px;position:sticky;top:110px}
+.s3 .side h4{font:700 12px Inter;color:#e3120b;text-transform:uppercase;letter-spacing:1px}
+.s3 .side p{font-size:16px}
+.s3 .side small{display:block;font:500 12px Inter;color:#888;margin-top:12px}
+.s3 .tg{font-family:Inter;font-style:normal}
+.s3 .tg.more{background:#fde3e1;color:#b50e08}.s3 .tg.less{background:#eee;color:#555}
+.s3 .qp{display:flex;align-items:baseline;gap:16px;margin:4px 0 14px;font-family:Inter}
+.s3 .qp b{font:700 34px Fraunces}
+.s3 .qp span{font-weight:700}
+.s3 .qp em{margin-left:auto;font:italic 13px 'Source Serif 4';color:#888}
+.s3 .rng{display:flex;gap:18px;font:600 13px Inter;border-bottom:1px solid #121212;padding-bottom:8px;margin-bottom:12px}
+.s3 .rng button{background:none;border:0;font:600 13px Inter;color:#888;padding:0}
+.s3 .rng button.on{color:#e3120b}
+.s3 table{width:100%;border-collapse:collapse;font-family:Inter;font-size:14px}
+.s3 td{padding:12px 4px;border-bottom:1px solid #ddd;vertical-align:middle}
+.s3 tr{cursor:pointer}
+.s3 tr.on td{background:#faf6f0}
+.s3 td small{display:block;color:#888;font-size:11px}
+.s3 td.r{text-align:right;font-weight:600}
+.s3 .rel{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:44px;border-top:4px solid #121212;padding-top:4px}
+
+/* ============ 5 BENTO ============ */
+.s5{background:#efece6;color:#141414;font-family:'Space Grotesk';padding-bottom:60px}
+.s5 .nav{display:flex;align-items:center;justify-content:space-between;height:76px}
+.s5 .logo{font:700 24px 'Space Grotesk'}
+.s5 nav{display:flex;gap:8px}
+.s5 nav a{background:#fff;padding:8px 18px;border-radius:99px;font-size:14px;font-weight:500}
+.s5 nav a.on{background:#141414;color:#fff}
+.s5 .chips{display:flex;gap:6px;margin-bottom:18px}
+.s5 .chips span{border:1px solid #14141433;padding:6px 14px;border-radius:99px;font-size:13px;font-weight:500}
+.s5 .chips span.on{background:#ff5a1f;border-color:#ff5a1f;color:#fff}
+.s5 .greet{font:500 52px/1.05 'Space Grotesk';letter-spacing:-2px;margin:10px 0 26px}
+.s5 .greet em{font-style:normal;color:#ff5a1f}
+.s5 .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:190px;gap:16px}
+.s5 .bento.tall{grid-template-rows:repeat(3,minmax(214px,auto)) auto;grid-auto-rows:auto}
+.s5 .t{border-radius:28px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;background:#fff;gap:10px;overflow:hidden}
+.s5 .t small{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.7}
+.s5 .t h3{font:500 21px/1.2 'Space Grotesk'}
+.s5 .big{font:700 64px 'Space Grotesk';letter-spacing:-3px;line-height:1}
+.s5 .big sub{font-size:16px;letter-spacing:0;vertical-align:baseline;margin-left:6px;opacity:.7;font-weight:500}
+.s5 .w2{grid-column:span 2}.s5 .w3{grid-column:span 3}.s5 .w4{grid-column:span 4}.s5 .h2{grid-row:span 2}
+.s5 .dark{background:#141414;color:#fff}.s5 .org{background:#ff5a1f;color:#fff}.s5 .lime{background:#d4f25c}.s5 .sky{background:#bfe0ff}
+.s5 .why{font-size:14px;opacity:.8;line-height:1.4}
+.s5 .rate{display:flex;gap:8px}
+.s5 .rb{border:1.5px solid currentColor;background:transparent;color:inherit;border-radius:99px;padding:6px 14px;font:700 13px 'Space Grotesk'}
+.s5 .rb.on{background:currentColor}
+.s5 .rb.on span{filter:invert(1)}
+.s5 .dark .rb.on span,.s5 .org .rb.on span{filter:none;color:#141414}
+.s5 .t:not(.dark):not(.org) .rb.on span{color:#fff;filter:none}
+.s5 .taste{flex-direction:row;align-items:center;justify-content:flex-start;gap:40px}
+.s5 .taste h4{font:700 26px 'Space Grotesk';margin:0;min-width:200px}
+.s5 .taste p{font-size:16px}
+.s5 .tg.more{background:#ff5a1f;color:#fff}.s5 .tg.less{background:#14141422;color:#141414}
+.s5 .qtop{display:flex;justify-content:space-between;align-items:flex-start}
+.s5 .rng{display:flex;gap:6px}
+.s5 .rng button{border:0;background:#2a2a2a;color:#aaa;border-radius:99px;padding:6px 14px;font:700 13px 'Space Grotesk'}
+.s5 .rng button.on{background:#d4f25c;color:#141414}
+.s5 .wl{justify-content:flex-start}
+.s5 .wl li{list-style:none;display:grid;grid-template-columns:1fr 70px 80px;align-items:center;gap:8px;padding:9px 10px;border-radius:14px;cursor:pointer;font-size:14px}
+.s5 .wl li.on{background:#efece6}
+.s5 .wl li .r{text-align:right}
+.s5 .wl li .r span{display:block;font-size:12px;font-weight:700}
+
+/* ============ 7 SWISS ============ */
+.s7{background:#fff;color:#000;font-family:'Inter Tight';padding-bottom:60px}
+.s7 .top{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;border-bottom:2px solid #000;padding:18px 0;font:700 13px Inter;text-transform:uppercase;letter-spacing:.5px}
+.s7 .top .logo{grid-column:span 4;font:900 15px Inter}
+.s7 .top a,.s7 .top span{grid-column:span 2}
+.s7 .top a.on{color:#ff2d00}
+.s7 .top .dt{text-align:right}
+.s7 .hero{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;padding:36px 0;border-bottom:2px solid #000}
+.s7 .hero .no{grid-column:span 2;font:900 120px/0.8 'Inter Tight';color:#ff2d00}
+.s7 .hero h1{grid-column:span 8;font:900 76px/0.92 'Inter Tight';letter-spacing:-3px;text-transform:uppercase}
+.s7 .hero .side{grid-column:span 2;font:500 14px/1.4 Inter;align-self:end}
+.s7 .list{display:grid;grid-template-columns:repeat(3,1fr)}
+.s7 .c{border-bottom:1px solid #000;border-right:1px solid #000;padding:22px 22px 26px}
+.s7 .c:nth-child(3n){border-right:0}
+.s7 .c .no{font:900 34px 'Inter Tight'}
+.s7 .c .lab{font:700 11px Inter;text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px}
+.s7 .c .lab b{color:#ff2d00}
+.s7 .c h3{font:800 24px/1.05 'Inter Tight';letter-spacing:-.5px;text-transform:uppercase}
+.s7 .c p{font:14px/1.4 Inter;margin-top:10px}
+.s7 .chips{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;border-bottom:1px solid #000;padding:10px 0;font:700 12px Inter;text-transform:uppercase;letter-spacing:1px}
+.s7 .chips span{grid-column:span 2}
+.s7 .chips span.on{color:#ff2d00}
+.s7 .wr{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;border-bottom:1px solid #000;padding:24px 0}
+.s7 .wr .no{grid-column:span 2;font:900 64px/0.85 'Inter Tight'}
+.s7 .wr .mn{grid-column:span 7}
+.s7 .wr .lab{font:700 11px Inter;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.s7 .wr .lab b{color:#ff2d00}
+.s7 .wr h3{font:900 32px/1 'Inter Tight';letter-spacing:-1px;text-transform:uppercase}
+.s7 .wr p{font:15px/1.45 Inter;margin-top:10px;max-width:640px}
+.s7 .wr .ac{grid-column:span 3;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
+.s7 .wr .cnt{font:900 44px/0.9 'Inter Tight'}
+.s7 .wr .cnt small{display:block;font:700 11px Inter;letter-spacing:1px;margin-top:4px}
+.s7 .rate{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.s7 .rb{border:2px solid #000;background:#fff;color:#000;font:800 12px Inter;text-transform:uppercase;letter-spacing:1px;padding:9px 0}
+.s7 .rb.rn{border-left:0}
+.s7 .rb.rw.on{background:#ff2d00;border-color:#ff2d00;color:#fff}
+.s7 .rb.rn.on{background:#000;color:#fff}
+.s7 .tst{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;background:#ff2d00;color:#fff;padding:26px 0;margin-top:0}
+.s7 .tst h4{grid-column:2 / span 3;font:900 32px/1 'Inter Tight';text-transform:uppercase}
+.s7 .tst p{grid-column:span 7;font:500 16px/1.45 Inter}
+.s7 .tst .tg{background:#fff;color:#000;border-radius:0}
+.s7 .tst .tg.less{background:#000;color:#fff}
+.s7 .qhero{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;padding:30px 0 24px;border-bottom:2px solid #000;align-items:end}
+.s7 .qhero .sx{grid-column:span 6;font:900 120px/0.8 'Inter Tight';letter-spacing:-5px}
+.s7 .qhero .sx small{display:block;font:700 13px Inter;letter-spacing:1px;margin-bottom:14px}
+.s7 .qhero .px{grid-column:span 4;font:900 64px/0.85 'Inter Tight';letter-spacing:-2px}
+.s7 .qhero .cg{grid-column:span 2;font:900 32px/1 'Inter Tight';text-align:right}
+.s7 .qbody{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;border-bottom:2px solid #000}
+.s7 .qbody .chartc{grid-column:span 8;border-right:1px solid #000;padding:16px 20px 16px 0}
+.s7 .qbody .wlc{grid-column:span 4}
+.s7 .rng{display:flex;gap:0;margin-bottom:10px}
+.s7 .rng button{border:2px solid #000;background:#fff;font:800 12px Inter;padding:6px 16px;margin-right:-2px}
+.s7 .rng button.on{background:#000;color:#fff}
+.s7 .rng em{margin-left:auto;font:700 11px Inter;text-transform:uppercase;letter-spacing:1px;align-self:center}
+.s7 .wlc h4{font:700 11px Inter;text-transform:uppercase;letter-spacing:1px;padding:16px 0 10px;border-bottom:1px solid #000}
+.s7 .wlc li{list-style:none;display:grid;grid-template-columns:1fr 70px 76px;align-items:center;gap:8px;padding:14px 0;border-bottom:1px solid #000;cursor:pointer;font:800 18px 'Inter Tight'}
+.s7 .wlc li:last-child{border-bottom:0}
+.s7 .wlc li.on{color:#ff2d00}
+.s7 .wlc li small{display:block;font:700 10px Inter;letter-spacing:1px;color:#000}
+.s7 .wlc li .r{text-align:right;font-size:15px}
+.s7 .wlc li .r span{display:block;font-size:12px}
+</style>
+</head>
+<body>
+<div id="sw"><b>Style</b><span id="sb"></span><span class="sep"></span><b>Page</b><span id="pb"></span><span class="note">Sample data, not real news or prices · ← → style · ↑ ↓ page</span></div>
+<div id="desc"></div>
+<div id="stage"></div>
+
+<script>
+/* ---------- data (all samples) ---------- */
+const N=[
+ {t:'Foreign investors net-sell ฿4.2bn as SET drops 1.8%',tp:'SET',imp:3,src:'Bangkok Post',ago:'12 min',n:14,why:'Your watchlist is mostly SET50, so a broad sell-off hits it directly.',big:'−1.8%'},
+ {t:'Bank of Thailand holds policy rate at 1.50%, hints at Q1 cut',tp:'Macro',imp:3,src:'Reuters',ago:'38 min',n:22,why:'A cut would lift bond prices; bank margins could narrow.',big:'1.50%'},
+ {t:'US Fed signals pause; baht firms to 34.1 per dollar',tp:'Macro',imp:2,src:'Bloomberg',ago:'1 hr',n:31,why:'A stronger baht trims returns on USD holdings.',big:'34.10'},
+ {t:'Regulator fines audit network over quality-control lapses',tp:'Audit',imp:2,src:'Financial Times',ago:'2 hr',n:9,why:'Audit-quality enforcement is rising, a likely Big 4 interview topic.',big:'$2.1m'},
+ {t:'Startup launches AI agent that automates month-end close',tp:'AI',imp:2,src:'TechCrunch',ago:'3 hr',n:6,why:'Overlaps your accounting + automation interest.',big:'5 days→1'},
+ {t:'Thai bank stocks rally after Q3 earnings beat estimates',tp:'SET',imp:1,src:'The Nation',ago:'4 hr',n:7,why:'Sector context for bank holdings.',big:'+2.4%'},
+ {t:'IFRS 18 explained: what changes in the income statement',tp:'Audit',imp:1,src:'IFRS Foundation',ago:'6 hr',n:3,why:'A new standard you would audit against from 2027.',big:'2027'},
+ {t:'Survey: 7 in 10 audit firms now use generative AI tools',tp:'AI',imp:1,src:'Accounting Today',ago:'8 hr',n:5,why:'Shows the skills employers will expect.',big:'70%'}
+];
+const W=[
+ {t:'G20 agrees framework for a global minimum tax on digital giants',rg:'Global',tp:'Economy',n:48,s:'Members back a shared rule so large tech firms pay tax where their users are. Rates are set next year.'},
+ {t:'Oil jumps 4% after a supply disruption in the Middle East',rg:'Middle East',tp:'Markets',n:41,s:'Brent crude hit a three-month high. Airlines and importers fell; energy stocks gained.'},
+ {t:'China unveils ¥1 trillion package to support the property sector',rg:'Asia',tp:'Economy',n:36,s:'Cheaper mortgages and state buying of unsold homes. Asian markets rose on the news.'},
+ {t:'EU passes first rules requiring audits of large AI models',rg:'Europe',tp:'Tech',n:29,s:'Big AI developers must test and document their models. Fines reach 7% of global revenue.'},
+ {t:'Yen weakens past 160 per dollar, raising intervention fears',rg:'Asia',tp:'Markets',n:24,s:'Japan’s finance ministry warned against fast moves. Traders expect the central bank may step in.'},
+ {t:'Record heat pushes coffee prices to a 15-year high',rg:'Latin America',tp:'Climate',n:18,s:'Drought in Brazil cut harvests. Cafés and food companies say price rises may follow.'}
+];
+const SY=[{s:'NVDA',x:'NASDAQ',nm:'NVIDIA',p:182.4,c:'$'},{s:'PTT',x:'SET',nm:'PTT PCL',p:32.5,c:'฿'},{s:'KBANK',x:'SET',nm:'Kasikornbank',p:152,c:'฿'},{s:'AAPL',x:'NASDAQ',nm:'Apple',p:228.1,c:'$'},{s:'CPALL',x:'SET',nm:'CP All',p:55.25,c:'฿'}];
+const REL={
+ NVDA:[['Nvidia data-centre revenue tops forecasts for a 6th quarter','Reuters','2 hr'],['Chip stocks slip as export-rule talks resume','CNBC','5 hr'],['Analysts lift Nvidia target ahead of new GPU launch','MarketWatch','1 day']],
+ PTT:[['PTT shares fall as the oil-price outlook softens','Bangkok Post','1 hr'],['PTT unit plans ฿20bn green-power push','The Nation','6 hr'],['Energy stocks lead the SET decline','Kaohoon','1 day']],
+ KBANK:[['Kasikornbank Q3 profit beats estimates by 8%','Bangkok Post','3 hr'],['Thai banks brace for a possible rate cut','Reuters','7 hr'],['KBank expands its digital-lending app to SMEs','The Nation','2 days']],
+ AAPL:[['Apple services revenue hits a record high','CNBC','4 hr'],['iPhone sales in China rebound in October','Bloomberg','9 hr'],['Apple to open a new store in Bangkok','Bangkok Post','2 days']],
+ CPALL:[['CP All same-store sales up 3.1% in Q3','Kaohoon','2 hr'],['7-Eleven Thailand to add 700 stores in 2027','The Nation','8 hr'],['Retail stocks steady despite a weaker baht','Bangkok Post','1 day']]
+};
+const TOP=['All','SET','Macro','Audit','AI'];
+const PG=['My News','World Brief','Charts'];
+const RG={'1M':22,'3M':60,'6M':120};
+const G={SET:'linear-gradient(135deg,#ff416c,#ff4b2b)',Macro:'linear-gradient(135deg,#f7971e,#ffd200)',Audit:'linear-gradient(135deg,#11998e,#38ef7d)',AI:'linear-gradient(135deg,#4776e6,#8e54e9)'};
+const img=(x)=>`<div class="img" style="background:${G[x.tp]}"><small>${x.tp}</small>${x.big}</div>`;
+const byImp=[...N].sort((a,b)=>b.imp-a.imp||N.indexOf(a)-N.indexOf(b));
+const imp=i=>['','Low','Medium','High'][i];
+
+/* ---------- fake price series (seeded, deterministic) ---------- */
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+SY.forEach((y,k)=>{const r=rng(k*977+11);let c=100;const a=[];for(let i=0;i<120;i++){const o=c;c=o*(1+(r()-0.47)*0.035);a.push({o,c,h:Math.max(o,c)*(1+r()*0.012),l:Math.min(o,c)*(1-r()*0.012),v:0.25+r()})}
+ const f=y.p/a[119].c;a.forEach(d=>{d.o*=f;d.h*=f;d.l*=f;d.c*=f});y.d=a;y.chg=(a[119].c-a[118].c)/a[118].c*100});
+const fmt=v=>v>=1000?v.toLocaleString('en',{maximumFractionDigits:0}):v.toFixed(2);
+const pct=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2)+'%';
+
+function chart(y,n,o){const H=o.H||380,Wd=900,pr=66,top=10,ph=H-110,vh=56,vb=H-6;const d=y.d.slice(-n);
+ const hi=Math.max(...d.map(x=>x.h)),lo=Math.min(...d.map(x=>x.l));const sy=v=>top+(hi-v)/(hi-lo)*ph;const cw=(Wd-pr)/n,bw=Math.max(1.5,cw*0.62);
+ let g='';for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,yy=sy(v);const lab=Math.abs(yy-sy(y.p))<18?"":fmt(v);g+=`<line x1="0" x2="${Wd-pr}" y1="${yy}" y2="${yy}" stroke="${o.grid}"/><text x="${Wd-pr+8}" y="${yy+4}" fill="${o.txt}" font-size="12" font-family="${o.font}">${lab}</text>`}
+ const vmax=Math.max(...d.map(x=>x.v));let c='';
+ d.forEach((x,i)=>{const up=x.c>=x.o,col=up?o.up:o.dn,cx=i*cw+cw/2,vy=vh*x.v/vmax;
+  c+=`<rect x="${cx-bw/2}" y="${vb-vy}" width="${bw}" height="${vy}" fill="${col}" opacity=".22"/>`;
+  c+=`<line x1="${cx}" x2="${cx}" y1="${sy(x.h)}" y2="${sy(x.l)}" stroke="${col}" stroke-width="1.2"/>`;
+  const y1=sy(Math.max(x.o,x.c)),hh=Math.max(1,Math.abs(sy(x.o)-sy(x.c)));
+  c+=`<rect x="${cx-bw/2}" y="${y1}" width="${bw}" height="${hh}" fill="${up&&o.hollow?o.bg:col}" stroke="${col}"/>`});
+ let ma='';if(o.ma){const off=120-n,pts=[];d.forEach((x,i)=>{const j=off+i;if(j<19)return;let s=0;for(let k=j-19;k<=j;k++)s+=y.d[k].c;const v=Math.min(hi,Math.max(lo,s/20));pts.push(`${(i*cw+cw/2).toFixed(1)},${sy(v).toFixed(1)}`)});ma=`<polyline points="${pts.join(' ')}" fill="none" stroke="${o.ma}" stroke-width="1.6"/>`}
+ const ly=sy(y.p),lc=y.chg>=0?o.up:o.dn;
+ const last=`<line x1="0" x2="${Wd-pr}" y1="${ly}" y2="${ly}" stroke="${lc}" stroke-dasharray="3 3"/><rect x="${Wd-pr+2}" y="${ly-10}" width="${pr-4}" height="20" fill="${lc}"/><text x="${Wd-pr+8}" y="${ly+4}" fill="${o.lt||'#fff'}" font-size="12" font-weight="700" font-family="${o.font}">${fmt(y.p)}</text>`;
+ return `<svg viewBox="0 0 ${Wd} ${H}" width="100%" style="display:block">${g}${c}${ma}${last}</svg>`}
+function spark(y,up,dn,w=90,h=30){const d=y.d.slice(-30).map(x=>x.c),hi=Math.max(...d),lo=Math.min(...d);const p=d.map((v,i)=>`${(i*w/29).toFixed(1)},${(2+(hi-v)/(hi-lo)*(h-4)).toFixed(1)}`).join(' ');return `<svg width="${w}" height="${h}" style="display:block"><polyline points="${p}" fill="none" stroke="${y.chg>=0?up:dn}" stroke-width="1.8"/></svg>`}
+
+/* ---------- state ---------- */
+const st={s:0,p:0,sym:0,rg:'3M',rate:{}};
+const sc=w=>w.n+(w.r=='want'?100:w.r=='no'?-1000:0);
+const world=()=>W.map((w,i)=>({...w,i,r:st.rate[i]})).sort((a,b)=>sc(b)-sc(a));
+function taste(){const m=[],l=[];W.forEach((w,i)=>{if(st.rate[i]=='want'&&!m.includes(w.tp))m.push(w.tp);if(st.rate[i]=='no'&&!l.includes(w.tp))l.push(w.tp)});
+ const body=m.length||l.length?`${m.length?`More of: ${m.map(t=>`<span class="tg more">${t}</span>`).join('')}<br>`:''}${l.length?`Less of: ${l.map(t=>`<span class="tg less">${t}</span>`).join('')}`:''}`:'Rate a few stories. You will see more of what you want and less of what you don\'t.';
+ return {h:'Your taste',body}}
+function rb(w,a='Want',b='No want'){return `<div class="rate"><button class="rb rw ${w.r=='want'?'on':''}" onclick="rate(${w.i},'want')"><span>${a}</span></button><button class="rb rn ${w.r=='no'?'on':''}" onclick="rate(${w.i},'no')"><span>${b}</span></button></div>`}
+const rgb=()=>Object.keys(RG).map(k=>`<button class="${k==st.rg?'on':''}" onclick="setRg('${k}')">${k}</button>`).join('');
+const Y=()=>SY[st.sym];
+function stats(y){const L=y.d[119],d=y.d.slice(-RG[st.rg]);return [['Open',fmt(L.o)],['Day high',fmt(L.h)],['Day low',fmt(L.l)],[st.rg+' range',fmt(Math.min(...d.map(x=>x.l)))+' – '+fmt(Math.max(...d.map(x=>x.h)))]]}
+const statsTbl=(y,cls='')=>`<table class="ks ${cls}">${stats(y).map(r=>`<tr><td>${r[0]}</td><td>${y.c}${r[1]}</td></tr>`).join('')}</table>`;
+const navs=(cls='')=>PG.map((p,i)=>`<a class="${i==st.p?'on':''} ${cls}" onclick="go(${i})">${p}</a>`).join('');
+
+/* ---------- styles ---------- */
+const S=[
+/* 1 DIGG */
+{name:'1. Digg-style',d:'<b>1. Digg-style.</b> Clean white, orange accent, big numbers. Social-news feel.',
+ h:()=>`<header><div class="wrap nav"><span class="logo">investment center</span><nav>${navs()}</nav><div class="r"><span class="srch">Search news or tickers…</span><span class="btn">Get alerts</span></div></div></header>`,
+ p:[
+ s=>{const [h,...rest]=byImp;return `<div class="s1">${s.h()}<div class="wrap"><div class="chips">${TOP.map((t,i)=>`<span class="chip ${i?'':'on'}">${t}</span>`).join('')}</div>
+  <div class="hero"><div>${img(h)}<h1>${h.t}</h1><div class="meta">${h.src} · ${h.ago} ago · ▲ ${h.n} sources</div><p class="why" style="margin-top:10px">${h.why}</p></div>
+  <div class="trend"><h2>Trending now</h2><ol>${rest.slice(0,5).map((x,i)=>`<li><span class="n">${i+2}</span><div><div class="meta">${x.tp} · ${x.ago}</div><h3>${x.t}</h3><div class="vote">▲ ${x.n} sources</div></div></li>`).join('')}</ol></div></div>
+  <div class="sec">More stories</div><div class="grid">${rest.slice(0,6).map(x=>`<div class="card">${img(x)}<h3>${x.t}</h3><div class="meta">${x.src} · ${x.ago} ago</div><p class="why" style="font-size:14px;margin-top:6px">${x.why}</p></div>`).join('')}</div></div></div>`},
+ s=>{const t=taste();return `<div class="s1">${s.h()}<div class="wrap"><div class="two"><div><div class="meta">Sunday 22 November 2026 · Updated 09:30</div><h1 class="pt">The world today, in 6 stories</h1><p class="why">Ranked by how many outlets cover each story. Rate them and the list learns what you want.</p>
+  ${world().map((w,k)=>`<div class="wrow ${w.r=='no'?'faded':''}"><span class="n">${k+1}</span><div><div class="meta">${w.rg} · ${w.tp} · ▲ ${w.n} sources</div><h3>${w.t}</h3><p class="sum">${w.s}</p>${rb(w,'▲ Want','▼ No want')}</div></div>`).join('')}</div>
+  <aside class="side taste"><h4>${t.h}</h4><p>${t.body}</p><small>Saved in this browser only.</small></aside></div></div></div>`},
+ s=>{const y=Y(),o={up:'#16a34a',dn:'#ef4444',grid:'#f0f0f0',txt:'#999',font:'Inter',ma:'#ff4500'};return `<div class="s1">${s.h()}<div class="wrap"><div class="two">
+  <div class="cc"><div class="qh"><span class="sx">${y.x}:${y.s}</span><span class="nm">${y.nm}</span></div><div class="qp"><b>${y.c}${fmt(y.p)}</b><span style="color:${y.chg>=0?o.up:o.dn}">${pct(y.chg)} today</span><em>Sample prices, not real</em></div><div class="rng">${rgb()}</div>${chart(y,RG[st.rg],o)}</div>
+  <div class="wl"><h2>Watchlist</h2><ul>${SY.map((z,i)=>`<li class="${i==st.sym?'on':''}" onclick="setSym(${i})"><div><b>${z.s}</b><small>${z.x}</small></div>${spark(z,o.up,o.dn)}<div class="r">${z.c}${fmt(z.p)}<span style="color:${z.chg>=0?o.up:o.dn}">${pct(z.chg)}</span></div></li>`).join('')}</ul><h2 style="margin-top:28px">Key stats</h2>${statsTbl(y)}</div></div>
+  <div class="sec">News about ${y.s}</div><div class="grid">${REL[y.s].map(r=>`<div class="rc"><div class="meta">${r[1]} · ${r[2]} ago</div><h3>${r[0]}</h3></div>`).join('')}</div></div></div>`}
+ ]},
+/* 3 MAGAZINE */
+{name:'3. Magazine',d:'<b>3. Magazine.</b> Serif headlines, red labels, thin rules. Calm, premium, made for reading.',
+ h:()=>`<div class="redbar"></div><div class="wrap"><div class="mast"><h1>Investment Center</h1><nav>${navs()}</nav></div><div class="date">Sunday, 22 November 2026 · ${['Your briefing: 8 stories, 3 that matter to you','The world today: 6 stories, ranked by coverage','Markets: your watchlist'][st.p]}</div>`,
+ p:[
+ s=>{const [h,...r]=byImp;return `<div class="s3">${s.h()}
+  <div class="lay"><div class="lead">${img(h)}<div class="kick">${h.tp} · Top story</div><h2>${h.t}</h2><p>${h.why}</p><div class="src">${h.src} · ${h.ago} ago · ${h.n} sources</div></div>
+  ${r.slice(0,4).map(x=>`<div class="art"><div class="kick">${x.tp}</div><h3>${x.t}</h3><p>${x.why}</p><div class="src">${x.src} · ${x.ago} ago</div></div>`).join('')}</div>
+  <div class="row">${r.slice(4).concat(r.slice(0,1)).map(x=>`<div><div class="kick">${x.tp}</div><h3 style="font-size:19px">${x.t}</h3><div class="src">${x.src}</div></div>`).join('')}</div></div></div>`},
+ s=>{const t=taste();return `<div class="s3">${s.h()}<div class="two"><div><div class="kick">World Brief</div><h2 class="pt">The world today</h2>
+  <div class="wg">${world().map(w=>`<div class="art ${w.r=='no'?'faded':''}"><div class="kick">${w.rg} · ${w.tp}</div><h3>${w.t}</h3><p>${w.s}</p><div class="src">Covered by ${w.n} outlets</div>${rb(w)}</div>`).join('')}</div></div>
+  <aside class="side taste"><h4>${t.h}</h4><p>${t.body}</p><small>Saved in this browser only.</small></aside></div></div></div>`},
+ s=>{const y=Y(),o={up:'#121212',dn:'#e3120b',grid:'#ececec',txt:'#888',font:'Inter',hollow:1,bg:'#fff',ma:'#b08d57'};return `<div class="s3">${s.h()}<div class="two"><div><div class="kick">${y.x} · ${y.s}</div><h2 class="pt">${y.nm}</h2>
+  <div class="qp"><b>${y.c}${fmt(y.p)}</b><span style="color:${y.chg>=0?'#121212':'#e3120b'}">${pct(y.chg)} today</span><em>Sample prices, not real</em></div><div class="rng">${rgb()}</div>${chart(y,RG[st.rg],o)}</div>
+  <div class="side"><h4>Watchlist</h4><table>${SY.map((z,i)=>`<tr class="${i==st.sym?'on':''}" onclick="setSym(${i})"><td><b>${z.s}</b><small>${z.x}</small></td><td>${spark(z,'#121212','#e3120b',70,26)}</td><td class="r">${z.c}${fmt(z.p)}<small style="color:${z.chg>=0?'#121212':'#e3120b'}">${pct(z.chg)}</small></td></tr>`).join('')}</table><h4 style="margin-top:28px;padding-top:10px;border-top:4px solid #121212">Key stats</h4>${statsTbl(y)}</div></div>
+  <div class="rel">${REL[y.s].map(r=>`<div><div class="kick">${y.s}</div><h3 style="font-size:21px">${r[0]}</h3><div class="src">${r[1]} · ${r[2]} ago</div></div>`).join('')}</div></div></div>`}
+ ]},
+/* 5 BENTO */
+{name:'5. Bento',d:'<b>5. Bento grid.</b> Rounded tiles, one big number per tile, bold colours on warm grey. Modern and playful.',
+ h:()=>`<div class="nav"><span class="logo">investment center.</span><nav>${navs()}</nav></div>`,
+ p:[
+ s=>{const cls=['dark w2 h2','org','lime','sky w2','','w2','','dark w4'];return `<div class="s5"><div class="wrap">${s.h()}
+  <div class="greet">Good morning. <em>2 things</em> need<br>your attention today.</div><div class="chips">${TOP.map((t,i)=>`<span class="${i?'':'on'}">${t}</span>`).join('')}</div>
+  <div class="bento">${byImp.map((x,i)=>`<div class="t ${cls[i]}"><small>${x.tp} · ${x.ago} ago · ▲ ${x.n}</small>${i==0||i==3?`<div class="big" ${i==0?'style="font-size:110px"':''}>${x.big}</div>`:''}<div><h3 ${i==0?'style="font-size:30px"':''}>${x.t}</h3>${i==0||i==3||i==5?`<p class="why" style="margin-top:8px">${x.why}</p>`:''}</div></div>`).join('')}</div></div></div>`},
+ s=>{const cls=['dark w2 h2','org w2','','lime','sky w2','w2'],t=taste();return `<div class="s5"><div class="wrap">${s.h()}
+  <div class="greet">The world today.<br><em>6 stories</em>, ranked by coverage.</div>
+  <div class="bento tall">${world().map((w,k)=>`<div class="t ${cls[k]} ${w.r=='no'?'faded':''}"><small>${w.rg} · ${w.tp}</small>${k==0?`<div class="big" style="font-size:96px">${w.n}<sub>sources</sub></div>`:''}<div><h3 ${k==0?'style="font-size:30px"':''}>${w.t}</h3>${cls[k].includes('w2')?`<p class="why" style="margin-top:8px">${w.s}</p>`:''}</div><div style="display:flex;justify-content:space-between;align-items:center">${rb(w)}${k?`<b style="font-size:13px">▲ ${w.n}</b>`:''}</div></div>`).join('')}
+  <div class="t w4 taste" style="min-height:0;padding:26px 28px"><h4>${t.h}</h4><p>${t.body}</p><small style="margin-left:auto">Saved in this browser only</small></div></div></div></div>`},
+ s=>{const y=Y(),o={up:'#d4f25c',dn:'#ff5a1f',grid:'#262626',txt:'#777',font:'Space Grotesk',ma:'#bfe0ff',lt:'#141414',H:300},r=REL[y.s];return `<div class="s5"><div class="wrap">${s.h()}
+  <div class="greet">Markets. <em>${y.s}</em> ${y.chg>=0?'is up':'is down'} today.</div>
+  <div class="bento" style="grid-auto-rows:210px">
+  <div class="t dark w3 h2"><div class="qtop"><div><small>${y.x}:${y.s} · sample prices, not real</small><h3 style="font-size:26px;margin-top:4px">${y.nm}</h3></div><div class="rng">${rgb()}</div></div>${chart(y,RG[st.rg],o)}</div>
+  <div class="t org"><small>Last price</small><div class="big">${y.c}${fmt(y.p)}</div><h3>${pct(y.chg)} today</h3></div>
+  <div class="t h2 wl"><small style="margin-bottom:6px">Watchlist</small><ul>${SY.map((z,i)=>`<li class="${i==st.sym?'on':''}" onclick="setSym(${i})"><b>${z.s}</b>${spark(z,'#3a9d2f','#ff5a1f',70,26)}<div class="r">${fmt(z.p)}<span style="color:${z.chg>=0?'#3a9d2f':'#ff5a1f'}">${pct(z.chg)}</span></div></li>`).join('')}</ul></div>
+  ${r.map((x,i)=>`<div class="t ${['lime','','sky'][i]}"><small>${x[1]} · ${x[2]} ago</small><h3>${x[0]}</h3></div>`).join('')}
+  </div></div></div>`}
+ ]},
+/* 7 SWISS */
+{name:'7. Swiss poster',d:'<b>7. Swiss poster.</b> Huge uppercase type, black and white with one red, strict grid lines. Strong portfolio look.',
+ h:()=>`<div class="top"><span class="logo">INVESTMENT CENTER</span>${navs()}<span class="dt">SUN 22.11.26</span></div>`,
+ p:[
+ s=>{const [h,...r]=byImp;return `<div class="s7"><div class="wrap">${s.h()}<div class="chips">${TOP.map((t,i)=>`<span class="${i?'':'on'}">${t}</span>`).join('')}</div>
+  <div class="hero"><div class="no">01</div><h1>${h.t}</h1><div class="side"><b style="color:#ff2d00">${h.tp} / HIGH</b><br>${h.why}<br><br>${h.src}<br>${h.ago} ago · ${h.n} sources</div></div>
+  <div class="list">${r.map((x,i)=>`<div class="c"><div class="no">${String(i+2).padStart(2,'0')}</div><div class="lab"><b>${x.tp}</b> / ${imp(x.imp)} / ${x.ago}</div><h3>${x.t}</h3><p>${x.why}</p></div>`).join('')}<div class="c" style="background:#ff2d00;color:#fff;grid-column:span 2;border-right:0"><div class="no">→</div><h3 style="margin-top:14px">Get the important ones on Telegram</h3></div></div></div></div>`},
+ s=>{const t=taste();return `<div class="s7"><div class="wrap">${s.h()}
+  <div class="hero"><div class="no">06</div><h1>The world today</h1><div class="side"><b style="color:#ff2d00">WORLD BRIEF</b><br>Six stories, ranked by how many outlets cover them. Rate each one.</div></div>
+  ${world().map((w,k)=>`<div class="wr ${w.r=='no'?'faded':''}"><div class="no">${String(k+1).padStart(2,'0')}</div><div class="mn"><div class="lab"><b>${w.tp}</b> / ${w.rg}</div><h3>${w.t}</h3><p>${w.s}</p></div><div class="ac"><div class="cnt">${w.n}<small>SOURCES</small></div>${rb(w,'+ Want','− No want')}</div></div>`).join('')}</div>
+  <div class="tst taste" style="max-width:1216px;margin:0 auto"><h4>${t.h}</h4><p>${t.body}<br><span style="opacity:.8;font-size:13px">Saved in this browser only.</span></p></div></div>`},
+ s=>{const y=Y(),o={up:'#000',dn:'#ff2d00',grid:'#e6e6e6',txt:'#000',font:'Inter',hollow:1,bg:'#fff',ma:'#999'};return `<div class="s7"><div class="wrap">${s.h()}
+  <div class="qhero"><div class="sx"><small>${y.x} / ${y.nm}</small>${y.s}</div><div class="px">${y.c}${fmt(y.p)}</div><div class="cg" style="color:${y.chg>=0?'#000':'#ff2d00'}">${pct(y.chg)}</div></div>
+  <div class="qbody"><div class="chartc"><div class="rng">${rgb()}<em>Sample prices, not real</em></div>${chart(y,RG[st.rg],o)}</div>
+  <div class="wlc"><h4>Watchlist</h4><ul>${SY.map((z,i)=>`<li class="${i==st.sym?'on':''}" onclick="setSym(${i})"><div>${z.s}<small>${z.x}</small></div>${spark(z,'#000','#ff2d00',70,26)}<div class="r">${fmt(z.p)}<span style="color:${z.chg>=0?'#000':'#ff2d00'}">${pct(z.chg)}</span></div></li>`).join('')}</ul></div></div>
+  <div class="list">${REL[y.s].map((r,i)=>`<div class="c"><div class="no">${String(i+1).padStart(2,'0')}</div><div class="lab"><b>${y.s}</b> / ${r[1]} / ${r[2]}</div><h3>${r[0]}</h3></div>`).join('')}</div></div></div>`}
+ ]}
+];
+const PD=['<i>My News:</i> your topics, scored for you.','<i>World Brief:</i> top global stories with Want / No want. Try the buttons: No want fades a story and moves it down.','<i>Charts:</i> TradingView-style layout. Click a watchlist row or a range button. The real build would embed TradingView\'s free chart.'];
+
+/* ---------- render ---------- */
+function render(keep){const y=window.scrollY;document.getElementById('stage').innerHTML=S[st.s].p[st.p](S[st.s]);document.getElementById('desc').innerHTML=S[st.s].d+' &nbsp;·&nbsp; '+PD[st.p];
+ document.getElementById('sb').innerHTML=S.map((s,i)=>`<button class="${i==st.s?'on':''}" onclick="setS(${i})">${s.name}</button>`).join(' ');
+ document.getElementById('pb').innerHTML=PG.map((p,i)=>`<button class="${i==st.p?'on':''}" onclick="go(${i})">${p}</button>`).join(' ');
+ history.replaceState(null,'','#'+(st.s+1)+'-'+(st.p+1));window.scrollTo(0,keep?y:0)}
+function setS(i){st.s=(i+S.length)%S.length;render()}
+function go(i){st.p=(i+3)%3;render()}
+function rate(i,v){st.rate[i]=st.rate[i]==v?null:v;render(1)}
+function setSym(i){st.sym=i;render(1)}
+function setRg(k){st.rg=k;render(1)}
+document.addEventListener('keydown',e=>{if(e.key=='ArrowRight')setS(st.s+1);if(e.key=='ArrowLeft')setS(st.s-1);if(e.key=='ArrowDown'){e.preventDefault();go(st.p+1)}if(e.key=='ArrowUp'){e.preventDefault();go(st.p-1)}});
+const m=location.hash.match(/#(\d)-(\d)/);if(m){st.s=Math.min(3,m[1]-1);st.p=Math.min(2,m[2]-1)}
+if(location.hash.includes('demo')){st.rate={3:'want',5:'no'}}
+render();
+</script>
+</body>
+</html>

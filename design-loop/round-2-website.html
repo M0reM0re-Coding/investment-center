@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Investment Center — Round 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@500;700;800;900&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;700&family=Playfair+Display:wght@700;900&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:#fff}
+a{color:inherit;text-decoration:none}
+/* switcher */
+#sw{position:sticky;top:0;z-index:99;background:#111;color:#fff;display:flex;align-items:center;gap:6px;padding:8px 14px;font:500 13px Inter;flex-wrap:wrap}
+#sw b{margin-right:8px}
+#sw button{font:600 12px Inter;border:0;border-radius:6px;padding:7px 11px;background:#2a2a2a;color:#ddd;cursor:pointer}
+#sw button.on{background:#fff;color:#111}
+#sw .note{margin-left:auto;color:#aaa;font-size:12px}
+#desc{background:#fffbe6;border-bottom:1px solid #eee;padding:8px 14px;font:13px Inter;color:#333}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+.img{border-radius:inherit;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:16px;color:#fff;font:800 28px 'Inter Tight'}
+.img small{position:absolute;top:14px;left:16px;font:700 11px Inter;letter-spacing:1px;text-transform:uppercase;opacity:.85}
+
+/* 1 DIGG */
+.s1{background:#fff;color:#111;padding-bottom:60px}
+.s1 header{border-bottom:1px solid #eee}
+.s1 .nav{display:flex;align-items:center;gap:28px;height:68px}
+.s1 .logo{font:900 30px 'Inter Tight';letter-spacing:-1.5px}
+.s1 .nav nav{display:flex;gap:22px;font-weight:600;font-size:15px;color:#555}
+.s1 .nav nav .on{color:#111;border-bottom:2px solid #111;padding-bottom:22px;margin-bottom:-24px}
+.s1 .nav .r{margin-left:auto;display:flex;gap:12px;align-items:center}
+.s1 .srch{background:#f3f3f3;border-radius:99px;padding:9px 16px;width:220px;color:#999;font-size:14px}
+.s1 .btn{background:#111;color:#fff;border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px}
+.s1 .hero{display:grid;grid-template-columns:1.6fr 1fr;gap:40px;margin-top:32px}
+.s1 .hero .img{height:400px;border-radius:16px;font-size:64px}
+.s1 .hero h1{font:800 38px/1.1 'Inter Tight';letter-spacing:-1px;margin:18px 0 10px}
+.s1 .meta{font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.s1 .why{color:#555;font-size:16px;line-height:1.5}
+.s1 .trend h2{font:800 20px 'Inter Tight';margin-bottom:6px}
+.s1 .trend li{list-style:none;display:grid;grid-template-columns:40px 1fr;padding:16px 0;border-bottom:1px solid #eee}
+.s1 .trend .n{font:900 28px 'Inter Tight';color:#ff4500}
+.s1 .trend h3{font:700 17px/1.25 'Inter Tight'}
+.s1 .vote{font-size:13px;font-weight:700;margin-top:6px}
+.s1 .sec{font:800 24px 'Inter Tight';margin:56px 0 18px}
+.s1 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.s1 .card .img{height:190px;border-radius:12px;font-size:34px}
+.s1 .card h3{font:700 20px/1.2 'Inter Tight';margin:12px 0 8px;letter-spacing:-.3px}
+
+/* 2 FINANCE PORTAL */
+.s2{background:#f5f6f8;color:#111;padding-bottom:60px}
+.s2 .tick{background:#0b1b33;color:#fff;font:500 13px 'IBM Plex Mono';display:flex;gap:30px;padding:9px 32px;white-space:nowrap;overflow:hidden}
+.s2 .dn{color:#ff6b6b}.s2 .up{color:#3ddc84}
+.s2 header{background:#fff;border-bottom:1px solid #e3e6eb}
+.s2 .nav{display:flex;align-items:center;gap:30px;height:64px}
+.s2 .logo{font:800 24px Inter;color:#0047bb}
+.s2 nav{display:flex;gap:22px;font-weight:600;font-size:14px}
+.s2 nav .on{color:#0047bb}
+.s2 .srch{margin-left:auto;border:1px solid #d4d8de;border-radius:6px;padding:8px 12px;width:280px;color:#999;font-size:13px}
+.s2 .cols{display:grid;grid-template-columns:260px 1fr 300px;gap:24px;margin-top:24px}
+.s2 .box{background:#fff;border:1px solid #e3e6eb;border-radius:8px;padding:16px}
+.s2 .box h4{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:#0047bb;margin-bottom:10px}
+.s2 .lat li{list-style:none;padding:10px 0;border-top:1px solid #f0f0f0;font-size:14px;font-weight:600;line-height:1.3}
+.s2 .lat time{display:block;font:500 11px 'IBM Plex Mono';color:#888;margin-bottom:3px}
+.s2 .hero .img{height:330px;border-radius:8px;font-size:60px}
+.s2 .hero h1{font:800 32px/1.15 Inter;margin:14px 0 8px}
+.s2 .badge{display:inline-block;background:#d7263d;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;margin-right:8px}
+.s2 .why{color:#444;font-size:15px;line-height:1.5}
+.s2 .subs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.s2 .subs h3{font:700 17px/1.3 Inter;margin:6px 0}
+.s2 .meta{font-size:12px;color:#888;font-weight:600}
+.s2 table{width:100%;border-collapse:collapse;font-size:13px}
+.s2 td{padding:9px 0;border-top:1px solid #f0f0f0}
+.s2 td:last-child{text-align:right;font-family:'IBM Plex Mono'}
+.s2 .wl{margin-top:16px}
+
+/* 3 MAGAZINE */
+.s3{background:#fff;color:#121212;padding-bottom:60px;font-family:'Source Serif 4'}
+.s3 .redbar{height:6px;background:#e3120b}
+.s3 .mast{display:flex;align-items:flex-end;justify-content:space-between;padding:22px 0 14px;border-bottom:1px solid #121212}
+.s3 .mast h1{font:900 54px Fraunces;letter-spacing:-2px}
+.s3 .mast nav{display:flex;gap:20px;font:600 14px Inter}
+.s3 .date{font:500 13px Inter;color:#666;padding:10px 0;border-bottom:1px solid #ddd}
+.s3 .lay{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;margin-top:28px}
+.s3 .lead{grid-row:span 2}
+.s3 .lead .img{height:380px;font-size:72px}
+.s3 .kick{font:700 12px Inter;color:#e3120b;text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px}
+.s3 .lead h2{font:900 42px/1.05 Fraunces;letter-spacing:-1px}
+.s3 h3{font:700 22px/1.15 Fraunces}
+.s3 p{font-size:16px;line-height:1.5;color:#444;margin-top:8px;font-style:italic}
+.s3 .art{border-top:1px solid #121212;padding-top:4px}
+.s3 .src{font:500 12px Inter;color:#888;margin-top:8px}
+.s3 .row{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:44px;border-top:4px solid #121212;padding-top:4px}
+
+/* 4 DARK DASHBOARD */
+.s4{background:#0d1117;color:#e6edf3;display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 80px)}
+.s4 aside{border-right:1px solid #21262d;padding:22px 16px}
+.s4 .logo{font:800 20px Inter;margin-bottom:26px;display:flex;gap:8px;align-items:center}
+.s4 .logo i{width:10px;height:10px;border-radius:50%;background:#3fb950;box-shadow:0 0 10px #3fb950}
+.s4 aside a{display:block;padding:9px 12px;border-radius:8px;font-size:14px;color:#8b949e;margin-bottom:2px}
+.s4 aside a.on{background:#161b22;color:#fff}
+.s4 aside h5{font-size:11px;color:#6e7681;text-transform:uppercase;letter-spacing:1px;margin:22px 12px 8px}
+.s4 main{padding:26px 32px}
+.s4 .h{display:flex;justify-content:space-between;align-items:center}
+.s4 .h h1{font:700 24px Inter}
+.s4 .h span{font:12px 'IBM Plex Mono';color:#8b949e}
+.s4 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}
+.s4 .kpi{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:16px}
+.s4 .kpi small{font-size:12px;color:#8b949e}
+.s4 .kpi b{display:block;font:600 28px 'IBM Plex Mono';margin-top:6px}
+.s4 .two{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.s4 .panel{background:#161b22;border:1px solid #21262d;border-radius:10px}
+.s4 .panel h4{font-size:13px;padding:14px 16px;border-bottom:1px solid #21262d;color:#8b949e}
+.s4 .nr{display:grid;grid-template-columns:56px 74px 1fr 90px;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid #21262d;font-size:14px}
+.s4 .nr time{font:12px 'IBM Plex Mono';color:#8b949e}
+.s4 .tp{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;text-align:center}
+.s4 .nr .w{display:block;font-size:12px;color:#8b949e;margin-top:3px}
+.s4 .sent{font-size:11px;font-weight:700;text-align:right}
+.s4 .chart{padding:14px 16px;border-bottom:1px solid #21262d}
+.s4 .chart div{display:flex;justify-content:space-between;font-size:13px}
+.s4 .chart b{font-family:'IBM Plex Mono'}
+
+/* 5 BENTO */
+.s5{background:#efece6;color:#141414;font-family:'Space Grotesk';padding-bottom:60px}
+.s5 .nav{display:flex;align-items:center;justify-content:space-between;height:76px}
+.s5 .logo{font:700 26px 'Space Grotesk'}
+.s5 nav{display:flex;gap:8px}
+.s5 nav span{background:#fff;padding:8px 16px;border-radius:99px;font-size:14px;font-weight:500}
+.s5 nav .on{background:#141414;color:#fff}
+.s5 .greet{font:500 52px/1.05 'Space Grotesk';letter-spacing:-2px;margin:10px 0 26px}
+.s5 .greet em{font-style:normal;color:#ff5a1f}
+.s5 .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:190px;gap:16px}
+.s5 .t{border-radius:28px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;background:#fff}
+.s5 .t small{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.7}
+.s5 .t h3{font:500 21px/1.2 'Space Grotesk'}
+.s5 .big{font:700 64px 'Space Grotesk';letter-spacing:-3px;line-height:1}
+.s5 .w2{grid-column:span 2}.s5 .w4{grid-column:span 4}.s5 .h2{grid-row:span 2}
+.s5 .dark{background:#141414;color:#fff}.s5 .org{background:#ff5a1f;color:#fff}.s5 .lime{background:#d4f25c}.s5 .sky{background:#bfe0ff}
+.s5 .why{font-size:14px;opacity:.8;line-height:1.4}
+
+/* 6 READER (3-pane) */
+.s6{background:#f7f7f5;color:#1d1d1f;display:grid;grid-template-columns:220px 420px 1fr;height:calc(100vh - 80px);min-height:720px}
+.s6 aside{padding:20px 14px;border-right:1px solid #e5e5e0}
+.s6 .logo{font:800 20px Inter;margin:0 10px 20px}
+.s6 aside a{display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;font-size:14px;color:#555}
+.s6 aside a.on{background:#e6f4ea;color:#1a7f37;font-weight:600}
+.s6 aside em{font-style:normal;font-size:12px;color:#999}
+.s6 aside h5{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;margin:20px 10px 6px}
+.s6 .list{border-right:1px solid #e5e5e0;overflow:auto;background:#fff}
+.s6 .list .hd{padding:18px 20px;font:700 18px Inter;border-bottom:1px solid #eee;display:flex;justify-content:space-between}
+.s6 .list .hd small{font-size:12px;color:#999;font-weight:500}
+.s6 .it{padding:14px 20px;border-bottom:1px solid #f0f0f0;border-left:3px solid transparent}
+.s6 .it.on{background:#f3faf5;border-left-color:#2bb24c}
+.s6 .it h3{font:600 15px/1.35 Inter}
+.s6 .it .m{font-size:12px;color:#999;margin-bottom:4px;display:flex;gap:8px}
+.s6 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-top:5px}
+.s6 .read{padding:40px 56px;overflow:auto;background:#fff}
+.s6 .read .m{font-size:13px;color:#888}
+.s6 .read h1{font:700 34px/1.15 'Source Serif 4';margin:12px 0 22px;max-width:680px}
+.s6 .box{background:#f3faf5;border:1px solid #d4edda;border-radius:12px;padding:18px 20px;max-width:680px;margin-bottom:18px}
+.s6 .box h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#1a7f37;margin-bottom:8px}
+.s6 .box li{margin-left:18px;font-size:15px;line-height:1.6}
+.s6 .yb{background:#fff8e6;border-color:#f5e2b0}.s6 .yb h4{color:#9a6b00}
+.s6 .srcs{display:flex;gap:8px;flex-wrap:wrap;max-width:680px}
+.s6 .srcs span{border:1px solid #e5e5e0;border-radius:99px;padding:5px 12px;font-size:13px}
+.s6 .open{display:inline-block;margin-top:22px;background:#1d1d1f;color:#fff;padding:11px 20px;border-radius:8px;font-weight:600;font-size:14px}
+
+/* 7 SWISS POSTER */
+.s7{background:#fff;color:#000;font-family:'Inter Tight';padding-bottom:60px}
+.s7 .top{display:grid;grid-template-columns:repeat(12,1fr);border-bottom:2px solid #000;padding:18px 0;font:700 13px Inter;text-transform:uppercase;letter-spacing:.5px}
+.s7 .top .logo{grid-column:span 4;font:900 15px Inter}
+.s7 .top span{grid-column:span 2}
+.s7 .top .red{color:#ff2d00}
+.s7 .hero{display:grid;grid-template-columns:repeat(12,1fr);gap:0 20px;padding:36px 0;border-bottom:2px solid #000}
+.s7 .hero .no{grid-column:span 2;font:900 120px/0.8 'Inter Tight';color:#ff2d00}
+.s7 .hero h1{grid-column:span 8;font:900 76px/0.92 'Inter Tight';letter-spacing:-3px;text-transform:uppercase}
+.s7 .hero .side{grid-column:span 2;font:500 14px/1.4 Inter;align-self:end}
+.s7 .list{display:grid;grid-template-columns:repeat(3,1fr)}
+.s7 .c{border-bottom:1px solid #000;border-right:1px solid #000;padding:22px 22px 26px}
+.s7 .c:nth-child(3n){border-right:0}
+.s7 .c .no{font:900 34px 'Inter Tight'}
+.s7 .c .lab{font:700 11px Inter;text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px}
+.s7 .c .lab b{color:#ff2d00}
+.s7 .c h3{font:800 24px/1.05 'Inter Tight';letter-spacing:-.5px;text-transform:uppercase}
+.s7 .c p{font:14px/1.4 Inter;margin-top:10px}
+
+/* 8 BROADSHEET */
+.s8{background:#f4efe3;color:#1b1813;font-family:'Source Serif 4';padding-bottom:60px}
+.s8 .mast{text-align:center;padding:26px 0 8px;border-bottom:4px double #1b1813}
+.s8 .mast h1{font:400 72px UnifrakturMaguntia;line-height:1}
+.s8 .strip{display:flex;justify-content:space-between;font:600 12px Inter;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:1px solid #1b1813}
+.s8 .front{display:grid;grid-template-columns:1fr 2fr 1fr;gap:0;margin-top:20px}
+.s8 .col{padding:0 18px;border-right:1px solid #1b181355}
+.s8 .col:last-child{border-right:0}
+.s8 h2{font:900 46px/1 'Playfair Display';text-align:center;margin-bottom:10px}
+.s8 h3{font:700 22px/1.1 'Playfair Display';margin-bottom:6px}
+.s8 .dk{font:italic 17px/1.35 'Source Serif 4';text-align:center;margin-bottom:12px}
+.s8 p{font-size:15px;line-height:1.5;text-align:justify;hyphens:auto}
+.s8 .by{font:600 11px Inter;text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;color:#6b6252}
+.s8 .st{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #1b181355}
+.s8 .ph{height:230px;margin-bottom:12px;filter:grayscale(1) contrast(1.1)}
+.s8 .ph .img{height:100%;font-size:48px}
+.s8 .colz{columns:2;column-gap:28px;column-rule:1px solid #1b181355}
+</style>
+</head>
+<body>
+<div id="sw"><b>Round 2 · Websites</b><span id="btns"></span><span class="note">Sample headlines, not real news · ← → keys switch</span></div>
+<div id="desc"></div>
+<div id="stage"></div>
+
+<script>
+const N=[
+ {t:'Foreign investors net-sell ฿4.2bn as SET drops 1.8%',tp:'SET',imp:3,src:'Bangkok Post',ago:'12 min',hr:'09:48',n:14,why:'Your watchlist is mostly SET50, so a broad sell-off hits it directly.',big:'−1.8%',sent:'Bearish'},
+ {t:'Bank of Thailand holds policy rate at 1.50%, hints at Q1 cut',tp:'Macro',imp:3,src:'Reuters',ago:'38 min',hr:'09:22',n:22,why:'A cut would lift bond prices; bank margins could narrow.',big:'1.50%',sent:'Neutral'},
+ {t:'US Fed signals pause; baht firms to 34.1 per dollar',tp:'Macro',imp:2,src:'Bloomberg',ago:'1 hr',hr:'09:00',n:31,why:'A stronger baht trims returns on USD holdings.',big:'34.10',sent:'Neutral'},
+ {t:'Regulator fines audit network over quality-control lapses',tp:'Audit',imp:2,src:'Financial Times',ago:'2 hr',hr:'08:02',n:9,why:'Audit-quality enforcement is rising, a likely Big 4 interview topic.',big:'$2.1m',sent:'—'},
+ {t:'Startup launches AI agent that automates month-end close',tp:'AI',imp:2,src:'TechCrunch',ago:'3 hr',hr:'07:15',n:6,why:'Overlaps your accounting + automation interest.',big:'5 days→1',sent:'—'},
+ {t:'Thai bank stocks rally after Q3 earnings beat estimates',tp:'SET',imp:1,src:'The Nation',ago:'4 hr',hr:'06:10',n:7,why:'Sector context for bank holdings.',big:'+2.4%',sent:'Bullish'},
+ {t:'IFRS 18 explained: what changes in the income statement',tp:'Audit',imp:1,src:'IFRS Foundation',ago:'6 hr',hr:'04:00',n:3,why:'A new standard you would audit against from 2027.',big:'2027',sent:'—'},
+ {t:'Survey: 7 in 10 audit firms now use generative AI tools',tp:'AI',imp:1,src:'Accounting Today',ago:'8 hr',hr:'02:05',n:5,why:'Shows the skills employers will expect.',big:'70%',sent:'—'}
+];
+const TOP=['Top','SET','Macro','Audit','AI'];
+const G={SET:'linear-gradient(135deg,#ff416c,#ff4b2b)',Macro:'linear-gradient(135deg,#f7971e,#ffd200)',Audit:'linear-gradient(135deg,#11998e,#38ef7d)',AI:'linear-gradient(135deg,#4776e6,#8e54e9)'};
+const C={SET:'#ff4d6d',Macro:'#f5b700',Audit:'#2ec4a6',AI:'#6c7cff'};
+const img=(x,extra='')=>`<div class="img" style="background:${G[x.tp]};${extra}"><small>${x.tp}</small>${x.big}</div>`;
+const byImp=[...N].sort((a,b)=>b.imp-a.imp||N.indexOf(a)-N.indexOf(b));
+const imp=i=>['','Low','Medium','High'][i];
+const spark=(up)=>{let p=[],y=20;for(let i=0;i<20;i++){y+=(Math.sin(i*1.7+(up?1:3))*4)+(up?-0.6:0.6);p.push(`${i*6},${y}`)}return `<svg width="114" height="40"><polyline points="${p.join(' ')}" fill="none" stroke="${up?'#3fb950':'#f85149'}" stroke-width="2"/></svg>`};
+
+const S=[
+{name:'Digg-style',d:'<b>1. Digg-style homepage.</b> Clean white, a big lead story plus a numbered "Trending" list, then a card grid with images. Feels like a modern social news site. <i>Ref: digg.com, Reddit.</i>',
+ r:()=>{const [h,...rest]=byImp;return `<div class="s1"><header><div class="wrap nav"><span class="logo">radar</span><nav>${TOP.map((t,i)=>`<a class="${i?'':'on'}">${t}</a>`).join('')}</nav><div class="r"><span class="srch">Search news…</span><span class="btn">Get alerts</span></div></div></header>
+ <div class="wrap"><div class="hero"><div>${img(h)}<h1>${h.t}</h1><div class="meta">${h.src} · ${h.ago} ago · ▲ ${h.n} sources</div><p class="why" style="margin-top:10px">${h.why}</p></div>
+ <div class="trend"><h2>Trending now</h2><ol>${rest.slice(0,5).map((x,i)=>`<li><span class="n">${i+2}</span><div><div class="meta">${x.tp} · ${x.ago}</div><h3>${x.t}</h3><div class="vote">▲ ${x.n}</div></div></li>`).join('')}</ol></div></div>
+ <div class="sec">More stories</div><div class="grid">${rest.slice(0,6).map(x=>`<div class="card">${img(x)}<h3>${x.t}</h3><div class="meta">${x.src} · ${x.ago} ago</div><p class="why" style="font-size:14px;margin-top:6px">${x.why}</p></div>`).join('')}</div></div></div>`}},
+
+{name:'Finance portal',d:'<b>2. Finance portal.</b> Live ticker strip, three columns: latest list, lead story, markets table and watchlist. Feels like a serious market site. <i>Ref: Yahoo Finance, CNBC, Kaohoon.</i>',
+ r:()=>{const [h,s1,s2]=byImp;return `<div class="s2"><div class="tick"><span>SET 1,412.30 <b class="dn">−1.80%</b></span><span>SET50 912.44 <b class="dn">−2.02%</b></span><span>USD/THB 34.10 <b class="up">−0.41%</b></span><span>GOLD 2,684 <b class="up">+0.62%</b></span><span>S&amp;P 500 6,012 <b class="up">+0.21%</b></span><span>BTC 91,240 <b class="dn">−1.1%</b></span></div>
+ <header><div class="wrap nav"><span class="logo">Radar Finance</span><nav>${TOP.map((t,i)=>`<a class="${i?'':'on'}">${t}</a>`).join('')}</nav><span class="srch">Search tickers or news</span></div></header>
+ <div class="wrap cols"><div class="box lat"><h4>Latest</h4><ul>${N.map(x=>`<li><time>${x.hr} · ${x.tp}</time>${x.t}</li>`).join('')}</ul></div>
+ <div><div class="box hero">${img(h)}<h1><span class="badge">HIGH</span>${h.t}</h1><p class="why">${h.why}</p><div class="meta" style="margin-top:8px">${h.src} · ${h.ago} ago · ${h.n} sources</div></div>
+ <div class="subs">${[s1,s2].map(x=>`<div class="box"><div class="meta">${x.tp} · ${x.ago} ago</div><h3>${x.t}</h3><p class="why" style="font-size:14px">${x.why}</p></div>`).join('')}</div></div>
+ <div><div class="box"><h4>Markets</h4><table>${[['SET','1,412.30','dn','−1.80%'],['SET50','912.44','dn','−2.02%'],['USD/THB','34.10','up','−0.41%'],['Gold','2,684','up','+0.62%'],['TH 10Y','2.41%','up','−3 bp']].map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="${r[2]}">${r[3]}</td></tr>`).join('')}</table></div>
+ <div class="box wl"><h4>Your watchlist</h4><table>${[['KBANK','dn','−2.6%'],['PTT','dn','−1.2%'],['CPALL','up','+0.4%'],['AOT','dn','−0.8%']].map(r=>`<tr><td><b>${r[0]}</b></td><td class="${r[1]}">${r[2]}</td></tr>`).join('')}</table></div></div></div></div>`}},
+
+{name:'Magazine',d:'<b>3. Business magazine.</b> Serif headlines, red section labels, an uneven grid with one big lead. Feels considered and premium. <i>Ref: The Economist, Bloomberg Businessweek.</i>',
+ r:()=>{const [h,...r]=byImp;return `<div class="s3"><div class="redbar"></div><div class="wrap"><div class="mast"><h1>The Radar</h1><nav>${TOP.map(t=>`<a>${t}</a>`).join('')}</nav></div><div class="date">Monday, 17 November 2026 · Today's briefing: 8 stories, 3 that matter to you</div>
+ <div class="lay"><div class="lead">${img(h)}<div class="kick">${h.tp} · Top story</div><h2>${h.t}</h2><p>${h.why}</p><div class="src">${h.src} · ${h.ago} ago</div></div>
+ ${r.slice(0,4).map(x=>`<div class="art"><div class="kick">${x.tp}</div><h3>${x.t}</h3><p>${x.why}</p><div class="src">${x.src} · ${x.ago} ago</div></div>`).join('')}</div>
+ <div class="row">${r.slice(4).concat(r.slice(0,1)).map(x=>`<div><div class="kick">${x.tp}</div><h3 style="font-size:19px">${x.t}</h3><div class="src">${x.src}</div></div>`).join('')}</div></div></div>`}},
+
+{name:'Dark dashboard',d:'<b>4. Dark dashboard.</b> Sidebar navigation, summary numbers, a news table with bullish/bearish tags, mini charts on the right. Feels like a trading tool. <i>Ref: TradingView, Koyfin, Linear.</i>',
+ r:()=>`<div class="s4"><aside><div class="logo"><i></i>Radar</div>${['Feed','Watchlist','Alerts','Saved'].map((x,i)=>`<a class="${i?'':'on'}">${x}</a>`).join('')}<h5>Topics</h5>${['SET','Macro','Audit','AI'].map(t=>`<a><span style="color:${C[t]}">●</span> ${t}</a>`).join('')}<h5>Settings</h5><a>Keywords</a><a>Telegram</a></aside>
+ <main><div class="h"><h1>Today's feed</h1><span>Last check 09:52 · next 10:22</span></div>
+ <div class="kpis"><div class="kpi"><small>High importance</small><b style="color:#f85149">2</b></div><div class="kpi"><small>New stories</small><b>8</b></div><div class="kpi"><small>Alerts sent</small><b>2</b></div><div class="kpi"><small>Sources checked</small><b>24</b></div></div>
+ <div class="two"><div class="panel"><h4>Stories · sorted by importance</h4>${byImp.map(x=>`<div class="nr"><time>${x.hr}</time><span class="tp" style="background:${C[x.tp]}22;color:${C[x.tp]}">${x.tp}</span><div><b style="font-weight:600">${x.t}</b><span class="w">${x.why}</span></div><span class="sent" style="color:${x.sent=='Bearish'?'#f85149':x.sent=='Bullish'?'#3fb950':'#8b949e'}">${x.sent}</span></div>`).join('')}</div>
+ <div class="panel"><h4>Markets</h4>${[['SET','1,412.30',0,'−1.80%'],['USD/THB','34.10',1,'−0.41%'],['Gold','2,684',1,'+0.62%'],['SET Banks','421.8',1,'+2.40%']].map(r=>`<div class="chart"><div><span>${r[0]}</span><b style="color:${r[2]?'#3fb950':'#f85149'}">${r[3]}</b></div><div><b>${r[1]}</b>${spark(r[2])}</div></div>`).join('')}</div></div></main></div>`},
+
+{name:'Bento grid',d:'<b>5. Bento grid.</b> Rounded tiles of different sizes, each story built around one big number. Bold colors on warm grey. Feels modern and playful but tidy. <i>Ref: Apple keynote slides, bento layouts on Dribbble.</i>',
+ r:()=>{const cls=['dark w2 h2','org','lime','sky w2','','w2','','dark w4'];return `<div class="s5"><div class="wrap"><div class="nav"><span class="logo">radar.</span><nav>${TOP.map((t,i)=>`<span class="${i?'':'on'}">${t}</span>`).join('')}</nav></div>
+ <div class="greet">Good morning. <em>2 things</em> need<br>your attention today.</div>
+ <div class="bento">${byImp.map((x,i)=>`<div class="t ${cls[i]}"><small>${x.tp} · ${x.ago} ago</small>${i==0||i==3?`<div class="big" ${i==0?'style="font-size:110px"':''}>${x.big}</div>`:''}<div><h3 ${i==0?'style="font-size:30px"':''}>${x.t}</h3>${i==0||i==3||i==5?`<p class="why" style="margin-top:8px">${x.why}</p>`:''}</div></div>`).join('')}</div></div></div>`}},
+
+{name:'Reader (3-pane)',d:'<b>6. Reader, three panes.</b> Topics, story list, then a reading pane with an AI summary, "why it matters to you" and the outlets covering it. Feels like an email app. Best for actually reading. <i>Ref: Feedly, Readwise Reader, Outlook.</i>',
+ r:()=>{const x=byImp[0];return `<div class="s6"><aside><div class="logo">Radar</div><a class="on">All stories <em>8</em></a><a>High only <em>2</em></a><a>Saved <em>0</em></a><h5>Topics</h5>${['SET','Macro','Audit','AI'].map(t=>`<a><span><span style="color:${C[t]}">●</span> ${t}</span><em>${N.filter(n=>n.tp==t).length}</em></a>`).join('')}</aside>
+ <div class="list"><div class="hd">Today <small>sorted by importance</small></div>${byImp.map((n,i)=>`<div class="it ${i?'':'on'}"><div class="m"><span class="dot" style="background:${C[n.tp]}"></span>${n.tp} · ${n.src} · ${n.ago}${n.imp==3?' · <b style="color:#d7263d">HIGH</b>':''}</div><h3>${n.t}</h3></div>`).join('')}</div>
+ <div class="read"><div class="m">${x.tp} · ${x.src} · ${x.ago} ago · <b style="color:#d7263d">High importance</b></div><h1>${x.t}</h1>
+ <div class="box"><h4>Summary</h4><ul><li>Foreign funds sold a net ฿4.2bn of Thai shares in one session.</li><li>The SET index closed down 1.8%, led by banks and energy.</li><li>Analysts point to the stronger US dollar and profit-taking.</li></ul></div>
+ <div class="box yb"><h4>Why it matters to you</h4><p style="font-size:15px;line-height:1.5">${x.why}</p></div>
+ <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#888;margin:22px 0 10px">Covered by ${x.n} outlets</h4><div class="srcs">${['Bangkok Post','Reuters','Kaohoon','Thansettakij','The Nation','Bloomberg','+8 more'].map(s=>`<span>${s}</span>`).join('')}</div><a class="open">Open original ↗</a></div></div>`}},
+
+{name:'Swiss poster',d:'<b>7. Swiss poster.</b> Huge uppercase type, black and white with one red, strict grid lines and numbers. Feels like a design studio. Very strong portfolio look. <i>Ref: International Typographic Style, design-agency sites.</i>',
+ r:()=>{const [h,...r]=byImp;return `<div class="s7"><div class="wrap"><div class="top"><span class="logo">RADAR — NEWS THAT MATTERS</span>${TOP.slice(1).map(t=>`<span>${t}</span>`).join('')}</div>
+ <div class="hero"><div class="no">01</div><h1>${h.t}</h1><div class="side"><b style="color:#ff2d00">${h.tp} / HIGH</b><br>${h.why}<br><br>${h.src}<br>${h.ago} ago</div></div>
+ <div class="list">${r.map((x,i)=>`<div class="c"><div class="no">${String(i+2).padStart(2,'0')}</div><div class="lab"><b>${x.tp}</b> / ${imp(x.imp)} / ${x.ago}</div><h3>${x.t}</h3><p>${x.why}</p></div>`).join('')}<div class="c" style="background:#ff2d00;color:#fff;grid-column:span 2;border-right:0"><div class="no">→</div><h3 style="margin-top:14px">Get the important ones on Telegram</h3></div></div></div></div>`}},
+
+{name:'Broadsheet',d:'<b>8. Old-school broadsheet.</b> Blackletter masthead, justified columns, black-and-white photo, paper color. Feels like a printed newspaper front page. Lots of charm, less scannable. <i>Ref: classic newspaper front pages.</i>',
+ r:()=>{const [h,s,...r]=byImp;return `<div class="s8"><div class="wrap"><div class="mast"><h1>The Daily Radar</h1></div><div class="strip"><span>Vol. I · No. 1</span><span>Monday, 17 November 2026</span><span>Bangkok Edition · Free</span></div>
+ <div class="front"><div class="col">${r.slice(0,3).map(x=>`<div class="st"><h3>${x.t}</h3><div class="by">${x.src} · ${x.tp}</div><p>${x.why} The story was picked up by ${x.n} outlets in the past ${x.ago}.</p></div>`).join('')}</div>
+ <div class="col"><h2>${h.t}</h2><div class="dk">${h.why}</div><div class="ph">${img(h)}</div><div class="by" style="text-align:center">${h.src} · ${h.ago} ago · ${h.n} outlets reporting</div><div class="colz"><p>Foreign funds sold a net ฿4.2 billion of Thai shares in a single session, pushing the SET index down 1.8 per cent by the close. Banks and energy names led the decline as a firmer US dollar drew money out of emerging markets.</p><p>Analysts said profit-taking after a strong October added to the pressure, though several expect buying to return should the central bank signal a rate cut early next year.</p></div></div>
+ <div class="col"><div class="st"><h3 style="font-size:28px">${s.t}</h3><div class="by">${s.src} · ${s.tp}</div><p>${s.why} Economists polled ahead of the decision were split on timing.</p></div>${r.slice(3).map(x=>`<div class="st"><h3>${x.t}</h3><div class="by">${x.src}</div><p>${x.why}</p></div>`).join('')}</div></div></div></div>`}}
+];
+let cur=0;
+function show(i){cur=(i+S.length)%S.length;document.getElementById('stage').innerHTML=S[cur].r();document.getElementById('desc').innerHTML=S[cur].d;document.querySelectorAll('#btns button').forEach((b,j)=>b.className=j==cur?'on':'');location.hash=cur+1;window.scrollTo(0,0)}
+document.getElementById('btns').innerHTML=S.map((s,i)=>`<button onclick="show(${i})">${i+1}. ${s.name}</button>`).join(' ');
+document.addEventListener('keydown',e=>{if(e.key=='ArrowRight')show(cur+1);if(e.key=='ArrowLeft')show(cur-1)});
+show((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body>
+</html>
