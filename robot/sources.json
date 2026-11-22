@@ -1,13 +1,135 @@
 [
-  {"name": "BBC Business", "url": "https://feeds.bbci.co.uk/news/business/rss.xml", "trust": 2},
-  {"name": "CNBC Top News", "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html", "trust": 2},
-  {"name": "MarketWatch Top", "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories", "trust": 1},
-  {"name": "Bangkok Post Business", "url": "https://www.bangkokpost.com/rss/data/business.xml", "trust": 2},
-  {"name": "Google News: SET Thailand", "url": "https://news.google.com/rss/search?q=SET+index+Thailand+stocks+when:2d&hl=en-US&gl=US&ceid=US:en", "trust": 1},
-  {"name": "Google News: Bank of Thailand", "url": "https://news.google.com/rss/search?q=%22Bank+of+Thailand%22+when:2d&hl=en-US&gl=US&ceid=US:en", "trust": 1},
-  {"name": "Google News: Fed", "url": "https://news.google.com/rss/search?q=%22Federal+Reserve%22+when:2d&hl=en-US&gl=US&ceid=US:en", "trust": 1},
-  {"name": "Google News: Audit IFRS", "url": "https://news.google.com/rss/search?q=Deloitte+OR+PwC+OR+KPMG+OR+IFRS+audit+when:2d&hl=en-US&gl=US&ceid=US:en", "trust": 1},
-  {"name": "Google News: AI finance", "url": "https://news.google.com/rss/search?q=AI+accounting+OR+%22AI+audit%22+OR+%22AI+in+finance%22+when:2d&hl=en-US&gl=US&ceid=US:en", "trust": 1},
-  {"name": "Yahoo Finance: NVDA", "url": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVDA&region=US&lang=en-US", "trust": 1},
-  {"name": "Yahoo Finance: AAPL", "url": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL&region=US&lang=en-US", "trust": 1}
+  {
+    "name": "Bloomberg Markets",
+    "outlet": "Bloomberg",
+    "url": "https://feeds.bloomberg.com/markets/news.rss",
+    "trust": 2
+  },
+  {
+    "name": "Bloomberg Economics",
+    "outlet": "Bloomberg",
+    "url": "https://feeds.bloomberg.com/economics/news.rss",
+    "trust": 2
+  },
+  {
+    "name": "Financial Times Markets",
+    "outlet": "Financial Times",
+    "url": "https://www.ft.com/markets?format=rss",
+    "trust": 2
+  },
+  {
+    "name": "Google News: Reuters",
+    "url": "https://news.google.com/rss/search?q=site%3Areuters.com+business+OR+markets+OR+economy+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 2
+  },
+  {
+    "name": "Google News: AP business",
+    "url": "https://news.google.com/rss/search?q=site%3Aapnews.com+business+OR+economy+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 2
+  },
+  {
+    "name": "Google News: Business headlines",
+    "url": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "CNBC World",
+    "outlet": "CNBC",
+    "url": "https://www.cnbc.com/id/100727362/device/rss/rss.html",
+    "trust": 2
+  },
+  {
+    "name": "CNBC Top News",
+    "outlet": "CNBC",
+    "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "trust": 2
+  },
+  {
+    "name": "BBC Business",
+    "outlet": "BBC",
+    "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+    "trust": 2
+  },
+  {
+    "name": "MarketWatch Top",
+    "outlet": "MarketWatch",
+    "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+    "trust": 1
+  },
+  {
+    "name": "Google News: Fed",
+    "url": "https://news.google.com/rss/search?q=%22Federal+Reserve%22+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "Google News: Audit IFRS",
+    "url": "https://news.google.com/rss/search?q=Deloitte+OR+PwC+OR+KPMG+OR+IFRS+audit+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "Google News: AI finance",
+    "url": "https://news.google.com/rss/search?q=AI+accounting+OR+%22AI+audit%22+OR+%22AI+in+finance%22+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "Bangkok Post Business",
+    "outlet": "Bangkok Post",
+    "url": "https://www.bangkokpost.com/rss/data/business.xml",
+    "trust": 2
+  },
+  {
+    "name": "Khaosod English",
+    "outlet": "Khaosod English",
+    "url": "https://www.khaosodenglish.com/feed/",
+    "trust": 1
+  },
+  {
+    "name": "Google News: SET Thailand",
+    "url": "https://news.google.com/rss/search?q=SET+index+Thailand+stocks+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "Google News: Bank of Thailand",
+    "url": "https://news.google.com/rss/search?q=%22Bank+of+Thailand%22+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "Google News: Thailand economy",
+    "url": "https://news.google.com/rss/search?q=Thailand+economy+OR+Thai+baht+OR+Thai+exports+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "trust": 1
+  },
+  {
+    "name": "Prachachat Business",
+    "outlet": "Prachachat (ประชาชาติธุรกิจ)",
+    "url": "https://www.prachachat.net/feed",
+    "trust": 1
+  },
+  {
+    "name": "THE STANDARD WEALTH",
+    "outlet": "THE STANDARD",
+    "url": "https://thestandard.co/category/wealth/feed/",
+    "trust": 2
+  },
+  {
+    "name": "Kaohoon",
+    "outlet": "Kaohoon (ข่าวหุ้น)",
+    "url": "https://www.kaohoon.com/feed",
+    "trust": 1
+  },
+  {
+    "name": "InfoQuest",
+    "outlet": "InfoQuest",
+    "url": "https://www.infoquest.co.th/feed",
+    "trust": 2
+  },
+  {
+    "name": "Google News TH: ตลาดหุ้น",
+    "url": "https://news.google.com/rss/search?q=%E0%B8%95%E0%B8%A5%E0%B8%B2%E0%B8%94%E0%B8%AB%E0%B8%B8%E0%B9%89%E0%B8%99%E0%B9%84%E0%B8%97%E0%B8%A2+OR+%E0%B8%AB%E0%B8%B8%E0%B9%89%E0%B8%99%E0%B9%84%E0%B8%97%E0%B8%A2+OR+SET+when:1d&hl=th&gl=TH&ceid=TH:th",
+    "trust": 1
+  },
+  {
+    "name": "Google News TH: เศรษฐกิจ",
+    "url": "https://news.google.com/rss/search?q=%E0%B9%80%E0%B8%A8%E0%B8%A3%E0%B8%A9%E0%B8%90%E0%B8%81%E0%B8%B4%E0%B8%88%E0%B9%84%E0%B8%97%E0%B8%A2+OR+%E0%B9%81%E0%B8%9A%E0%B8%87%E0%B8%81%E0%B9%8C%E0%B8%8A%E0%B8%B2%E0%B8%95%E0%B8%B4+OR+%E0%B8%81%E0%B8%99%E0%B8%87+when:1d&hl=th&gl=TH&ceid=TH:th",
+    "trust": 1
+  }
 ]

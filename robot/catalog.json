@@ -8,7 +8,13 @@
       "Thai stocks",
       "Thai shares",
       "foreign investors",
-      "Thai market"
+      "Thai market",
+      "ตลาดหุ้น",
+      "หุ้นไทย",
+      "ดัชนี SET",
+      "ตลท.",
+      "ต่างชาติขาย",
+      "ต่างชาติซื้อ"
     ],
     "Thai economy & BOT": [
       "Bank of Thailand",
@@ -16,7 +22,14 @@
       "Thai economy",
       "baht",
       "Thailand's economy",
-      "Thai exports"
+      "Thai exports",
+      "แบงก์ชาติ",
+      "ธปท.",
+      "กนง.",
+      "เศรษฐกิจไทย",
+      "ดอกเบี้ยนโยบาย",
+      "เงินบาท",
+      "ส่งออกไทย"
     ],
     "Global macro & Fed": [
       "Federal Reserve",
@@ -30,7 +43,11 @@
       "ECB",
       "GDP",
       "tariff",
-      "tariffs"
+      "tariffs",
+      "เฟด",
+      "ดอกเบี้ยสหรัฐ",
+      "เงินเฟ้อ",
+      "ภาษีนำเข้า"
     ],
     "Big 4 / audit / IFRS": [
       "Big Four",
@@ -44,7 +61,10 @@
       "auditors",
       "IFRS",
       "TFRS",
-      "accounting"
+      "accounting",
+      "ผู้สอบบัญชี",
+      "มาตรฐานการบัญชี",
+      "สภาวิชาชีพบัญชี"
     ],
     "AI in finance": [
       "AI",
@@ -65,7 +85,9 @@
       "Microsoft",
       "Alphabet",
       "Google",
-      "Meta"
+      "Meta",
+      "ชิป",
+      "เซมิคอนดักเตอร์"
     ],
     "Energy & oil": [
       "oil",
@@ -74,7 +96,11 @@
       "OPEC",
       "natural gas",
       "LNG",
-      "energy prices"
+      "energy prices",
+      "น้ำมัน",
+      "ราคาน้ำมัน",
+      "พลังงาน",
+      "ก๊าซธรรมชาติ"
     ],
     "Banking": [
       "bank",
@@ -84,7 +110,10 @@
       "Kasikorn",
       "SCB",
       "Bangkok Bank",
-      "Krungthai"
+      "Krungthai",
+      "ธนาคาร",
+      "แบงก์",
+      "สินเชื่อ"
     ],
     "Crypto": [
       "bitcoin",
@@ -92,7 +121,10 @@
       "cryptocurrency",
       "ether",
       "stablecoin",
-      "stablecoins"
+      "stablecoins",
+      "คริปโท",
+      "คริปโต",
+      "บิตคอยน์"
     ],
     "Fintech": [
       "fintech",
@@ -100,21 +132,28 @@
       "digital payments",
       "neobank",
       "PromptPay",
-      "e-wallet"
+      "e-wallet",
+      "ฟินเทค",
+      "พร้อมเพย์",
+      "เป๋าตัง"
     ],
     "China economy": [
       "China",
       "Chinese economy",
       "yuan",
       "PBOC",
-      "Beijing"
+      "Beijing",
+      "เศรษฐกิจจีน",
+      "ทางการจีน"
     ],
     "Commodities & gold": [
       "gold",
       "silver",
       "copper",
       "commodity",
-      "commodities"
+      "commodities",
+      "ทองคำ",
+      "ราคาทอง"
     ]
   },
   "default_watchlist": [
@@ -156,16 +195,31 @@
     "MarketBeat": 0,
     "Simply Wall St": 0,
     "AOL.com": 0,
-    "Yahoo Finance": 1
+    "Yahoo Finance": 1,
+    "MarketWatch": 1,
+    "InfoQuest": 2,
+    "Prachachat (ประชาชาติธุรกิจ)": 1,
+    "ประชาชาติธุรกิจ": 1,
+    "Kaohoon (ข่าวหุ้น)": 1,
+    "ข่าวหุ้น": 1,
+    "กรุงเทพธุรกิจ": 2,
+    "ฐานเศรษฐกิจ": 1,
+    "ทันหุ้น": 1,
+    "Thairath": 1,
+    "ไทยรัฐ": 1,
+    "Khaosod English": 1,
+    "THE STANDARD": 2
   },
   "tickers": {
     "NVDA": [
       "Nvidia",
-      "NVDA"
+      "NVDA",
+      "เอ็นวิเดีย"
     ],
     "AAPL": [
       "Apple",
-      "AAPL"
+      "AAPL",
+      "แอปเปิล"
     ],
     "MSFT": [
       "Microsoft",
@@ -186,57 +240,73 @@
     ],
     "TSLA": [
       "Tesla",
-      "TSLA"
+      "TSLA",
+      "เทสลา"
     ],
     "TSM": [
       "TSMC",
       "Taiwan Semiconductor"
     ],
     "PTT": [
-      "PTT"
+      "PTT",
+      "ปตท."
     ],
     "KBANK": [
       "Kasikornbank",
       "KBank",
-      "KBANK"
+      "KBANK",
+      "กสิกรไทย"
     ],
     "SCB": [
       "SCB X",
       "SCBX",
-      "Siam Commercial Bank"
+      "Siam Commercial Bank",
+      "ไทยพาณิชย์",
+      "เอสซีบี เอกซ์"
     ],
     "BBL": [
-      "Bangkok Bank"
+      "Bangkok Bank",
+      "ธนาคารกรุงเทพ"
     ],
     "KTB": [
       "Krungthai",
-      "Krung Thai Bank"
+      "Krung Thai Bank",
+      "กรุงไทย"
     ],
     "CPALL": [
       "CP All",
-      "CPALL"
+      "CPALL",
+      "ซีพี ออลล์",
+      "ซีพีออลล์"
     ],
     "AOT": [
       "Airports of Thailand",
-      "AOT"
+      "AOT",
+      "ท่าอากาศยานไทย",
+      "ทอท."
     ],
     "ADVANC": [
       "Advanced Info Service",
-      "ADVANC"
+      "ADVANC",
+      "แอดวานซ์ อินโฟร์"
     ],
     "DELTA": [
-      "Delta Electronics"
+      "Delta Electronics",
+      "เดลต้า อีเลคโทรนิคส์"
     ],
     "GULF": [
       "Gulf Energy",
-      "Gulf Development"
+      "Gulf Development",
+      "กัลฟ์"
     ],
     "CPN": [
-      "Central Pattana"
+      "Central Pattana",
+      "เซ็นทรัลพัฒนา"
     ],
     "BDMS": [
       "Bangkok Dusit Medical",
-      "BDMS"
+      "BDMS",
+      "กรุงเทพดุสิตเวชการ"
     ]
   },
   "yahoo_symbols": {
@@ -253,5 +323,52 @@
     "GULF": "GULF.BK",
     "CPN": "CPN.BK",
     "BDMS": "BDMS.BK"
+  },
+  "outlet_block": {
+    "_note": "Stories from these outlets are dropped completely (spam, SEO farms, off-topic).",
+    "list": [
+      "Wisevoter",
+      "Global Advisory Experts",
+      "Traders Union",
+      "ad-hoc-news.de",
+      "Billionaires.Africa",
+      "MarketBeat",
+      "TipRanks",
+      "GuruFocus",
+      "Simply Wall St",
+      "24/7 Wall St.",
+      "InvestorPlace",
+      "Benzinga",
+      "Zacks",
+      "Zacks Investment Research",
+      "AOL.com",
+      "Blockchain News"
+    ]
+  },
+  "outlet_alias": {
+    "_note": "Different spellings of the same outlet, so one outlet is never counted as two sources.",
+    "Bloomberg.com": "Bloomberg",
+    "Bloomberg News": "Bloomberg",
+    "Reuters.com": "Reuters",
+    "AP News": "Associated Press",
+    "The Associated Press": "Associated Press",
+    "CNBC.com": "CNBC",
+    "BBC News": "BBC",
+    "FT.com": "Financial Times",
+    "The Financial Times": "Financial Times",
+    "Bangkok Post.com": "Bangkok Post",
+    "ข่าวหุ้นธุรกิจออนไลน์": "Kaohoon (ข่าวหุ้น)",
+    "ข่าวหุ้น": "Kaohoon (ข่าวหุ้น)",
+    "kaohoon.com": "Kaohoon (ข่าวหุ้น)",
+    "ประชาชาติธุรกิจ": "Prachachat (ประชาชาติธุรกิจ)",
+    "prachachat.net": "Prachachat (ประชาชาติธุรกิจ)",
+    "bangkokbiznews": "กรุงเทพธุรกิจ",
+    "Bangkok Biz News": "กรุงเทพธุรกิจ",
+    "thestandard.co": "THE STANDARD",
+    "Yahoo Finance UK": "Yahoo Finance",
+    "สำนักข่าวอินโฟเควสท์": "InfoQuest",
+    "อินโฟเควสท์": "InfoQuest",
+    "The Standard": "THE STANDARD",
+    "THE STANDARD WEALTH": "THE STANDARD"
   }
 }

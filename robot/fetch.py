@@ -28,6 +28,9 @@ OUT = HERE.parent / "out"
 USER_AGENT = "Mozilla/5.0 (compatible; InvestmentCenterBot/0.1)"
 MAX_AGE_HOURS = 48          # ignore stories older than this
 GROUP_SIMILARITY = 0.34     # how alike two headlines must be to count as the same story
+MAX_PER_FEED = 25           # newest items kept from each feed, so no single feed can flood the list
+MAX_PER_STOCK_FEED = 6      # newest items from each watchlist stock's Yahoo feed
+MAX_STOCK_FEEDS = 8         # watchlist stocks that get their own Yahoo headline feed
 QUOTE_PAGE = re.compile(r"stock price,? news,? quote|quote (&|and) history|stock price today|stock quote", re.I)  # price pages, not news
 STOPWORDS = set("""a an the of to in on for and or as at by with from is are was be been after
 over into its it this that new says say said amid vs will could may than more most up down""".split())
@@ -83,7 +86,7 @@ def fetch_feed(src):
     for it in root.iter("item"):
         title = clean(it.findtext("title"))
         link = (it.findtext("link") or "").strip()
-        outlet = src["name"]
+        outlet = src.get("outlet", src["name"])
         source_tag = it.find("source")  # Google News names the real outlet here
         if source_tag is not None and source_tag.text:
             outlet = source_tag.text.strip()
@@ -99,11 +102,20 @@ def fetch_feed(src):
                 "feed": src["name"],
                 "trust": src.get("trust", 1),
             })
-    return src, items, None
+    items.sort(key=lambda i: i["published"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    return src, items[:src.get("max", MAX_PER_FEED)], None
+
+
+THAI_RUN = re.compile(r"[฀-๿]+")
 
 
 def words(title):
-    return {w for w in re.findall(r"[a-z0-9]+", title.lower()) if w not in STOPWORDS and len(w) > 1}
+    """Comparable pieces of a headline: English words, plus 3-letter slices of Thai text (Thai has no spaces)."""
+    t = title.lower()
+    out = {w for w in re.findall(r"[a-z0-9]+", t) if w not in STOPWORDS and len(w) > 1}
+    for run in THAI_RUN.findall(t):
+        out |= {run[k:k + 3] for k in range(max(1, len(run) - 2))}
+    return out
 
 
 def similarity(a, b):
@@ -115,7 +127,7 @@ def group_stories(items):
     groups = []
     for item in sorted(items, key=lambda x: x["published"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True):
         w = words(item["title"])
-        for g in groups:
+        for g in (groups if len(w) >= 3 else []):   # too little text to compare safely: keep it on its own
             if similarity(w, g["words"]) >= GROUP_SIMILARITY:
                 g["items"].append(item)
                 break
@@ -184,6 +196,19 @@ def company_name(name):
     return n.title() if n.isupper() else n
 
 
+def stock_feeds(watchlist, catalog):
+    """Yahoo Finance headlines for your watchlist stocks (not Thai .BK stocks: Yahoo has little for them;
+    Thai stocks are covered by the Thai news feeds). Capped per stock so one name can't flood the list."""
+    feeds = []
+    for t in [t for t in watchlist if t][:MAX_STOCK_FEEDS]:
+        y = catalog.get("yahoo_symbols", {}).get(t, t)
+        if y.upper().endswith(".BK") or not re.fullmatch(r"[A-Za-z0-9.^=-]{1,15}", y):
+            continue
+        feeds.append({"name": f"Yahoo Finance: {t}", "outlet": "Yahoo Finance", "trust": 1, "max": MAX_PER_STOCK_FEED,
+                      "url": f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={y}&region=US&lang=en-US"})
+    return feeds
+
+
 def personal_feeds(custom_topics, extra_tickers, watch_names):
     """Extra Google News searches for your own topics and stocks (capped).
     They only bring in more articles; a story is tagged with your topic/stock only if its text mentions it."""
@@ -221,7 +246,7 @@ def collect(watchlist=None, verbose=True, custom_topics=None, watch_names=None):
     watch_names = watch_names or {}
     custom_topics = [t for t in (custom_topics or []) if t and t not in catalog["topics"]][:MAX_CUSTOM_TOPICS]
     extra_tickers = [t for t in (watchlist or []) if t not in catalog["tickers"]][:MAX_EXTRA_TICKERS]
-    sources = sources + personal_feeds(custom_topics, extra_tickers, watch_names)
+    sources = sources + stock_feeds(watchlist or catalog["default_watchlist"], catalog) + personal_feeds(custom_topics, extra_tickers, watch_names)
     topic_rx = {t: [matcher(k) for k in kws] for t, kws in catalog["topics"].items()}
     for t in custom_topics:
         topic_rx[t] = [word_rx(t)]
@@ -234,11 +259,14 @@ def collect(watchlist=None, verbose=True, custom_topics=None, watch_names=None):
 
     watchlist = set(watchlist or catalog["default_watchlist"])
     outlet_trust = {k: v for k, v in catalog["outlet_trust"].items() if not k.startswith("_")}
+    blocked = {o.lower() for o in catalog.get("outlet_block", {}).get("list", [])}
 
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = list(pool.map(fetch_feed, sources))
+    alias = {k: v for k, v in catalog.get("outlet_alias", {}).items() if not k.startswith("_")}
     for _, feed_items, _ in results:
         for it in feed_items:
+            it["outlet"] = alias.get(it["outlet"], it["outlet"])
             if it["outlet"] in outlet_trust:
                 it["trust"] = outlet_trust[it["outlet"]]
 
@@ -249,7 +277,7 @@ def collect(watchlist=None, verbose=True, custom_topics=None, watch_names=None):
         if verbose or err:
             print(f"  {'FAIL' if err else 'ok  '}  {src['name']:<32} {len(feed_items):>3} items" + (f"   ({err[:80]})" if err else ""))
         for it in feed_items:
-            if it["link"] in seen:
+            if it["link"] in seen or it["outlet"].lower() in blocked:
                 continue
             if it["published"] and (now - it["published"]).total_seconds() > MAX_AGE_HOURS * 3600:
                 continue
