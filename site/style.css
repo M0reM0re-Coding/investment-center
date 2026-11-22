@@ -117,8 +117,12 @@ header{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0
 select,input[type=email]{font:inherit;padding:10px 14px;border:1px solid #ddd;border-radius:10px;background:#fff}
 .login{max-width:440px;margin:120px auto 0;text-align:center}
 .login .logo{font-size:36px}
-.login form{display:flex;gap:8px;margin-top:24px}
-.login input{flex:1}
+.login-form{display:flex;flex-direction:column;gap:10px;margin-top:24px;text-align:left}
+.login-form input[type=email],.login-form input[type=password]{font:inherit;padding:12px 14px;border:1px solid #ddd;border-radius:10px;background:#fff}
+.login-form .btn{padding:12px 18px}
+.remember{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--soft);cursor:pointer}
+.remember input{width:16px;height:16px;accent-color:var(--accent)}
+.linkbtn{border:0;background:none;margin-top:14px;color:var(--soft);font-size:14px;font-weight:600;text-decoration:underline}
 .msg{margin-top:16px;font-size:14px;color:var(--soft)}
 .msg.err{color:var(--down)}
 .saved-ok{color:var(--up);font-weight:700;margin-left:12px}

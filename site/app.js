@@ -2,7 +2,17 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 
 const CFG = window.IC_CONFIG;
-const sb = createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { flowType: "pkce" } });
+
+// "Remember me": ticked = login kept in localStorage (survives closing the browser);
+// unticked = sessionStorage (logged out when the browser closes).
+const safe = (fn, fallback = null) => { try { return fn(); } catch { return fallback; } };
+const remember = () => safe(() => localStorage.getItem("ic_remember"), null) !== "0";
+const authStore = {
+  getItem: (k) => safe(() => (remember() ? localStorage : sessionStorage).getItem(k)),
+  setItem: (k, v) => safe(() => (remember() ? localStorage : sessionStorage).setItem(k, v)),
+  removeItem: (k) => { safe(() => localStorage.removeItem(k)); safe(() => sessionStorage.removeItem(k)); },
+};
+const sb = createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { flowType: "pkce", storage: authStore, persistSession: true } });
 const app = document.getElementById("app");
 
 const state = { user: null, settings: null, stories: [], saved: new Set(), filter: "All" };
@@ -176,16 +186,33 @@ function viewSettings() {
   </div></div>`;
 }
 
-function viewLogin(msg = "", err = false) {
+function viewLogin(msg = "", err = false, email = "") {
   return `<div class="login"><div class="logo">investment center</div>
-    <p class="why" style="margin-top:10px">Sign in with your email. We'll send you a one-click login link (no password).</p>
-    <form id="login"><input type="email" id="email" placeholder="you@example.com" required><button class="btn">Send link</button></form>
-    <p class="msg ${err ? "err" : ""}">${esc(msg)}</p></div>`;
+    <p class="why" style="margin-top:10px">Sign in to your news.</p>
+    <form id="login" class="login-form">
+      <input type="email" id="email" placeholder="Email" autocomplete="username" required value="${esc(email)}">
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+      <label class="remember"><input type="checkbox" id="remember" ${remember() ? "checked" : ""}> Remember me</label>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+    <p class="msg ${err ? "err" : ""}">${esc(msg)}</p>
+    <button class="linkbtn" data-act="magic">Email me a login link instead</button></div>`;
 }
+
+const friendly = (m) => /invalid login credentials/i.test(m) ? "Wrong email or password."
+  : /rate limit/i.test(m) ? "Too many login emails were sent. Wait about an hour, or sign in with your password."
+  : /expired|invalid/i.test(m) ? "That login link was already used or has expired. Sign in with your password, or request a new link."
+  : m;
 
 // ---------- router ----------
 function render() {
-  if (!state.user) { app.innerHTML = viewLogin(); return; }
+  if (!state.user) {
+    // A failed email link comes back as #error=...; show it in plain words and tidy the address bar
+    const err = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("error_description");
+    if (err) history.replaceState(null, "", location.pathname);
+    app.innerHTML = err ? viewLogin(friendly(err), true) : viewLogin();
+    return;
+  }
   const h = location.hash || "#/";
   if (h.startsWith("#/story/")) app.innerHTML = viewStory(h.slice(8));
   else if (h === "#/settings") app.innerHTML = viewSettings();
@@ -208,6 +235,7 @@ app.addEventListener("click", async (e) => {
   if (el.dataset.filter) { state.filter = el.dataset.filter; return render(); }
   if (el.dataset.rm) { state.settings.watchlist = state.settings.watchlist.filter((t) => t !== el.dataset.rm); return render(); }
   const act = el.dataset.act;
+  if (act === "magic") { e.preventDefault(); return sendMagicLink(); }
   if (act === "logout") { await sb.auth.signOut(); return; }
   if (act === "add-ticker") {
     const t = document.getElementById("add-ticker").value;
@@ -226,9 +254,23 @@ app.addEventListener("submit", async (e) => {
   if (e.target.id !== "login") return;
   e.preventDefault();
   const email = document.getElementById("email").value.trim();
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-  app.innerHTML = error ? viewLogin(error.message, true) : viewLogin("Check your email and click the link. You can close this tab.");
+  const password = document.getElementById("password").value;
+  const keep = document.getElementById("remember").checked;
+  if (!password) { app.innerHTML = viewLogin("Enter your password, or use the email link below.", true, email); return; }
+  safe(() => localStorage.setItem("ic_remember", keep ? "1" : "0")); // decides where the login is stored
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) app.innerHTML = viewLogin(friendly(error.message), true, email);
+  // on success, onAuthStateChange loads the news
 });
+
+async function sendMagicLink() {
+  const email = (document.getElementById("email")?.value || "").trim();
+  if (!email) { app.innerHTML = viewLogin("Type your email first, then click the link option.", true); return; }
+  safe(() => localStorage.setItem("ic_remember", document.getElementById("remember")?.checked ? "1" : "0"));
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false } });
+  app.innerHTML = error ? viewLogin(friendly(error.message), true, email)
+    : viewLogin("Check your email and click the newest link (it works once). Open it in this same browser.", false, email);
+}
 
 // ---------- start ----------
 let loading = null; // the user id currently being loaded, so two login signals don't load twice
