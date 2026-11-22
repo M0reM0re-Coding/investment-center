@@ -45,7 +45,8 @@ def story_image(feed_image, links):
 
 
 # ---------- Pexels: a related free photo when the publisher has none ----------
-# Needs PEXELS_API_KEY (free at pexels.com/api). Photos are linked with the photographer's credit, never re-hosted.
+# Needs UNSPLASH_ACCESS_KEY (free at unsplash.com/developers) or PEXELS_API_KEY (pexels.com/api).
+# Unsplash is used first when both exist. Photos are linked with the photographer's credit, never re-hosted.
 import json  # noqa: E402
 import os  # noqa: E402
 import urllib.parse  # noqa: E402
@@ -85,13 +86,59 @@ def pexels_photo(query):
     return result
 
 
+UNSPLASH_MAX_PER_RUN = 20   # free (demo) plan allows 50 searches per hour; the robot runs every 30 minutes
+_unsplash_calls = [0]
+
+def unsplash_photo(query):
+    """Return (image_url, credit) for the best landscape photo on Unsplash, or (None, None). Cached per run."""
+    key = os.environ.get("UNSPLASH_ACCESS_KEY", "").strip()
+    query = (query or "").strip()
+    if not key or not query:
+        return None, None
+    cache_key = "u:" + query
+    if cache_key in _photo_cache:
+        return _photo_cache[cache_key]
+    if _unsplash_calls[0] >= UNSPLASH_MAX_PER_RUN:
+        return None, None
+    _unsplash_calls[0] += 1
+    headers = {"Authorization": f"Client-ID {key}", "Accept-Version": "v1", "User-Agent": USER_AGENT}
+    url = "https://api.unsplash.com/search/photos?" + urllib.parse.urlencode(
+        {"query": query, "orientation": "landscape", "per_page": 5, "content_filter": "high"})
+    result = (None, None)
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=15) as r:
+            photos = json.loads(r.read()).get("results", [])
+        if photos:
+            p = photos[0]
+            img = (p.get("urls") or {}).get("regular")   # Unsplash asks apps to use these links as given (hotlinking)
+            if img and img.startswith("https://"):
+                result = (img, f"Photo: {(p.get('user') or {}).get('name', 'Unsplash')} / Unsplash")
+                # Unsplash's rule: tell them when a photo is used (counts the download for the photographer)
+                dl = (p.get("links") or {}).get("download_location")
+                if dl and dl.startswith("https://api.unsplash.com/"):
+                    try:
+                        urllib.request.urlopen(urllib.request.Request(dl, headers=headers), timeout=10).read()
+                    except Exception:
+                        pass
+    except Exception as e:
+        print(f"  Unsplash search failed for '{query}': {str(e)[:80]}")
+    _photo_cache[cache_key] = result
+    return result
+
+def stock_photo(query):
+    """Unsplash first (if its key is set), then Pexels (if its key is set)."""
+    img, credit = unsplash_photo(query)
+    if not img:
+        img, credit = pexels_photo(query)
+    return img, credit
+
 def related_photo(photo_query, topics):
     """AI photo idea first, then the story's topic backup search."""
-    img, credit = pexels_photo(photo_query)
+    img, credit = stock_photo(photo_query)
     if not img:
         for t in topics or []:
             if t in TOPIC_PHOTO:
-                img, credit = pexels_photo(TOPIC_PHOTO[t])
+                img, credit = stock_photo(TOPIC_PHOTO[t])
                 if img:
                     break
     return img, credit
