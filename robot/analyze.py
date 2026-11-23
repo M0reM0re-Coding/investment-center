@@ -30,7 +30,7 @@ ROOT = Path(__file__).parent.parent
 OUT = ROOT / "out"
 USAGE_FILE = OUT / "gemini_usage.json"
 MAX_CALLS_PER_DAY = 40
-BATCH_SIZE = 10
+BATCH_SIZE = 5   # was 10; full article text makes each story bigger, and smaller calls answer faster
 # Fallback chain: each model has its OWN free daily limit on the same key (checked in AI Studio 2026-11-22).
 # Best quality first (Flash-class, ~20/day each), then high-volume Lite (500/day each), then Gemma (14,400/day).
 # Side-by-side test 2026-11-22: impact scores agree within ±1 across models; Flash writes the most precise
@@ -47,6 +47,11 @@ class QuotaReached(Exception):
 
 class Busy(Exception):
     """Google says the model is temporarily overloaded (HTTP 500/503)."""
+
+
+class Slow(Busy):
+    """No answer within the time limit. That model is skipped for the rest of this run,
+    so a run can't hang for many minutes (GitHub stops a run after 15)."""
 
 
 def load_env():
@@ -87,8 +92,10 @@ def http(url, body=None):
         headers={"Content-Type": "application/json", "x-goog-api-key": key},
     )
     try:
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=60) as r:
             return json.loads(r.read())
+    except (TimeoutError, ConnectionError) as e:  # slow or dropped answer: try the next model instead of crashing
+        raise Slow(f"no answer in time ({type(e).__name__})")
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace")[:300]
         if e.code == 429:
@@ -98,6 +105,8 @@ def http(url, body=None):
         if e.code == 404:
             raise QuotaReached(f"model not available any more (404)")  # skip it for the rest of this run
         raise RuntimeError(f"Gemini HTTP {e.code}: {detail}")
+    except urllib.error.URLError as e:  # network trouble (also wraps timeouts on some systems)
+        raise Busy(f"network problem ({e.reason})")
 
 
 def models():
@@ -111,11 +120,19 @@ def _extract_json(text):
     return json.loads(text[start:end + 1])
 
 
-def gemini_json(prompt, schema):
-    """One AI call that must return JSON matching `schema`. Moves down the model chain when a model's limit is hit."""
-    for model in models():
+def gemini_json(prompt, schema, lite_first=False):
+    """One AI call that must return JSON matching `schema`. Moves down the model chain when a model's limit is hit.
+    lite_first: simple jobs (grouping headlines) use the high-volume Lite models first, saving the scarce Flash calls."""
+    chain = models()
+    if lite_first:
+        chain = [m for m in chain if "lite" in m] + [m for m in chain if "lite" not in m]
+    tries = [(0, m) for m in chain] + [(1, m) for m in chain]  # 2nd round: "busy" (503) usually clears in seconds
+    for rnd, model in tries:
         if model in _exhausted:
             continue
+        if rnd == 1 and model == next(m for m in chain if m not in _exhausted):
+            print("  All models busy: waiting 20 seconds, then one more round")
+            time.sleep(20)
         n = count_call()
         if model.startswith("gemma"):
             body = {"contents": [{"role": "user", "parts": [{"text": prompt + "\n\nReturn ONLY one JSON object, no other text. JSON schema:\n" + json.dumps(schema)}]}],
@@ -126,11 +143,13 @@ def gemini_json(prompt, schema):
         try:
             data = http(f"{API}/models/{model}:generateContent", body)
         except QuotaReached as e:
-            print(f"  {model}: limit reached, switching to the next model ({str(e)[:80]})")
+            print(f"  {model}: limit reached, switching to the next model")
             _exhausted.add(model)
             continue
-        except Busy:
-            print(f"  {model}: busy right now, trying the next model")
+        except Busy as e:
+            print(f"  {model}: {e}, trying the next model")
+            if isinstance(e, Slow):
+                _exhausted.add(model)
             continue
         text = data["candidates"][0]["content"]["parts"][0]["text"]
         print(f"  (AI call {n} today, model {model})")
@@ -150,7 +169,7 @@ def merge_duplicates(stories):
         "Treat as DIFFERENT: separate developments about the same company (e.g. a CEO resignation vs an accounting probe). "
         "Only return groups with 2 or more numbers.\n\n" + listing
     )
-    groups = gemini_json(prompt, schema)["groups"]
+    groups = gemini_json(prompt, schema, lite_first=True)["groups"]
     absorbed, merged = set(), []
     for grp in groups:
         grp = sorted({i for i in grp if 0 <= i < len(stories)})
@@ -184,6 +203,10 @@ ANALYSIS_SCHEMA = {
             "event": {"type": "STRING"},
             "headline": {"type": "STRING"},
             "summary": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "full_story": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "for_you": {"type": "STRING"},
+            "terms": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {
+                "term": {"type": "STRING"}, "explain": {"type": "STRING"}}, "required": ["term", "explain"]}},
             "what_it_means": {"type": "STRING"},
             "winners": {"type": "ARRAY", "items": {"type": "STRING"}},
             "losers": {"type": "ARRAY", "items": {"type": "STRING"}},
@@ -207,10 +230,12 @@ ANALYSIS_SCHEMA = {
 }
 
 ANALYSIS_RULES = """You are a careful financial news analyst writing for a Thai accounting/finance student who invests in Thai (SET) and US stocks.
-For each story below you get every outlet's headline and snippet. Write in plain English.
+For each story below you get every outlet's headline and snippet, and for some stories the text of 1-2 full articles.
+Write in plain English.
 
 STRICT RULES
-- Use ONLY facts present in the given headlines/snippets. Never invent numbers, names, dates or quotes.
+- Use ONLY facts present in the given headlines/snippets/article text. Never invent numbers, names, dates or quotes.
+- Never copy sentences from the article text: always write in your own words.
 - If a detail is unclear or outlets disagree, say so (e.g. "reports differ on the size").
 - If a claim comes from a single unnamed source or "media reports", say it is unconfirmed.
 
@@ -219,7 +244,18 @@ FIELDS
   "fed-rate-decision-dec", "bitcoin-two-year-low". Stories about the same event must get the same label.
 - headline: a neutral, factual rewrite (no clickbait), max 14 words.
 - summary: 4-7 bullet facts, most important first, each one sentence, include the numbers given.
+- full_story: ONLY when the story has ARTICLE TEXT: the story told properly in 3-4 short paragraphs, 200-300 words in total:
+  (1) what happened, (2) the key numbers and details, (3) background: how we got here, (4) reactions and what people
+  disagree on. Plain words; explain jargon in a few words. No analysis or advice here (that goes in what_it_means).
+  When the story has NO article text, return an empty list.
 - what_it_means: 2-3 sentences of analysis: why this matters for markets/investors.
+- for_you: ONE sentence (max 30 words) on why this matters to THIS reader, naming the specific stock(s) or topic(s)
+  from READER'S WATCHLIST/TOPICS below that it touches, e.g. "You follow KBANK: lower card repayments could lift its
+  bad-debt risk." If it touches none of them, return an empty string. Never give buy/sell advice.
+- terms: 2-4 finance or business terms that a student might not know, copied EXACTLY as they are written in your
+  summary, full_story or what_it_means (same spelling and capitals), each with a plain-English explanation of max
+  25 words, e.g. {"term": "short ETF", "explain": "A fund that rises when a stock falls, so its owners lose money
+  when the stock jumps."}. Skip everyday words. Empty list if none.
 - winners / losers: who could benefit / be hurt (companies, sectors, countries). Empty list if none.
 - watch_next: one sentence on what to watch next.
 - impact_parts, each scored 1-10:
@@ -240,11 +276,12 @@ FIELDS
 
 
 def diverse(stories, limit, cap):
-    """Pick the best-scored stories but at most `cap` per main ticker/topic, so one name can't flood the list."""
+    """Pick the best-scored stories but at most `cap` per main ticker/topic, so one name can't flood the list.
+    A widely covered story (3+ outlets) may use one extra slot, never more."""
     picked, counts = [], {}
     for s in stories:
         key = (s["tickers"] or s["topics"] or ["other"])[0]
-        if s["n_sources"] >= 3 or counts.get(key, 0) < cap:  # widely covered stories always get through
+        if counts.get(key, 0) < cap + (1 if s["n_sources"] >= 3 else 0):
             picked.append(s)
             counts[key] = counts.get(key, 0) + 1
         if len(picked) >= limit:
@@ -271,26 +308,39 @@ def drop_same_event(analyzed):
     return list(best.values())
 
 
-def analyze(stories, existing_events=None):
-    """existing_events: [(label, headline)] of recent stories, so Gemini reuses labels instead of inventing new ones."""
+def analyze(stories, existing_events=None, reader=None):
+    """existing_events: [(label, headline)] of recent stories, so Gemini reuses labels instead of inventing new ones.
+    reader: {"watchlist": [...], "topics": [...]} for the for_you line."""
     rules = ANALYSIS_RULES
+    reader = reader or {}
+    names = reader.get("watch_names") or {}
+    watch = [f"{t} ({names[t]})" if names.get(t) else t for t in (reader.get("watchlist") or [])]
+    rules += ("\nREADER'S WATCHLIST: " + (", ".join(watch) or "none")
+              + "\nREADER'S TOPICS: " + (", ".join(reader.get("topics") or []) or "none") + "\n")
     if existing_events:
         listing = "\n".join(f"- {ev}: {hl}" for ev, hl in existing_events[:80])
         rules += ("\nEXISTING EVENTS from the last few days. If a story is about one of these, you MUST reuse "
                   "that exact event label:\n" + listing + "\n")
+    from article import add_texts
+    add_texts(stories)
     results = []
     for start in range(0, len(stories), BATCH_SIZE):
         batch = stories[start:start + BATCH_SIZE]
         blocks = []
         for i, s in enumerate(batch, start):
             lines = [f"- [{l['outlet']}] {l['title']}" for l in s["all_links"][:8]]
-            blocks.append(f"STORY id={i}\nHeadlines:\n" + "\n".join(lines) + f"\nSnippet: {s['snippet'][:400]}")
+            block = f"STORY id={i}\nHeadlines:\n" + "\n".join(lines) + f"\nSnippet: {s['snippet'][:400]}"
+            for outlet, text in s.get("articles") or []:
+                block += f"\nARTICLE TEXT ({outlet}): {text}"
+            blocks.append(block if s.get("articles") else block + "\n(no article text: full_story must be empty)")
         print(f"Analysing stories {start + 1}-{start + len(batch)}...")
         out = gemini_json(rules + "\n\n" + "\n\n".join(blocks), ANALYSIS_SCHEMA)
         by_id = {a["id"]: a for a in out["stories"]}
         for i, s in enumerate(batch, start):
             a = by_id.get(i)
             if a:
+                if not s.get("articles"):
+                    a["full_story"] = []  # never a "full story" made up from headlines alone
                 results.append({**s, "ai": a})
         time.sleep(2)  # stay well under the per-minute limit
     return results
@@ -335,6 +385,11 @@ def main():
         print(f"{a['headline']}   [{s['n_sources']} sources · event: {a['event']}]")
         for b in a["summary"]:
             print(f"  - {b}")
+        if a.get("full_story"):
+            n = sum(len(p.split()) for p in a["full_story"])
+            print(f"  FULL STORY ({n} words, from {', '.join(o for o, _ in s['articles'])}):")
+            for para in a["full_story"]:
+                print(f"    {para}")
         print(f"  Means: {a['what_it_means']}")
         print(f"  Winners: {', '.join(a['winners']) or '-'}   Losers: {', '.join(a['losers']) or '-'}")
         print(f"  Watch: {a['watch_next']}")

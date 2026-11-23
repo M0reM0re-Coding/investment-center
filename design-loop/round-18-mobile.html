@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 18: mobile layouts</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;--hi:#ef4444;--md:#f59e0b;--lo:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e4e4e7;color:var(--ink);padding:28px 16px 80px}
+.intro{max-width:1300px;margin:0 auto 22px}
+.intro h1{font:800 26px 'Inter Tight'}.intro p{color:#444;font-size:14px;margin-top:6px;line-height:1.5;max-width:880px}
+.opt{max-width:1300px;margin:0 auto 46px}
+.opt>h2{font:800 20px 'Inter Tight'}.opt>p{font-size:14px;color:#444;margin:4px 0 14px;max-width:880px;line-height:1.5}
+.pair{display:flex;gap:28px;flex-wrap:wrap}
+.cap{font:700 12px Inter;color:#555;margin-bottom:6px;text-align:center}
+/* phone */
+.ph{width:375px;height:760px;border:10px solid #000;border-radius:44px;overflow:hidden;background:var(--bg);position:relative;box-shadow:0 22px 50px rgba(0,0,0,.22);display:flex;flex-direction:column}
+.sb{height:38px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 24px;font:700 13px Inter}
+.scr{flex:1;overflow:auto;scrollbar-width:none;position:relative}.scr::-webkit-scrollbar{display:none}
+.tabbar{flex:none;height:74px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 6px 20px;background:rgba(255,255,255,.96)}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font:700 10.5px Inter;color:var(--muted)}
+.tabbar a i{font-style:normal;font-size:19px;line-height:1}
+.tabbar a.on{color:var(--ink)}.tabbar a.on i{color:var(--accent)}
+/* shared bits from the site */
+.logo{font:900 18px 'Inter Tight';letter-spacing:-.6px}
+.ic{width:34px;height:34px;border-radius:50%;background:var(--chip);display:grid;place-items:center;font-size:15px}
+.top{display:flex;align-items:center;gap:8px;padding:6px 16px 10px}.top .logo{margin-right:auto}
+.chips{display:flex;gap:6px;overflow:auto;padding:0 16px 10px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.c{flex:none;border:1px solid #e5e5e5;border-radius:99px;padding:7px 12px;font:600 13px Inter;background:#fff;white-space:nowrap}
+.c.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.c small{color:var(--muted);font-weight:700;margin-left:4px}.c.on small{color:#bbb}
+.badge{display:inline-flex;align-items:baseline;gap:3px;border-radius:8px;padding:3px 7px;color:#fff;font:800 13px 'Inter Tight'}
+.badge small{font:800 8px Inter;letter-spacing:.8px}
+.hi{background:var(--hi)}.md{background:var(--md)}.lo{background:var(--lo)}
+.meta{font:600 11px Inter;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.img{background:linear-gradient(135deg,#2b2b33,#4b4b57);position:relative;overflow:hidden}
+.img.g1{background:linear-gradient(135deg,#1f2937,#76b900 160%)}.img.g2{background:linear-gradient(135deg,#7f1d1d,#1f2937)}
+.img.g3{background:linear-gradient(135deg,#0c4a6e,#f59e0b 170%)}.img.g4{background:linear-gradient(135deg,#14532d,#0f172a)}.img.g5{background:linear-gradient(135deg,#312e81,#ec4899 180%)}
+.img::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 6px,transparent 6px 12px)}
+.up{color:var(--up)}.down{color:var(--down)}
+.foryou{background:rgba(255,69,0,.08);border-radius:12px;padding:9px 12px;font-size:13.5px;line-height:1.45}
+.foryou b{font:800 10px Inter;letter-spacing:1px;color:var(--accent);margin-right:6px}
+.sec{font:800 17px 'Inter Tight';padding:16px 16px 8px}
+.term{border-bottom:2px dotted var(--accent)}
+.tag{display:inline-block;padding:3px 9px;border-radius:99px;font:700 11px Inter;background:var(--chip)}
+.tag.bull{background:#dcfce7;color:#166534}
+.note{font-size:11px;color:var(--muted)}
+/* ---------- A: list ---------- */
+.a-must{margin:0 16px 12px;background:#111;color:#fff;border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px}
+.a-must b{font:800 14px 'Inter Tight'}.a-must span{font:600 11.5px Inter;color:#ffb38f;display:block;margin-top:2px}
+.a-must .go{margin-left:auto;background:var(--accent);border-radius:99px;padding:7px 12px;font:800 12px Inter;white-space:nowrap}
+.a-row{display:grid;grid-template-columns:1fr 78px;gap:12px;padding:13px 16px;border-top:1px solid var(--line)}
+.a-row h3{font:700 15.5px/1.28 'Inter Tight';margin:5px 0 6px}
+.a-row .th{width:78px;height:78px;border-radius:12px;position:relative}
+.a-row .th .badge{position:absolute;left:5px;top:5px;padding:2px 5px;font-size:11px}
+.a-row .fy{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.a-lead .th{width:100%;height:190px;border-radius:16px;position:relative}
+.a-lead{padding:4px 16px 14px}.a-lead .th .badge{position:absolute;left:10px;top:10px;font-size:16px;padding:4px 9px}
+.a-lead h2{font:800 21px/1.18 'Inter Tight';margin:10px 0 6px;letter-spacing:-.3px}
+.a-ticker{display:flex;gap:8px;overflow:auto;padding:0 16px 12px;scrollbar-width:none}
+.a-ticker div{flex:none;border:1px solid var(--line);border-radius:12px;padding:7px 10px;font:700 12px Inter}
+.a-ticker div b{font:800 13px 'Inter Tight';margin-right:6px}
+/* story (A) */
+.st-head{position:sticky;top:0;background:rgba(255,255,255,.96);display:flex;align-items:center;gap:8px;padding:6px 12px 8px;border-bottom:1px solid var(--line);z-index:2}
+.st-head .bk{font:700 14px Inter;margin-right:auto}
+.prog{height:3px;background:var(--line)}.prog i{display:block;height:100%;width:28%;background:var(--accent)}
+.st{padding:14px 16px 20px}
+.st h1{font:800 24px/1.14 'Inter Tight';letter-spacing:-.4px;margin:8px 0 10px}
+.impline{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:10px 0 12px}
+.impline .bars{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.impline .bars span{font:700 9px Inter;color:var(--muted);text-transform:uppercase}.impline .bars i{display:block;height:5px;border-radius:9px;background:var(--chip);margin-top:3px;overflow:hidden}.impline .bars em{display:block;height:100%;background:var(--ink)}
+.fs{border-left:3px solid var(--accent);padding-left:12px;margin:14px 0}
+.fs h4,.acc h4{font:800 11px Inter;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.fs p{font-size:15px;line-height:1.62;margin-bottom:10px}
+.acc{border-top:1px solid var(--line);padding:13px 0;display:flex;justify-content:space-between;align-items:center}
+.acc h4{margin:0;color:var(--ink);font-size:12px}
+.acc span{color:var(--muted);font-weight:700}
+.actbar{flex:none;height:76px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 20px;background:#fff}
+.actbar a{display:flex;flex-direction:column;align-items:center;gap:2px;font:700 10.5px Inter;color:var(--soft)}
+.actbar a i{font-style:normal;font-size:18px}
+.actbar a.pri{color:#fff;background:var(--ink);border-radius:14px;margin:0 3px;justify-content:center}
+.tip{position:absolute;left:12px;right:12px;bottom:88px;background:var(--ink);color:#fff;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.tip b{display:block;font-size:12px;margin-bottom:2px}
+/* ---------- B: swipe deck ---------- */
+.b-deck{padding:4px 16px 0;position:relative;height:470px}
+.b-card{position:absolute;left:16px;right:16px;top:4px;height:452px;border-radius:22px;background:#fff;box-shadow:0 12px 30px rgba(0,0,0,.14);overflow:hidden;display:flex;flex-direction:column}
+.b-card.back1{transform:translateY(12px) scale(.95);opacity:.7;box-shadow:none;background:#f1f1f1}
+.b-card.back2{transform:translateY(22px) scale(.9);opacity:.45;box-shadow:none;background:#e9e9e9}
+.b-card .img{height:200px;flex:none}
+.b-card .in{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.b-card h2{font:800 22px/1.16 'Inter Tight';letter-spacing:-.3px}
+.b-card .why{font-size:13.5px;color:var(--soft);line-height:1.45}
+.b-card .sw{margin-top:auto;display:flex;justify-content:space-between;font:800 11px Inter;letter-spacing:.6px}
+.b-card .sw span:first-child{color:var(--muted)}.b-card .sw span:last-child{color:var(--up)}
+.b-cnt{display:flex;justify-content:center;gap:5px;padding:8px 0 4px}.b-cnt i{width:6px;height:6px;border-radius:9px;background:#d4d4d8}.b-cnt i.on{width:18px;background:var(--accent)}
+.b-hero{height:300px;position:relative}
+.b-hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 35%,rgba(0,0,0,.75))}
+.b-hero .tb{position:absolute;top:8px;left:12px;right:12px;display:flex;justify-content:space-between;z-index:1}
+.b-hero .tb .ic{background:rgba(255,255,255,.9)}
+.b-hero .txt{position:absolute;left:16px;right:16px;bottom:16px;color:#fff;z-index:1}
+.b-hero h1{font:800 24px/1.14 'Inter Tight';margin-top:8px}
+.b-sheet{background:#fff;border-radius:22px 22px 0 0;margin-top:-18px;position:relative;padding:16px}
+/* ---------- C: magazine ---------- */
+.c-lead{position:relative;height:330px;margin:0 0 14px}
+.c-lead .shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.82))}
+.c-lead .txt{position:absolute;left:16px;right:16px;bottom:16px;color:#fff}
+.c-lead h2{font:800 24px/1.14 'Inter Tight';margin:8px 0 6px;letter-spacing:-.4px}
+.c-lead .meta{color:#ddd}
+.c-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px}
+.c-tile .img{height:110px;border-radius:14px;position:relative}
+.c-tile .badge{position:absolute;left:6px;top:6px;font-size:11px;padding:2px 6px}
+.c-tile h3{font:700 13.5px/1.25 'Inter Tight';margin:7px 0 3px}
+.c-pill{position:absolute;left:14px;right:14px;bottom:84px;background:#111;color:#fff;border-radius:99px;padding:9px 14px;display:flex;gap:14px;font:700 12px Inter;box-shadow:0 10px 26px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden}
+.c-pill b{font:800 12px 'Inter Tight';margin-right:4px}
+.c-seg{display:flex;gap:4px;background:var(--chip);border-radius:12px;padding:4px;margin:12px 0}
+.c-seg span{flex:1;text-align:center;padding:7px 0;border-radius:9px;font:700 12.5px Inter;color:var(--soft)}
+.c-seg span.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+/* ---------- D: markets first ---------- */
+.d-wl{display:flex;gap:10px;overflow:auto;padding:4px 16px 12px;scrollbar-width:none}
+.d-wl .card{flex:none;width:132px;border-radius:16px;padding:11px 12px;background:#111;color:#fff}
+.d-wl .card b{font:800 15px 'Inter Tight'}.d-wl .card .px{font:800 19px Inter;margin-top:6px}.d-wl .card small{font:700 12px Inter}
+.d-wl .card svg{display:block;margin-top:6px}
+.d-wl .card .n{font:600 10px Inter;color:#aaa;margin-top:4px}
+.d-must{display:flex;gap:10px;overflow:auto;padding:0 16px 6px;scrollbar-width:none}
+.d-must .m{flex:none;width:250px;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.d-must .m .img{height:96px;position:relative}.d-must .m .badge{position:absolute;left:8px;top:8px}
+.d-must .m div.t{padding:9px 11px}.d-must .m h3{font:700 14px/1.25 'Inter Tight'}
+.d-row{display:flex;gap:10px;align-items:flex-start;padding:11px 16px;border-top:1px solid var(--line)}
+.d-row h3{font:700 14.5px/1.28 'Inter Tight';margin-bottom:3px}
+.d-rx{margin:12px 0;border-radius:14px;background:#111;color:#fff;padding:12px 14px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.d-rx b{font:800 16px 'Inter Tight'}.d-rx small{display:block;font:600 10px Inter;color:#aaa}
+.d-rx .big{font:800 20px Inter;color:#4ade80;text-align:right}
+.rec{display:inline-block;background:#111;color:#fff;font:800 11px Inter;border-radius:99px;padding:3px 10px;margin-left:8px;vertical-align:middle}
+</style></head><body>
+
+<div class="intro">
+  <h1>Round 18: a real phone design</h1>
+  <p>Same look as the website (white, Inter Tight headlines, orange accent, impact badges), but four different ways to <b>use</b> it on a phone. Each option shows the home screen and a story. Real headlines from today's robot run; pictures are placeholders. The scrollable areas inside the phones really scroll.</p>
+</div>
+
+<!-- ================= A ================= -->
+<section class="opt"><h2>A. News app list <span class="rec">MY PICK</span></h2>
+<p><b>Scan fast, thumb-friendly.</b> Like Apple News / Reuters apps: one big lead, then compact rows with a small picture on the right. A tab bar at the bottom (News, Calendar, Alerts, Topics) replaces the desktop header. On a story, the actions (Done, Later, Save) sit in a bar at the bottom where your thumb is, and the long sections fold open. <i>Trade-off: less visual than the desktop cards.</i></p>
+<div class="pair">
+ <div><div class="cap">Home</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="scr">
+   <div class="top"><span class="logo">investment center</span><span class="ic">⌕</span><span class="ic">⚙</span></div>
+   <div class="a-must"><div><b>3 must-reads</b><span>NVDA +31.4% today · 7 new</span></div><span class="go">▶ Brief · 3 min</span></div>
+   <div class="a-ticker"><div><b>NVDA</b><span class="up">+31.4%</span></div><div><b>AMD</b><span class="up">+6.1%</span></div><div><b>TSM</b><span class="up">+4.2%</span></div><div><b>PTT</b>0.00%</div><div><b>KBANK</b><span class="up">+0.8%</span></div></div>
+   <div class="chips"><span class="c on">All<small>164</small></span><span class="c">To read<small>143</small></span><span class="c">Watchlist<small>45</small></span><span class="c">Tech &amp; chips<small>60</small></span><span class="c">Banking<small>20</small></span></div>
+   <div class="a-lead"><div class="th img g1"><span class="badge hi">9<small>IMPACT</small></span></div>
+     <h2>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h2>
+     <div class="foryou"><b>FOR YOU</b>NVDA is on your watchlist: biggest one-day move in your list this month.</div>
+     <div class="meta" style="margin-top:8px">CNBC · 6h · ▲ 12 sources</div></div>
+   <div class="a-row"><div><div class="meta">AAPL · 2d · ▲ 26</div><h3>Nvidia stock plunges 14% amid unconfirmed reports of SEC accounting probe</h3><div class="fy">For you: touches NVDA</div></div><div class="th img g2"><span class="badge hi">8</span></div></div>
+   <div class="a-row"><div><div class="meta">Banking · 13h · ▲ 5</div><h3>Bank of Thailand extends 8% credit card minimum payment for two years</h3></div><div class="th img g3"><span class="badge md">5</span></div></div>
+   <div class="a-row"><div><div class="meta">CRWD · 6h · ▲ 3</div><h3>CrowdStrike to acquire Zscaler in $44 billion cybersecurity deal</h3></div><div class="th img g5"><span class="badge hi">7</span></div></div>
+   <div class="a-row"><div><div class="meta">AMZN · 9h · ▲ 3</div><h3>Amazon moves to acquire AI startup Decart's chip software and founders</h3></div><div class="th img g4"><span class="badge md">6</span></div></div>
+  </div>
+  <div class="tabbar"><a class="on"><i>◉</i>News</a><a><i>▦</i>Calendar</a><a><i>🔔</i>Alerts</a><a><i>#</i>Topics</a></div></div></div>
+
+ <div><div class="cap">Story (tap a dotted word)</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="st-head"><span class="bk">‹ News</span><span class="ic">⇪</span></div><div class="prog"><i></i></div>
+  <div class="scr"><div class="st">
+   <div class="meta">AI in finance · Tech &amp; chips · 6h · ▲ 12 sources</div>
+   <h1>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h1>
+   <span class="tag bull">Bullish</span> <span class="tag">NVDA</span> <span class="tag">AMD</span>
+   <div class="impline"><span class="badge hi" style="font-size:20px">9<small>IMPACT</small></span><div class="bars"><span>Reach<i><em style="width:90%"></em></i></span><span>Surprise<i><em style="width:90%"></em></i></span><span>Size<i><em style="width:90%"></em></i></span><span>Timing<i><em style="width:100%"></em></i></span></div></div>
+   <div class="foryou"><b>FOR YOU</b>NVDA is on your watchlist: biggest one-day move in your list this month.</div>
+   <div class="fs"><h4>The full story · 1 min</h4><p>Nvidia's board voted unanimously to bring back co-founder Jensen Huang as <span class="term">chief executive officer</span>, days after rejecting his offer to return.</p><p>The shares jumped more than 30%, recovering nearly all the ground lost since his earlier disclosure…</p></div>
+   <div class="acc"><h4>Key facts (5)</h4><span>+</span></div>
+   <div class="acc"><h4>What it means</h4><span>+</span></div>
+   <div class="acc"><h4>Winners &amp; losers</h4><span>+</span></div>
+   <div class="acc"><h4>Price reaction · NVDA +31.4%</h4><span>+</span></div>
+   <div class="acc"><h4>Sources (54)</h4><span>+</span></div>
+  </div></div>
+  <div class="tip"><b>chief executive officer</b>The CEO: the person who runs the company day to day and answers to the board.</div>
+  <div class="actbar"><a class="pri"><i>✓</i>Done</a><a><i>⏱</i>Later</a><a><i>☆</i>Save</a><a><i>✎</i>Note</a></div></div></div>
+</div></section>
+
+<!-- ================= B ================= -->
+<section class="opt"><h2>B. Swipe briefing</h2>
+<p><b>One story at a time, like a card deck.</b> Home is a stack: swipe right = "Done", left = "Later", tap = read. Perfect for the morning brief and Telegram taps; feels like an app, not a website. The story opens full-bleed with the picture on top. <i>Trade-off: slower to browse many stories; less overview.</i></p>
+<div class="pair">
+ <div><div class="cap">Home</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="scr">
+   <div class="top"><span class="logo">investment center</span><span class="ic">⌕</span></div>
+   <div class="chips"><span class="c on">Must-reads<small>3</small></span><span class="c">To read<small>143</small></span><span class="c">Watchlist<small>45</small></span></div>
+   <div class="b-deck">
+    <div class="b-card back2"></div><div class="b-card back1"></div>
+    <div class="b-card"><div class="img g1" style="position:relative"><span class="badge hi" style="position:absolute;left:12px;top:12px;font-size:18px">9<small>IMPACT</small></span></div>
+     <div class="in"><div class="meta">NVDA · 6h · ▲ 12 sources</div><h2>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h2>
+      <div class="why">Removes big leadership doubt over the company at the centre of the AI trade.</div>
+      <div class="foryou"><b>FOR YOU</b>NVDA is on your watchlist.</div>
+      <div class="sw"><span>← LATER</span><span>DONE →</span></div></div></div>
+   </div>
+   <div class="b-cnt"><i class="on"></i><i></i><i></i></div>
+   <div class="sec">Up next</div>
+   <div class="a-row"><div><div class="meta">AAPL · 2d</div><h3>Nvidia stock plunges 14% amid unconfirmed SEC probe reports</h3></div><div class="th img g2"><span class="badge hi">8</span></div></div>
+  </div>
+  <div class="tabbar"><a class="on"><i>◉</i>Brief</a><a><i>≡</i>All news</a><a><i>▦</i>Calendar</a><a><i>#</i>Topics</a></div></div></div>
+
+ <div><div class="cap">Story</div><div class="ph"><div class="sb" style="position:absolute;z-index:3;left:0;right:0;color:#fff"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="scr">
+   <div class="b-hero img g1"><div class="shade"></div><div class="tb" style="top:44px"><span class="ic">‹</span><span class="ic">☆</span></div>
+    <div class="txt"><span class="badge hi">9<small>IMPACT</small></span><h1>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h1></div></div>
+   <div class="b-sheet">
+    <div class="meta">CNBC + BBC · 6h · ▲ 12 sources</div>
+    <div class="foryou" style="margin:10px 0">NVDA is on your watchlist: biggest one-day move in your list this month.</div>
+    <div class="fs" style="margin-top:0"><h4>The full story · 1 min</h4><p>Nvidia's board voted unanimously to bring back co-founder Jensen Huang as <span class="term">chief executive officer</span>, days after rejecting his offer to return.</p><p>The shares jumped more than 30%…</p></div>
+    <div class="acc"><h4>Key facts</h4><span>+</span></div><div class="acc"><h4>What it means</h4><span>+</span></div>
+   </div>
+  </div>
+  <div class="actbar" style="grid-template-columns:1fr 1fr"><a><i>⏱</i>Later</a><a class="pri"><i>✓</i>Done · next story →</a></div></div></div>
+</div></section>
+
+<!-- ================= C ================= -->
+<section class="opt"><h2>C. Magazine</h2>
+<p><b>Visual and glossy.</b> Edge-to-edge lead picture with the headline on it, then a 2-column grid of picture tiles. A floating price pill above the tab bar keeps your watchlist in view. The story page splits into tabs (Story · Facts · Impact · Sources) instead of one long scroll. <i>Trade-off: pictures take space; headlines in the grid are short.</i></p>
+<div class="pair">
+ <div><div class="cap">Home</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="scr">
+   <div class="top"><span class="logo">investment center</span><span class="ic">⌕</span><span class="ic">⚙</span></div>
+   <div class="chips"><span class="c on">All<small>164</small></span><span class="c">To read<small>143</small></span><span class="c">Tech &amp; chips<small>60</small></span><span class="c">Banking<small>20</small></span></div>
+   <div class="c-lead img g1"><div class="shade"></div><div class="txt"><span class="badge hi">9<small>IMPACT</small></span><h2>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h2><div class="meta">CNBC · 6h · ▲ 12</div></div></div>
+   <div class="c-grid">
+    <div class="c-tile"><div class="img g2"><span class="badge hi">8</span></div><h3>Nvidia plunges 14% on SEC probe reports</h3><div class="meta">2d · ▲ 26</div></div>
+    <div class="c-tile"><div class="img g3"><span class="badge md">5</span></div><h3>BOT keeps 8% card minimum for 2 years</h3><div class="meta">13h · ▲ 5</div></div>
+    <div class="c-tile"><div class="img g5"><span class="badge hi">7</span></div><h3>CrowdStrike to buy Zscaler for $44bn</h3><div class="meta">6h · ▲ 3</div></div>
+    <div class="c-tile"><div class="img g4"><span class="badge md">6</span></div><h3>Amazon moves on AI startup Decart</h3><div class="meta">9h · ▲ 3</div></div>
+   </div><div style="height:70px"></div>
+  </div>
+  <div class="c-pill"><span><b>NVDA</b><span class="up">+31.4%</span></span><span><b>AMD</b><span class="up">+6.1%</span></span><span><b>TSM</b><span class="up">+4.2%</span></span><span><b>PTT</b>0.0%</span></div>
+  <div class="tabbar"><a class="on"><i>◉</i>News</a><a><i>▦</i>Calendar</a><a><i>🔔</i>Alerts</a><a><i>#</i>Topics</a></div></div></div>
+
+ <div><div class="cap">Story</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="st-head"><span class="bk">‹ News</span><span class="ic">☆</span><span class="ic">✓</span></div>
+  <div class="scr"><div class="st" style="padding-top:8px">
+   <div class="img g1" style="height:170px;border-radius:16px;position:relative"><span class="badge hi" style="position:absolute;left:10px;top:10px">9<small>IMPACT</small></span></div>
+   <h1>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h1>
+   <div class="c-seg"><span class="on">Story</span><span>Facts</span><span>Impact</span><span>Sources</span></div>
+   <div class="foryou">NVDA is on your watchlist: biggest one-day move in your list this month.</div>
+   <div class="fs"><h4>The full story · 1 min</h4><p>Nvidia's board voted unanimously to bring back co-founder Jensen Huang as <span class="term">chief executive officer</span>, days after rejecting his offer to return.</p><p>The shares jumped more than 30%, recovering nearly all the ground lost…</p></div>
+  </div></div></div></div>
+</div></section>
+
+<!-- ================= D ================= -->
+<section class="opt"><h2>D. Markets first (wild card)</h2>
+<p><b>Trading-app feel.</b> Opens on your watchlist as big dark price cards you swipe through; tap one to see its news. Then a must-read carousel, then a tight news list. The story page leads with how the stock reacted. <i>Trade-off: news is second; busier screen; closest to a broker app.</i></p>
+<div class="pair">
+ <div><div class="cap">Home</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="scr">
+   <div class="top"><span class="logo">investment center</span><span class="ic">⌕</span><span class="ic">⚙</span></div>
+   <div class="d-wl">
+    <div class="card"><b>NVDA</b><div class="n">Nvidia</div><div class="px">164.50</div><small class="up" style="color:#4ade80">+31.4%</small><svg width="108" height="26"><polyline fill="none" stroke="#4ade80" stroke-width="2" points="0,22 15,21 30,20 45,18 60,9 75,7 90,5 108,3"/></svg></div>
+    <div class="card"><b>AMD</b><div class="n">AMD</div><div class="px">449.70</div><small style="color:#4ade80">+6.1%</small><svg width="108" height="26"><polyline fill="none" stroke="#4ade80" stroke-width="2" points="0,20 18,19 36,16 54,14 72,12 90,10 108,8"/></svg></div>
+    <div class="card"><b>PTT</b><div class="n">PTT PCL</div><div class="px">37.40</div><small style="color:#aaa">0.00%</small><svg width="108" height="26"><polyline fill="none" stroke="#aaa" stroke-width="2" points="0,13 18,14 36,12 54,13 72,13 90,12 108,13"/></svg></div>
+   </div>
+   <div class="sec" style="padding-top:4px">Must-reads</div>
+   <div class="d-must">
+    <div class="m"><div class="img g1"><span class="badge hi">9<small>IMPACT</small></span></div><div class="t"><h3>Nvidia reinstates Jensen Huang as CEO, shares jump 30%</h3><div class="meta" style="margin-top:4px">6h · ▲ 12</div></div></div>
+    <div class="m"><div class="img g2"><span class="badge hi">8</span></div><div class="t"><h3>Nvidia plunges 14% on SEC probe reports</h3></div></div>
+   </div>
+   <div class="sec">Latest</div>
+   <div class="d-row"><span class="badge md">5</span><div><h3>Bank of Thailand extends 8% card minimum for two years</h3><div class="meta">Banking · 13h</div></div></div>
+   <div class="d-row"><span class="badge hi">7</span><div><h3>CrowdStrike to acquire Zscaler in $44bn deal</h3><div class="meta">CRWD · 6h</div></div></div>
+  </div>
+  <div class="tabbar"><a class="on"><i>◉</i>Home</a><a><i>≡</i>News</a><a><i>▦</i>Calendar</a><a><i>🔔</i>Alerts</a></div></div></div>
+
+ <div><div class="cap">Story</div><div class="ph"><div class="sb"><span>9:41</span><span>●●● 5G ▮</span></div>
+  <div class="st-head"><span class="bk">‹ Back</span><span class="ic">☆</span></div>
+  <div class="scr"><div class="st" style="padding-top:8px">
+   <div class="d-rx"><div><b>NVDA</b><small>since this news</small></div><svg width="120" height="30"><polyline fill="none" stroke="#4ade80" stroke-width="2" points="0,26 20,25 40,20 60,12 80,9 100,6 120,4"/></svg><div class="big">+31.4%<small>125.53 → 164.50</small></div></div>
+   <div class="meta">AI in finance · 6h · ▲ 12 sources</div>
+   <h1>Nvidia reinstates Jensen Huang as CEO, shares jump over 30%</h1>
+   <div class="impline"><span class="badge hi" style="font-size:20px">9<small>IMPACT</small></span><div class="bars"><span>Reach<i><em style="width:90%"></em></i></span><span>Surprise<i><em style="width:90%"></em></i></span><span>Size<i><em style="width:90%"></em></i></span><span>Timing<i><em style="width:100%"></em></i></span></div></div>
+   <div class="fs"><h4>The full story · 1 min</h4><p>Nvidia's board voted unanimously to bring back co-founder Jensen Huang as <span class="term">chief executive officer</span>…</p></div>
+   <div class="acc"><h4>Key facts</h4><span>+</span></div><div class="acc"><h4>What it means</h4><span>+</span></div>
+  </div></div>
+  <div class="actbar"><a class="pri"><i>✓</i>Done</a><a><i>⏱</i>Later</a><a><i>☆</i>Save</a><a><i>✎</i>Note</a></div></div></div>
+</div></section>
+</body></html>

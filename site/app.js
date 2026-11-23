@@ -18,7 +18,11 @@ const app = document.getElementById("app");
 const state = {
   cal: { filter: "All", wk: 0, sel: null, range: { days: 28, from: null, to: null }, hide: new Set() }, user: null, settings: null, stories: [], saved: new Set(), filter: "All", draft: null, fresh: new Set(),
   status: new Map(), notes: new Map(), events: [], more: new Map(), since: new Date(Date.now() - 864e5), ready005: false,
-  briefing: null, searchQ: "", searchResults: null, loadingStory: null };
+  briefing: null, searchQ: "", searchResults: null, loadingStory: null, feedLimit: 30 };
+const FEED_STEP = 30;
+// Local preview only (python -m http.server on this PC): lets Claude show sample data before the database is updated.
+// Does nothing on the real site.
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.IC_PREVIEW = { state, render: (...a) => render(...a), brief: (ids) => { state.briefing = { ids, i: 0, res: {} }; drawBriefing(); } };
 // Motion setting (Settings page): "auto" follows the device, "full" always animates, "reduced" keeps things still.
 const motionPref = () => safe(() => localStorage.getItem("ic_motion"), null) || "auto";
 const deviceCalm = () => safe(() => matchMedia("(prefers-reduced-motion: reduce)").matches, false);
@@ -28,12 +32,14 @@ applyMotion();
 // Theme setting (Settings page): "auto" follows the device, "light" or "dark"; dark has 3 styles (design round 16)
 const themePref = () => safe(() => localStorage.getItem("ic_theme"), null) || "auto";
 const darkStyle = () => safe(() => localStorage.getItem("ic_dark"), null) || "graphite";
+const lightStyle = () => safe(() => localStorage.getItem("ic_light"), null) || "crisp"; // design round 16: crisp / newsprint / cloud / sage
 const deviceDark = () => safe(() => matchMedia("(prefers-color-scheme: dark)").matches, false);
 const isDark = () => { const p = themePref(); return p === "dark" || (p === "auto" && deviceDark()); };
 function applyTheme() {
   const r = document.documentElement;
   r.dataset.theme = isDark() ? "dark" : "light";
   r.dataset.dark = darkStyle();
+  r.dataset.light = lightStyle();
 }
 applyTheme();
 safe(() => matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyTheme(); if (location.hash === "#/prefs") render(false); }));
@@ -116,6 +122,7 @@ function storiesFor(f) {
   else if (f === "Later") list = list.filter((s) => stOf(s) === "later");
   else if (f === "Done") list = list.filter((s) => stOf(s) === "done");
   else if (f === "My watchlist") list = list.filter((s) => (s.tickers || []).some((x) => state.settings.watchlist.includes(x)));
+  else if (f.startsWith("$")) list = list.filter((s) => (s.tickers || []).includes(f.slice(1))); // one stock (clicked in prices or tags)
   else if (f !== "All") list = list.filter((s) => (s.topics || []).includes(f));
   else list = list.filter(matches);
   return list;
@@ -159,7 +166,7 @@ function priceStrip() {
     ? MARKETS.map(([y, n, sub]) => ({ y, n, sub }))
     : (state.settings.watchlist || []).map((t) => ({ y: yahoo(t), n: t, sub: cleanName(state.settings.watch_names?.[t] || quotes[yahoo(t)]?.name || "") }));
   const cards = items.length
-    ? items.map((it) => `<div class="mk"><span class="nm">${esc(it.n)}</span><span class="sub">${esc(it.sub)}</span>${pxSpan(it.y)}${chSpan(it.y)}${spSpan(it.y, 74, 40)}</div>`).join("")
+    ? items.map((it) => `<div class="mk${tab === "m" ? "" : " clk"}" ${tab === "m" ? "" : `data-stock="${esc(it.n)}" title="Show ${esc(it.n)} news"`}><span class="nm">${esc(it.n)}</span><span class="sub">${esc(it.sub)}</span>${pxSpan(it.y)}${chSpan(it.y)}${spSpan(it.y, 74, 40)}</div>`).join("")
     : `<p class="note">Your watchlist is empty. Add stocks in Topics &amp; watchlist.</p>`;
   return `<div class="stripwrap a" data-sig="${esc([tab, ...items.map((it) => it.y + (quotes[it.y] ? "+" : "-"))].join(","))}"><div class="strip-head"><h2>${tab === "m" ? "Markets" : "My watchlist"} <span class="delay">· Yahoo Finance, may be delayed</span>${marketBadges()}</h2>
       <div class="tabs"><button class="${tab === "m" ? "on" : ""}" data-ptab="m">Markets</button><button class="${tab === "w" ? "on" : ""}" data-ptab="w">My watchlist</button></div></div>
@@ -210,8 +217,9 @@ function dock() {
   const m = MARKETS.map(([y, n]) => ({ y, n }));
   const bar = w.length ? w.slice(0, 5) : m.slice(0, 5);
   const rest = w.length ? [...m, ...w.slice(5)] : m.slice(5);
-  const it = (x) => `<span class="it"><b>${esc(x.n)}</b>${pxSpan(x.y)}${chSpan(x.y)}</span>`;
-  const cell = (x) => `<div class="cell"><b>${esc(x.n)}</b><div>${pxSpan(x.y)} ${chSpan(x.y)}</div></div>`;
+  const mine = (x) => (state.settings.watchlist || []).includes(x.n) ? ` data-stock="${esc(x.n)}" title="Show ${esc(x.n)} news"` : "";
+  const it = (x) => `<span class="it${mine(x) ? " clk" : ""}"${mine(x)}><b>${esc(x.n)}</b>${pxSpan(x.y)}${chSpan(x.y)}</span>`;
+  const cell = (x) => `<div class="cell${mine(x) ? " clk" : ""}"${mine(x)}><b>${esc(x.n)}</b><div>${pxSpan(x.y)} ${chSpan(x.y)}</div></div>`;
   return `<div class="dock ${state.dockOpen ? "open" : ""}" data-sig="${esc([state.dockOpen, ...[...w, ...m].map((x) => x.y + (quotes[x.y] ? "+" : "-"))].join(","))}" aria-label="Prices">
     <div class="bar"><span class="lbl">${w.length ? "MY WATCHLIST" : "MARKETS"}</span><div class="items">${calm() ? bar.map(it).join("") : (() => {
         // the whole list scrolls like an exchange ticker; repeated so the loop has no gap
@@ -227,7 +235,10 @@ function setupFilterRow() {
   if (!track) return;
   const on = track.querySelector(".c.on");
   if (on && on.offsetLeft + on.offsetWidth > track.clientWidth) track.scrollLeft = on.offsetLeft - 40; // keep the chosen topic visible
-  const sync = () => track.parentElement.classList.toggle("more", track.scrollLeft + track.clientWidth < track.scrollWidth - 4);
+  const sync = () => {
+    track.parentElement.classList.toggle("more", track.scrollLeft + track.clientWidth < track.scrollWidth - 4);
+    track.parentElement.classList.toggle("less", track.scrollLeft > 4); // ‹ button once you've scrolled right
+  };
   track.onscroll = sync;
   sync();
 }
@@ -301,11 +312,11 @@ async function setStatus(id, status) {
   if (error) console.warn("status not saved", error.message);
 }
 
-// Small round actions on each photo (A style): ✓ done, ⏱ later
+// Small round actions on each photo (A style): ✓ done, clock = later
 const acts = (s) => `<button class="chk ${stOf(s) === "done" ? "on" : ""}" data-done="${s.id}" title="${stOf(s) === "done" ? "Mark as not done" : "Done"}" aria-label="Done">${CHK}</button>
-  <button class="lat ${stOf(s) === "later" ? "on" : ""}" data-later="${s.id}" title="${stOf(s) === "later" ? "Remove from later" : "Read later"}" aria-label="Read later">⏱</button>`;
+  <button class="lat ${stOf(s) === "later" ? "on" : ""}" data-later="${s.id}" title="${stOf(s) === "later" ? "Remove from later" : "Read later"}" aria-label="Read later">${ICO.clock}</button>`;
 const stateCls = (s) => ({ seen: " seen", done: " done", later: " later" }[stOf(s)] || "");
-const metaTags = (s) => `${isNew(s) ? '<span class="newdot"></span><span class="newtag">NEW</span> · ' : ""}${isUpdated(s) ? '<span class="updtag">UPDATED</span> · ' : ""}${stOf(s) === "later" ? '<span class="latertag">⏱ LATER</span> · ' : ""}${state.notes.has(s.id) ? "📝 · " : ""}`;
+const metaTags = (s) => `${isNew(s) ? '<span class="newdot"></span><span class="newtag">NEW</span> · ' : ""}${isUpdated(s) ? '<span class="updtag">UPDATED</span> · ' : ""}${stOf(s) === "later" ? '<span class="latertag">LATER</span> · ' : ""}${state.notes.has(s.id) ? '<span class="notetag">NOTE</span> · ' : ""}`;
 
 // Price reaction: how the stock moved since the robot saved this story
 function sinceMove(s, t) {
@@ -325,7 +336,7 @@ function briefBar() {
   return `<div class="brief a" data-sig="${esc([waiting.length, fresh.length, hi, mover].join("|"))}">${calm() ? "" : BRIEF_BG}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${hi} high-impact${mover}</p></div>
     <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
-    ${waiting.length ? `<button class="go" data-brief>▶ Start briefing · ~${waiting.length} min</button>` : ""}</div>`;
+    ${waiting.length ? `<button class="go" data-brief>▶ Start<span class="hide-sm"> briefing</span> · ~${waiting.length} min</button>` : ""}</div>`;
 }
 
 function queuePanel() {
@@ -338,7 +349,7 @@ function queuePanel() {
   return `<div class="queue a"><h2>Read first <small>${list.length} to read</small></h2>
     ${m.length ? `<div class="prog"><div class="bar"><i style="width:${(done / m.length) * 100}%"></i></div><small>Must-reads today: ${done} of ${m.length} done</small></div>` : ""}
     ${list.length ? list.slice(0, 6).map((s, i) => row(s, i + 1, i === 0)).join("") : `<div class="caught">✓ All caught up</div>`}
-    ${later.length ? `<div class="qsec">LATER (${later.length})</div>${later.slice(0, 4).map((s) => row(s, "⏱", false)).join("")}` : ""}</div>`;
+    ${later.length ? `<div class="qsec">LATER (${later.length})</div>${later.slice(0, 4).map((s) => row(s, ICO.clock, false)).join("")}` : ""}</div>`;
 }
 
 function trendPanel(list) {
@@ -512,8 +523,36 @@ function drawBriefing() {
         <h2>${esc(s.headline)}</h2><ul>${(s.summary || []).slice(0, 4).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
         <p class="why">${esc(s.what_it_means)}</p>
         <div class="act"><div class="dots">${dots}</div><button class="linkbtn" data-bopen="${s.id}">Open full story</button>
-          <button class="btn ghost" data-blater="${s.id}">⏱ Later</button><button class="btn ok" data-bdone="${s.id}">✓ Done · next</button></div></div>
-        <button class="x" data-bclose aria-label="Close">×</button></div>`;
+          <button class="btn ghost" data-blater="${s.id}">Later</button><button class="btn ok" data-bdone="${s.id}">✓ Done · next</button></div></div>
+        <button class="x" data-bclose aria-label="Close">×</button>
+        <div class="swhint mob-only"><span>← Later</span><span>swipe</span><span>Done →</span></div></div>`;
+  if (s && isPhone()) swipeCard(ov.querySelector(".sheet"), s.id);
+}
+// Phone briefing (design round 18, B's swipe deck): drag the card right = Done, left = Later.
+function swipeCard(card, id) {
+  if (!card) return;
+  let x0 = null, y0 = 0, dx = 0, horiz = null;
+  card.addEventListener("pointerdown", (e) => { if (e.target.closest("button,a")) return; x0 = e.clientX; y0 = e.clientY; dx = 0; horiz = null; });
+  card.addEventListener("pointermove", (e) => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    if (horiz === null && (Math.abs(dx) > 8 || Math.abs(e.clientY - y0) > 8)) horiz = Math.abs(dx) > Math.abs(e.clientY - y0);
+    if (!horiz) return; // a vertical move scrolls the card's text instead
+    card.style.transition = "none";
+    card.style.transform = `translateX(${dx}px) rotate(${dx / 25}deg)`;
+    card.dataset.dir = dx > 40 ? "done" : dx < -40 ? "later" : "";
+  });
+  const end = () => {
+    if (x0 === null) return;
+    x0 = null; card.style.transition = "transform .25s var(--ease)";
+    if (horiz && Math.abs(dx) > 90) {
+      card.style.transform = `translateX(${dx > 0 ? 120 : -120}vw) rotate(${dx > 0 ? 12 : -12}deg)`;
+      const st = dx > 0 ? "done" : "later", b = state.briefing;
+      setTimeout(() => { setStatus(id, st); b.res[id] = st; b.i++; drawBriefing(); }, 200);
+    } else { card.style.transform = ""; card.dataset.dir = ""; }
+  };
+  card.addEventListener("pointerup", end);
+  card.addEventListener("pointercancel", end);
 }
 function onBriefClick(e) {
   const el = e.target.closest("[data-bdone],[data-blater],[data-bopen],[data-bclose]");
@@ -544,7 +583,7 @@ function changeStatus(id, wanted, rowSel) {
   const leaving = next !== "seen" && (state.filter === "To read" || rowSel);
   const el = leaving && !calm() ? app.querySelector(rowSel || `.card[data-go="${CSS.escape(id)}"], .lead-wrap[data-id="${CSS.escape(id)}"]`) : null;
   if (el) { el.classList.add("out"); setTimeout(go, 320); } else go();
-  if (next !== "seen") toastUndo(next === "done" ? "✓ Marked as read" : "⏱ Saved for later", () => { setStatus(id, prev || null); render(false); });
+  if (next !== "seen") toastUndo(next === "done" ? "✓ Marked as read" : "Saved for later", () => { setStatus(id, prev || null); render(false); });
 }
 
 // Notes: your one-line takeaway, saved as you type
@@ -605,11 +644,39 @@ function header(active) {
     <div class="r">
       <form class="hsearch" id="hsearch" role="search"><span>⌕</span><input id="hq" type="search" placeholder="Search news & notes" value="${esc(state.searchQ || "")}" autocomplete="off" maxlength="60"></form>
       <span class="live" title="Checks for new stories every 2 minutes"><i></i>LIVE</span>
-      <a class="btn ghost" href="#/settings">Topics &amp; watchlist</a>
+      <a class="btn ghost" href="#/settings">Topics<span class="hide-sm"> &amp; watchlist</span></a>
       <a class="gear ${active === "prefs" ? "on" : ""}" href="#/prefs" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
       <button class="btn" data-act="logout">Sign out</button>
-    </div></div></header>`;
+      <button class="msearch" data-act="msearch" aria-label="Search" title="Search">${ICO.search}</button>
+    </div></div></header>${tabBar()}`;
 }
+// Thin line icons for the phone bars (same stroke style as the settings gear; no emoji)
+const svgI = (d) => `<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICO = {
+  news: svgI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>'),
+  cal: svgI('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  bell: svgI('<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
+  topics: svgI('<path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16"/>'),
+  check: svgI('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+  clock: svgI('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  star: svgI('<path d="m12 3.8 2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/>'),
+  starOn: `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/></svg>`,
+  note: svgI('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
+  search: svgI('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
+};
+// Phone only (design round 18, option A): bottom tab bar instead of the desktop header links
+function tabBar() {
+  const h = location.hash || "#/";
+  const on = (k) => ((k === "news" && (h === "#/" || h.startsWith("#/story") || h.startsWith("#/search"))) || (k === "cal" && h.startsWith("#/calendar"))
+    || (k === "topics" && h === "#/settings" && !state.toAlerts) || (k === "alerts" && h === "#/settings" && state.toAlerts) || (k === "prefs" && h === "#/prefs")) ? "on" : "";
+  return `<nav class="tabbar" aria-label="Pages">
+    <a class="${on("news")}" href="#/">${ICO.news}News</a>
+    <a class="${on("cal")}" href="#/calendar">${ICO.cal}Calendar</a>
+    <a class="${on("alerts")}" href="#/settings" data-tab-alerts="1">${ICO.bell}Alerts</a>
+    <a class="${on("topics")}" href="#/settings" data-tab-topics="1">${ICO.topics}Topics</a></nav>`;
+}
+const isPhone = () => safe(() => matchMedia("(max-width:760px)").matches, false);
+safe(() => matchMedia("(max-width:760px)").addEventListener("change", () => state.user && render(false)));
 
 // Price chips under a story: today's move, plus the move since the story was saved
 const pchips = (s) => (s.tickers || []).filter(followed).slice(0, 2).filter((t) => quotes[yahoo(t)]).map((t) => {
@@ -617,39 +684,88 @@ const pchips = (s) => (s.tickers || []).filter(followed).slice(0, 2).filter((t) 
   return `<span class="pchip"><b>${esc(t)}</b>${pxSpan(yahoo(t))}${chSpan(yahoo(t))}${v === null ? "" : `<span class="since ${v >= 0 ? "up" : "down"}" title="Change since this story was added">since ${sinceTxt(v)}</span>`}</span>`;
 }).join("");
 
+// Phone only: one swipeable row of your watchlist prices (replaces the price cards and the bottom dock). Tap = that stock's news.
+function mTicker() {
+  const wl = state.settings.watchlist || [];
+  const items = wl.length ? wl.map((t) => ({ y: yahoo(t), n: t, stock: t })) : MARKETS.map(([y, n]) => ({ y, n }));
+  return `<div class="mticker a" data-sig="${esc(items.map((x) => x.y + (quotes[x.y] ? "+" : "-")).join(","))}">${items.map((x) =>
+    `<button class="mt"${x.stock ? ` data-stock="${esc(x.stock)}"` : ""}><b>${esc(x.n)}</b>${chSpan(x.y)}</button>`).join("")}</div>`;
+}
+
 function viewFeed() {
   // Filter row (design round 9, option A): quick views | reading status | your topics in one sideways-scrolling row
   const fchip = (c) => `<button class="c ${c === state.filter ? "on" : ""}" data-filter="${esc(c)}">${esc(c)}<span class="count">${storiesFor(c).length}</span></button>`;
-  const filterRow = `<div class="filters a"><div class="quick">${["All", "My watchlist", "Saved"].map(fchip).join("")}</div>
+  const stockChip = state.filter.startsWith("$")
+    ? `<div class="quick"><button class="c on" data-filter="All" title="Back to All">${esc(state.filter.slice(1))} news<span class="count">${storiesFor(state.filter).length}</span> ×</button></div>` : "";
+  const filterRow = `<div class="filters a">${stockChip}<div class="quick">${["All", "My watchlist", "Saved"].map(fchip).join("")}</div>
     <div class="quick">${["To read", "Later", "Done"].map(fchip).join("")}</div>
-    <div class="scroller"><div class="track">${myTopics().map(fchip).join("")}</div><button class="arrow" data-scroll title="More topics" aria-label="More topics">›</button></div></div>`;
+    <div class="scroller"><button class="arrow prev" data-scroll="-1" title="Back" aria-label="Scroll topics back">‹</button><div class="track">${myTopics().map(fchip).join("")}</div><button class="arrow" data-scroll="1" title="More topics" aria-label="More topics">›</button></div></div>`;
   const fr = (s) => (state.fresh.has(s.id) ? " fresh" : "");
   const list = visibleStories();
   let left, trending = [];
   if (!list.length) {
-    const why = { Saved: "Tap ☆ on a story to save it.", "To read": "✓ You've read everything here.", Later: "Press ⏱ on a story to keep it for later.", Done: "Tick ✓ on a story when you've read it." }[state.filter]
+    const why = { Saved: "Tap ☆ on a story to save it.", "To read": "✓ You've read everything here.", Later: "Press Later on a story to keep it for later.", Done: "Tick ✓ on a story when you've read it." }[state.filter]
       || "No stories match this filter in the last 3 days. Try another topic, or add topics in Topics &amp; watchlist.";
     left = `<div class="empty"><h2>${state.filter === "To read" ? "All caught up" : "Nothing here yet"}</h2><p>${why}</p></div>`;
   } else {
     const [h, ...rest0] = list;
     // Right column: Trending now (stories 2-6) normally; the Read first queue only in the "To read" view
     const reading = state.filter === "To read";
-    trending = reading ? [] : rest0.slice(0, 5);
-    const rest = reading ? rest0 : rest0.slice(5);
+    const phone = isPhone(); // phone: one list in rank order (no "Trending" side column that would end up at the bottom)
+    trending = reading || phone ? [] : rest0.slice(0, 5);
+    const all = reading || phone ? rest0 : rest0.slice(5);
+    // Draw 30 cards at a time: drawing all ~140 froze the page for ~100 ms on every redraw (measured 2026-11-24)
+    const rest = all.slice(0, state.feedLimit), hidden = all.length - rest.length;
     left = `<div class="lead-wrap a${fr(h)}${stateCls(h)}" data-id="${h.id}"><div class="mwrap">${`<a class="lead" href="#/story/${h.id}">${media(h, true)}</a>`}${acts(h)}</div>
         <a class="lead" href="#/story/${h.id}"><h1>${esc(h.headline)}</h1></a>
         <div class="rowline"><div class="meta">${metaTags(h)}${esc(h.outlets?.[0])} · ${ago(when(h))} · ▲ ${srcs(h.n_sources)}</div>${star(h)}</div>
         ${heroChart(h)}
+        ${forYou(h)}
         <p class="why" style="margin-top:10px">${esc(h.what_it_means)}</p></div>
       ${rest.length ? `<div class="sec">More stories</div><div class="grid2">${rest.map((s) => `
         <div class="card a${fr(s)}${stateCls(s)}" data-go="${s.id}"><div class="mwrap">${media(s)}${acts(s)}</div><h3>${esc(s.headline)}</h3>
-        <div class="rowline"><div class="meta">${metaTags(s)}${esc(s.outlets?.[0])} · ${ago(when(s))} · ▲ ${s.n_sources}</div>${star(s)}</div>${pchips(s) ? `<div class="vote">${pchips(s)}</div>` : ""}</div>`).join("")}</div>` : ""}`;
+        <div class="rowline"><div class="meta"><span class="mimp ${impClass(s.impact_score)}">${esc(s.impact_score)} impact</span>${metaTags(s)}${esc(s.outlets?.[0])} · ${ago(when(s))} · ▲ ${s.n_sources}</div>${star(s)}</div>${forYou(s, "sm")}${pchips(s) ? `<div class="vote">${pchips(s)}</div>` : ""}</div>`).join("")}</div>` : ""}
+      ${hidden > 0 ? `<div style="text-align:center;margin-top:24px"><button class="btn ghost" data-act="more-stories">Show ${Math.min(hidden, FEED_STEP)} more stories (${hidden} left)</button></div>` : ""}`;
   }
   return `${header("news")}<div class="wrap">
     ${briefBar()}
+    ${mTicker()}
     ${filterRow}
     ${priceStrip()}
     <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending)}${upcomingPanel()}</aside></div></div>${dock()}`;
+}
+
+// "The full story" (design round 16): 3-4 paragraphs the AI wrote from the full articles it could read.
+// Stories saved before this feature have no full_story field at all: show nothing for those.
+// Explain-a-term (design round 17): the first time each hard term appears on the story page it gets a dotted
+// underline; pointing at it (or tapping it on a phone) opens a small box with a plain-English explanation.
+function termMarker(s) {
+  const terms = (Array.isArray(s.terms) ? s.terms : []).filter((t) => t && t.term && t.explain);
+  const used = new Set();
+  return (text) => {
+    let out = esc(text);
+    const spans = [];
+    terms.forEach((t, i) => {
+      if (used.has(i)) return;
+      const needle = esc(t.term), at = out.indexOf(needle);
+      if (at < 0) return;
+      used.add(i);
+      spans.push(`<span class="term" tabindex="0">${needle}<span class="tip" role="tooltip"><b>${needle}</b>${esc(t.explain)}</span></span>`);
+      out = out.slice(0, at) + `\u0000${spans.length - 1}\u0000` + out.slice(at + needle.length); // placeholder, so later terms can't match inside a box
+    });
+    return out.replace(/\u0000(\d+)\u0000/g, (_, n) => spans[n]);
+  };
+}
+const forYou = (s, cls = "") => (s.for_you ? `<p class="foryou ${cls}"><b>For you</b>${esc(s.for_you)}</p>` : "");
+
+function fullStory(s, mark = esc) {
+  const paras = Array.isArray(s.full_story) ? s.full_story.filter(Boolean) : null;
+  if (!paras) return "";
+  if (!paras.length) return `<div class="thin a">Based on headlines only: the full articles for this story couldn't be read (often a paywall). Open the sources on the right for the whole story.</div>`;
+  const words = paras.join(" ").split(/\s+/).length, from = (s.story_from || []).join(" + ");
+  return `<div class="box fs a"><h4>The full story</h4>
+    <div class="by"><span class="pill2">AI-written${from ? ` from ${esc(from)}` : ""}</span><span>· ${Math.max(1, Math.round(words / 220))} min read</span></div>
+    ${paras.map((p) => `<p>${mark(p)}</p>`).join("")}</div>`;
 }
 
 function viewStory(id) {
@@ -664,16 +780,17 @@ function viewStory(id) {
     return `<div class="rx"><b>${esc(t)}</b><span>${fmtPx(Number(s.prices_at[t]))} → ${q ? fmtPx(q.price) : "…"}</span><span class="tnum ${v === null ? "" : v >= 0 ? "up" : "down"}">${v === null ? "—" : sinceTxt(v)}</span></div>`;
   }).join("");
   const outlets = (s.outlets || []).slice(0, 3);
+  const mark = termMarker(s);
   return `${header("news")}<div class="wrap">
     <a class="back a" href="#/">← Back to My News</a>
     <div class="rprog"><i></i></div>
     <div class="detail"><div>
       <div class="meta a">${metaTags(s)}${esc((s.topics || []).join(" · "))} · ${ago(when(s))} · ▲ ${srcs(s.n_sources)}</div>
       <h1 class="a">${esc(s.headline)}</h1>
-      <div class="a" style="margin-bottom:14px"><span class="tag ${sentiment}">${esc(s.sentiment)}</span>${(s.tickers || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+      <div class="a" style="margin-bottom:14px"><span class="tag ${sentiment}">${esc(s.sentiment)}</span>${(s.tickers || []).map((t) => `<button class="tag clk" data-stock="${esc(t)}" title="Show all ${esc(t)} news">${esc(t)}</button>`).join("")}</div>
       <div class="sacts a">
         <button class="sbtn ${st === "done" ? "on-done" : ""}" data-sdone="${s.id}">${st === "done" ? "✓ Done" : "✓ Mark as read"}</button>
-        <button class="sbtn ${st === "later" ? "on-later" : ""}" data-slater="${s.id}">⏱ ${st === "later" ? "In Later" : "Read later"}</button>
+        <button class="sbtn ${st === "later" ? "on-later" : ""}" data-slater="${s.id}">${st === "later" ? "In Later" : "Read later"}</button>
         ${star(s)}
         <details class="mute"><summary>Show less like this ▾</summary><div class="menu">
           ${(s.topics || []).map((t) => `<button data-mute-topic="${esc(t)}">Hide topic “${esc(t)}”</button>`).join("")}
@@ -681,30 +798,48 @@ function viewStory(id) {
           <p class="note">Watchlist news always stays. Undo anytime in Topics &amp; watchlist.</p></div></details>
       </div>
       ${/^https:\/\//.test(s.image_url || "") ? `<figure class="hero-fig"><img class="hero-img" src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()">${s.image_credit ? `<figcaption>${esc(s.image_credit)}</figcaption>` : ""}</figure>` : ""}
-      <div class="box a"><h4>Full detail</h4><ul>${(s.summary || []).map((b) => `<li>${esc(b)}</li>`).join("")}</ul></div>
-      <div class="box a"><h4>What it means</h4><p>${esc(s.what_it_means)}</p></div>
-      <div class="box wl a"><div class="w"><b>Who could win</b>${esc((s.winners || []).join(", ") || "—")}</div><div class="l"><b>Who could lose</b>${esc((s.losers || []).join(", ") || "—")}</div></div>
-      <div class="box a"><h4>Watch next</h4><p>${esc(s.watch_next)}</p></div>
+      <div class="impline mob-only a"><span class="badge ${impClass(s.impact_score)}"><b>${esc(s.impact_score)}</b> <small>IMPACT</small></span>
+        <div class="ibars">${[["Reach", p.reach], ["Surprise", p.surprise], ["Size", p.size], ["Timing", p.timing]].map(([n, v]) => `<span>${n}<i><em style="width:${(v || 0) * 10}%"></em></i></span>`).join("")}</div></div>
+      ${forYou(s, "a")}
+      ${fullStory(s, mark)}
+      ${fold(`Key facts (${(s.summary || []).length})`, `<ul>${(s.summary || []).map((b) => `<li>${mark(b)}</li>`).join("")}</ul>`, !s.full_story?.length)}
+      ${fold("What it means", `<p>${mark(s.what_it_means)}</p>`)}
+      ${(() => { const wl = `<div class="w"><b>Who could win</b>${esc((s.winners || []).join(", ") || "—")}</div><div class="l"><b>Who could lose</b>${esc((s.losers || []).join(", ") || "—")}</div>`;
+        return isPhone() ? fold("Winners &amp; losers", `<div class="wl">${wl}</div>`) : `<div class="box wl a">${wl}</div>`; })()}
+      ${fold("Watch next", `<p>${esc(s.watch_next)}</p>`)}
       <div class="box a"><h4>My takeaway</h4><textarea id="note" data-note="${s.id}" rows="3" maxlength="1000" placeholder="One line for future you: what did you learn, or what will you do?">${esc(state.notes.get(s.id) || "")}</textarea><p class="note" id="note-msg">Saved automatically. Only you can see it.</p></div>
-      <p class="note">Summary and analysis written by AI (Gemini) from ${s.n_sources === 1 ? "1 outlet's" : s.n_sources + " outlets'"} headlines and snippets. Check the original articles before acting on it. Not investment advice.</p>
+      <p class="note">Summary and analysis written by AI (Gemini) from ${s.n_sources === 1 ? "1 outlet's" : s.n_sources + " outlets'"} headlines and snippets${s.full_story?.length ? `, plus the full article${(s.story_from || []).length > 1 ? "s" : ""} from ${esc((s.story_from || []).join(" and "))}` : ""}. Check the original articles before acting on it. Not investment advice.</p>
     </div>
     <aside class="side">
-      <div class="box a">${tile(s)}
+      <div class="box a side-imp">${tile(s)}
         <p style="margin-top:14px;font-weight:600">${esc(s.impact_reason)}</p>
         <div class="bars">${bar("Reach", p.reach)}${bar("Surprise", p.surprise)}${bar("Size", p.size)}${bar("Timing", p.timing)}</div>
         <p class="note">AI impact estimate (1–10).</p>
       </div>
-      ${reaction ? `<div class="box a"><h4>Price reaction</h4>${reaction}<p class="note">Price when this story was added → now (Yahoo Finance, may be delayed).</p></div>` : ""}
-      <div class="box a"><h4>Sources (${(s.links || []).length})</h4><ul class="srcs">${(s.links || []).map((l) =>
-        `<li><b>${esc(l.outlet)}</b><a href="${safeUrl(l.link)}" target="_blank" rel="noopener noreferrer">${esc(l.title)} ↗</a></li>`).join("")}</ul></div>
-    </aside></div></div>`;
+      ${reaction ? fold("Price reaction", `${reaction}<p class="note">Price when this story was added → now (Yahoo Finance, may be delayed).</p>`) : ""}
+      ${fold(`Sources (${(s.links || []).length})`, `<ul class="srcs">${(s.links || []).map((l) =>
+        `<li><b>${esc(l.outlet)}</b><a href="${safeUrl(l.link)}" target="_blank" rel="noopener noreferrer">${esc(l.title)} ↗</a></li>`).join("")}</ul>`)}
+    </aside></div></div>
+    <div class="actbar mob-only" role="toolbar" aria-label="Story actions">
+      <button class="${st === "done" ? "pri" : ""}" data-sdone="${s.id}">${ICO.check}${st === "done" ? "Read" : "Mark read"}</button>
+      <button class="${st === "later" ? "on" : ""}" data-slater="${s.id}">${ICO.clock}${st === "later" ? "In Later" : "Later"}</button>
+      <button class="${state.saved.has(s.id) ? "on" : ""}" data-save="${s.id}">${state.saved.has(s.id) ? ICO.starOn : ICO.star}${state.saved.has(s.id) ? "Saved" : "Save"}</button>
+      <button data-act="note">${ICO.note}Note</button></div>`;
+}
+// A section of the story page. Desktop: an open box like before. Phone: folds open/closed (+) to keep the page short.
+const foldOpen = new Map(); // remembers which sections you opened, so Done / Save (which redraw the page) don't close them
+app.addEventListener("toggle", (e) => { const d = e.target; if (d.matches?.("details.fold")) foldOpen.set(d.dataset.k, d.open); }, true);
+function fold(title, inner, openOnPhone = false, extra = "") {
+  if (!isPhone()) return `<div class="box a ${extra}"><h4>${title}</h4>${inner}</div>`;
+  const k = title.replace(/\s*\(\d+\)$/, ""), open = foldOpen.has(k) ? foldOpen.get(k) : openOnPhone;
+  return `<details class="box fold a ${extra}" data-k="${esc(k)}" ${open ? "open" : ""}><summary><h4>${title}</h4><span class="pm" aria-hidden="true"></span></summary>${inner}</details>`;
 }
 
 function viewSearch() {
   const q = state.searchQ || "", r = state.searchResults;
   const row = (s) => `<div class="sr${stateCls(s)}" data-go="${s.id}">${/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="qi ${impClass(s.impact_score)}">${s.impact_score}</span>`}
     <div><div class="meta">${metaTags(s)}${esc((s.topics || [])[0] || "")} · ${new Date(when(s)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · impact ${s.impact_score}</div>
-    <h3>${esc(s.headline)}</h3>${state.notes.has(s.id) ? `<p class="note">📝 ${esc(state.notes.get(s.id))}</p>` : ""}</div></div>`;
+    <h3>${esc(s.headline)}</h3>${state.notes.has(s.id) ? `<p class="note"><b>Note:</b> ${esc(state.notes.get(s.id))}</p>` : ""}</div></div>`;
   return `${header("news")}<div class="wrap"><div class="panel" style="max-width:900px">
     <a class="back a" href="#/">← Back to My News</a>
     <h1 class="a" style="margin-top:16px">Search: “${esc(q)}”</h1>
@@ -740,6 +875,9 @@ function viewPrefs() {
       ${topt("light", "Light", "White pages, like a newspaper.")}
       ${topt("dark", "Dark", "Dark pages: easier on the eyes at night.")}
     </div>
+    <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">Light style</h3>
+    <div class="dpick a">${[["crisp", "Crisp white", "Clean white, like a newspaper", ["#ffffff", "#f3f3f3", "#111111"]], ["newsprint", "Newsprint", "Warm cream paper, serif headlines", ["#f6f1e7", "#fffaf0", "#231d15"]], ["cloud", "Cloud", "Grey page, floating white cards", ["#eef1f5", "#ffffff", "#0f172a"]], ["sage", "Sage", "Soft green-grey, low glare", ["#eef2ec", "#f8faf6", "#17211a"]]]
+      .map(([k, n, sub, c]) => `<button class="dsw ${lightStyle() === k ? "on" : ""}" data-light-pick="${k}"><span class="sw" style="background:${c[0]};border:1px solid #0000001a"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i><i style="background:#ff4500"></i></span><b>${n}</b><small>${sub}</small></button>`).join("")}</div>
     <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">Dark style</h3>
     <div class="dpick a">${[["graphite", "Graphite", "Soft charcoal greys", ["#0f0f10", "#18181b", "#222226"]], ["black", "True black", "Pure black, high contrast", ["#000", "#0b0b0c", "#151517"]], ["navy", "Midnight", "Deep blue, trading-terminal feel", ["#0a0f1c", "#101829", "#16203a"]]]
       .map(([k, n, sub, c]) => `<button class="dsw ${darkStyle() === k ? "on" : ""}" data-dark-pick="${k}"><span class="sw" style="background:${c[0]}"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i><i style="background:#ff4500"></i></span><b>${n}</b><small>${sub}</small></button>`).join("")}</div>
@@ -753,27 +891,61 @@ function viewPrefs() {
       <button class="btn ghost" data-act="play-intro" ${calm() ? "disabled" : ""}>▶ Play the opening intro</button>
       <span class="note" id="motion-msg" style="margin:0">${calm() ? "The intro is off while motion is reduced." : "Plays the next of the 4 intros."}</span>
     </div>
+    <div class="mob-only" style="margin-top:32px"><h2 class="sec">Account</h2><button class="btn" data-act="logout" style="margin-top:10px">Sign out</button></div>
   </div></div>`;
 }
 
+// ---------- price alerts (tier 3): rules saved in Supabase; the robot checks them every ~30 min ----------
+const MAX_ALERTS = 20;
+const paKind = { move: "moves ±% in a day", above: "goes above", below: "goes below" };
+async function loadAlerts() {
+  const { data, error } = await sb.from("price_alerts").select("*").order("created_at");
+  state.alerts = error ? { error: /price_alerts/.test(error.message) ? "Price alerts need a one-time database update: run supabase/007_full_story.sql in Supabase." : error.message } : data;
+  if (location.hash === "#/settings") render(false);
+}
+function alertsPanel() {
+  const a = state.alerts;
+  if (a === undefined) return `<p class="note">Loading…</p>`;
+  if (a.error) return `<p class="msg err">${esc(a.error)}</p>`;
+  const wl = state.settings.watchlist || [];
+  const rule = (x) => x.kind === "move" ? `moves ±${esc(x.value)}% in a day` : `${paKind[x.kind]} ${fmtPx(Number(x.value))}`;
+  const rows = a.map((x) => `<div class="pa-row ${x.active ? "" : "off"}">
+      <b>${esc(x.ticker)}</b><span>${rule(x)}</span>
+      <span class="pa-st">${x.active ? "On" : "Sent, now off"}${x.fired_note ? ` · last: ${esc(x.fired_note)} (${ago(x.fired_at)})` : ""}</span>
+      ${x.active ? "" : `<button class="btn ghost sm" data-pa-on="${x.id}">Turn on again</button>`}
+      <button class="pa-x" data-pa-rm="${x.id}" title="Delete alert" aria-label="Delete alert">×</button></div>`).join("");
+  return `${rows || `<p class="note">No alerts yet.</p>`}
+    ${wl.length ? `<div class="pa-add">
+      <select id="pa-t" aria-label="Stock">${wl.map((t) => `<option>${esc(t)}</option>`).join("")}</select>
+      <select id="pa-k" aria-label="When">${Object.entries(paKind).map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select>
+      <input id="pa-v" type="number" min="0" step="any" placeholder="5" aria-label="Value">
+      <button class="btn" data-pa-add="1" ${a.length >= MAX_ALERTS ? "disabled" : ""}>Add alert</button></div>
+      <p class="note">“Moves ±%”: tells you once a day when the stock is up or down that much since yesterday's close. “Above / below”: tells you once, then turns itself off. Sent to Telegram. Checked about every 30 minutes, not instantly; prices may be delayed ~15 min. Saves straight away.</p>`
+      : `<p class="note">Add stocks to your watchlist first.</p>`}`;
+}
+
 function viewSettings() {
+  if (state.alerts === undefined && !state.alertsLoading) { state.alertsLoading = true; loadAlerts().finally(() => { state.alertsLoading = false; }); }
   const d = state.draft;
   const extra = d.watchlist.filter((t) => !known(t));
   const chip = (t) => `<span class="chip on" data-chip="${esc(t)}" title="${esc(d.watch_names[t] || "")}">${esc(t)}<button data-rm="${esc(t)}" title="Remove">×</button></span>`;
   const tchip = (t) => `<span class="chip topic" data-chip="${esc(t)}"># ${esc(t)}<button data-rm-t="${esc(t)}" title="Remove">×</button></span>`;
+  const stchip = (t) => `<span class="chip topic" data-chip="${esc(t)}"># ${esc(t)}<button data-rm-st="${esc(t)}" title="Remove">×</button></span>`;
+  const none = !d.watchlist.length && !d.custom_topics.length && !d.topics.length;
   return `${header("")}<div class="wrap"><div class="panel">
     <a class="back a" href="#/">← Back to My News</a>
     <h1 class="a" style="margin-top:16px">Topics &amp; watchlist</h1>
     <p class="why a">Search any stock or subject. Saved to your account, so it's the same on every device. Telegram alerts follow these too.</p>
-    <div class="search a"><span class="mag">⌕</span><input id="q" placeholder="Search stocks or topics, e.g. tesla, gulf, toyota, rare earths…" autocomplete="off" maxlength="40"><div id="res"></div></div>
+    <div class="search a"><span class="mag">⌕</span><input id="q" placeholder="Search stocks or topics, e.g. tesla, gulf, bitcoin, oil, rare earths…" autocomplete="off" maxlength="40"><div id="res"></div></div>
+    <p class="note a">Click the empty search box to browse all topics.</p>
     <h2 class="sec a" style="margin-top:32px">My watchlist &amp; topics</h2>
-    <div class="wlist a">${d.watchlist.map(chip).join("")}${d.custom_topics.map(tchip).join("")}${!d.watchlist.length && !d.custom_topics.length ? `<span class="note">Nothing yet. Search above to add stocks or topics.</span>` : ""}</div>
+    <div class="wlist a">${d.watchlist.map(chip).join("")}${d.topics.map(stchip).join("")}${d.custom_topics.map(tchip).join("")}${none ? `<span class="note">Nothing yet. Search above to add stocks or topics.</span>` : ""}</div>
     <p class="note a">Your own topics: ${d.custom_topics.length} of ${MAX_CUSTOM_TOPICS}. Stocks outside the robot's built-in list get their own news search: ${Math.min(extra.length, MAX_EXTRA_TICKERS)} of ${MAX_EXTRA_TICKERS} used${extra.length > MAX_EXTRA_TICKERS ? ` (the rest still match by name, without their own search)` : ""}. These limits keep the robot inside the free tiers.</p>
+    <h2 class="sec a" style="margin-top:32px">Price alerts</h2>
+    <div class="a" id="pa">${alertsPanel()}</div>
     ${(state.settings.muted_topics || []).length || (state.settings.muted_sources || []).length ? `<h2 class="sec a" style="margin-top:32px">Hidden (show less)</h2>
     <div class="wlist a">${(state.settings.muted_topics || []).map((t) => `<span class="chip muted">Topic: ${esc(t)}<button data-unmute-topic="${esc(t)}" title="Show again">×</button></span>`).join("")}${(state.settings.muted_sources || []).map((o) => `<span class="chip muted">Source: ${esc(o)}<button data-unmute-source="${esc(o)}" title="Show again">×</button></span>`).join("")}</div>
     <p class="note a">Hidden from My News and Telegram alerts. News about your watchlist always shows. Press × to show again (saves straight away).</p>` : ""}
-    <h2 class="sec a" style="margin-top:32px">Suggested topics</h2>
-    <div class="checks">${CFG.topics.map((t) => `<label class="a"><input type="checkbox" data-topic="${esc(t)}" ${d.topics.includes(t) ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div>
     <div class="a" style="margin-top:32px"><button class="btn" data-act="save-settings">Save</button><span id="saved-msg"></span></div>
   </div></div>`;
 }
@@ -784,10 +956,35 @@ const typeName = (t) => ({ EQUITY: "Stock", ETF: "ETF", INDEX: "Index", CRYPTOCU
 const cleanSym = (s) => { const u = String(s || "").toUpperCase(), base = u.replace(/\.BK$/, ""); return CFG.tickers.includes(base) ? base : u; };
 const cleanName = (n) => String(n || "").replace(/^[A-Z0-9&.-]+_/, ""); // Yahoo's Thai names: "PTT_PTT" -> "PTT"
 
+// Built-in topics that match what you typed: by name or by one of the robot's keywords ("bitcoin" -> Crypto)
+function topicMatches(q) {
+  const s = q.trim().toLowerCase(), words = CFG.topic_words || {};
+  if (!s) return CFG.topics.map((t) => ({ t, hit: "" }));
+  // short searches match from the start of a word only ("ai" finds "AI in finance", not "Thai")
+  const fits = (text) => { const x = text.toLowerCase(); return x.split(/[^a-z0-9฀-๿]+/).some((w) => w.startsWith(s)) || (s.length >= 3 && x.includes(s)); };
+  return CFG.topics.map((t) => {
+    if (fits(t)) return { t, hit: "" };
+    const k = (words[t] || []).find(fits);
+    return k ? { t, hit: k } : null;
+  }).filter(Boolean);
+}
+function topicRows(q, start = 0) {
+  const d = state.draft;
+  return topicMatches(q).map(({ t, hit }, i) => {
+    const have = d.topics.includes(t);
+    return `<div class="row ${have ? "dim" : ""}" style="--i:${start + i}" ${have ? "" : `data-stopic-add="${esc(t)}"`}>
+      <span class="sym">#</span><span class="nm">${esc(t)}<small>${hit ? `Matches “${esc(hit)}” · ` : ""}${(CFG.topic_words?.[t] || []).length} keywords the robot watches</small></span>
+      <span class="kind t">${have ? "ADDED" : "+ TOPIC"}</span></div>`;
+  }).join("");
+}
+// Empty search box: list every built-in topic, so you can browse them like the old checklist
+const viewBrowse = () => `<div class="results"><div class="head">TOPICS</div>${topicRows("")}</div>`;
+
 function viewResults(q, list, note = "") {
   const d = state.draft;
   const topic = q.trim().replace(/\s+/g, " ").slice(0, 40);
-  let i = 0;
+  const builtIn = topicMatches(topic);
+  let i = builtIn.length;
   const stockRows = note
     ? `<div class="row dim"><span class="sym">…</span><span class="nm">${esc(note)}</span><span></span></div>`
     : list.length
@@ -800,11 +997,13 @@ function viewResults(q, list, note = "") {
       : `<div class="row dim"><span class="sym">—</span><span class="nm">No stock matches “${esc(topic)}”</span><span></span></div>`;
   const haveT = d.custom_topics.some((t) => t.toLowerCase() === topic.toLowerCase()) || d.topics.includes(topic);
   const fullT = d.custom_topics.length >= MAX_CUSTOM_TOPICS;
-  return `<div class="results"><div class="head">STOCKS FOUND ONLINE</div>${stockRows}
-    <div class="head">OR FOLLOW AS A TOPIC</div>
+  const sameAsBuiltIn = CFG.topics.some((t) => t.toLowerCase() === topic.toLowerCase());
+  return `<div class="results">${builtIn.length ? `<div class="head">TOPICS</div>${topicRows(topic)}` : ""}
+    <div class="head">STOCKS FOUND ONLINE</div>${stockRows}
+    ${sameAsBuiltIn ? "" : `<div class="head">OR FOLLOW AS YOUR OWN TOPIC</div>
     <div class="row ${haveT || fullT ? "dim" : ""}" style="--i:${i}" ${haveT || fullT ? "" : `data-topic-add="${esc(topic)}"`}>
-      <span class="sym">#</span><span class="nm">${esc(topic)}<small>${fullT && !haveT ? `You already follow ${MAX_CUSTOM_TOPICS} of your own topics. Remove one first.` : "The robot searches the news for this phrase"}</small></span>
-      <span class="kind t">${haveT ? "ADDED" : "+ TOPIC"}</span></div></div>`;
+      <span class="sym">#</span><span class="nm">${esc(topic)}<small>${fullT && !haveT ? `You already follow ${MAX_CUSTOM_TOPICS} of your own topics. Remove one first.` : "The robot searches the news for this exact phrase"}</small></span>
+      <span class="kind t">${haveT ? "ADDED" : "+ TOPIC"}</span></div>`}</div>`;
 }
 
 let searchTimer = null, searchSeq = 0;
@@ -976,12 +1175,13 @@ const GLINT = `<svg class="glint" viewBox="0 0 300 30" preserveAspectRatio="none
 const BRIEF_BG = `<svg class="bgline" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60 L60 52 L120 58 L180 40 L240 46 L300 30 L360 38 L420 22 L480 30 L540 18 L600 26 L660 52 L720 58 L780 40 L840 46 L900 30 L960 38 L1020 22 L1080 30 L1140 18 L1200 26"/></svg>`;
 
 // 6. Chart-line page wipe when you move to another page (feed → story, → calendar, …)
-let lastView = null;
+let lastView = null, lastRendered = null;
 function pageWipe() {
   const key = (location.hash || "#/").split("/")[1] || "feed";
   const changed = lastView !== null && key !== lastView;
+  const reading = key === "story" || lastView === "story"; // opening / leaving a story: no wipe, it made reading feel slow
   lastView = key;
-  if (!changed || calm()) return;
+  if (!changed || reading || calm()) return;
   document.querySelector(".pwipe")?.remove();
   const w = document.createElement("div");
   w.className = "pwipe";
@@ -1035,6 +1235,10 @@ function setApp(html, animate) {
 function render(animate = true) {
   applyMotion();
   app.classList.remove("enter", "soft"); void app.offsetWidth;
+  // Opening a story or coming back from one: a short, quick rise instead of the slow page entrance (felt like lag)
+  const viewNow = (location.hash || "#/").split("/")[1] || "feed";
+  app.classList.toggle("quick", viewNow === "story" || lastRendered === "story");
+  if (animate === true) lastRendered = viewNow;
   if (animate === true && !calm()) app.classList.add("enter");
   if (animate === "soft" && !calm()) app.classList.add("soft");
   if (!state.user) {
@@ -1045,7 +1249,7 @@ function render(animate = true) {
     return;
   }
   const h = location.hash || "#/";
-  if (h !== "#/settings") state.draft = null;
+  if (h !== "#/settings") { state.draft = null; state.toAlerts = false; }
   if (h.startsWith("#/story/")) {
     const id = decodeURIComponent(h.slice(8)), s = findStory(id);
     app.innerHTML = viewStory(id);
@@ -1059,7 +1263,10 @@ function render(animate = true) {
     setApp(viewCalendar(), animate);
   }
   else if (h === "#/prefs") app.innerHTML = viewPrefs();
-  else if (h === "#/settings") { state.draft = state.draft || makeDraft(); app.innerHTML = viewSettings(); }
+  else if (h === "#/settings") {
+    state.draft = state.draft || makeDraft(); app.innerHTML = viewSettings();
+    if (state.toAlerts && isPhone()) requestAnimationFrame(() => document.getElementById("pa")?.previousElementSibling?.scrollIntoView({ block: "start" }));
+  }
   else setApp(viewFeed(), animate);
   // soft updates: charts appear already drawn (no redraw flash)
   if (animate === "soft") app.querySelectorAll(".spark.draw").forEach((el) => el.classList.remove("draw"));
@@ -1120,7 +1327,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { ch
 app.addEventListener("click", async (e) => {
   // Clicking outside the search box closes its results
   if (!e.target.closest(".search")) { const r = document.getElementById("res"); if (r) r.innerHTML = ""; }
-  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add]");
+  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics]");
   if (!el) return;
   if (el.dataset.save) {
     e.preventDefault(); e.stopPropagation();
@@ -1130,9 +1337,10 @@ app.addEventListener("click", async (e) => {
     render(false);
     return pop(`[data-save="${CSS.escape(id)}"]`);
   }
-  if (el.dataset.themePick || el.dataset.darkPick) {
+  if (el.dataset.themePick || el.dataset.darkPick || el.dataset.lightPick) {
     if (el.dataset.themePick) safe(() => localStorage.setItem("ic_theme", el.dataset.themePick));
     if (el.dataset.darkPick) { safe(() => localStorage.setItem("ic_dark", el.dataset.darkPick)); if (!isDark()) safe(() => localStorage.setItem("ic_theme", "dark")); }
+    if (el.dataset.lightPick) { safe(() => localStorage.setItem("ic_light", el.dataset.lightPick)); if (isDark()) safe(() => localStorage.setItem("ic_theme", "light")); }
     applyTheme();
     return render(false);
   }
@@ -1168,8 +1376,30 @@ app.addEventListener("click", async (e) => {
     return render(false);
   }
   if (el.dataset.go) { location.hash = `#/story/${el.dataset.go}`; return; }
-  if (el.dataset.filter) { state.filter = el.dataset.filter; render("soft"); return loadQuotes(); }
-  if (el.dataset.scroll !== undefined) { app.querySelector(".filters .track")?.scrollBy({ left: 320, behavior: calm() ? "auto" : "smooth" }); return; }
+  if (el.dataset.filter) { state.filter = el.dataset.filter; state.feedLimit = FEED_STEP; render("soft"); return loadQuotes(); }
+  if (el.dataset.act === "msearch") { const h = app.querySelector("header"); h.classList.toggle("sopen"); if (h.classList.contains("sopen")) document.getElementById("hq")?.focus(); return; }
+  if (el.dataset.act === "note") { const n = document.getElementById("note"); n?.scrollIntoView({ block: "center", behavior: calm() ? "auto" : "smooth" }); n?.focus({ preventScroll: true }); return; }
+  if (el.dataset.tabAlerts || el.dataset.tabTopics) { // bottom tab bar: both live on the Topics & watchlist page
+    state.toAlerts = !!el.dataset.tabAlerts;
+    if (location.hash === "#/settings") { e.preventDefault(); render(false); }
+    return; // otherwise the link changes the page, and render() scrolls to the alerts
+  }
+  if (el.dataset.paAdd) {
+    const t = document.getElementById("pa-t").value, k = document.getElementById("pa-k").value, v = Number(document.getElementById("pa-v").value);
+    if (!(v > 0) || (k === "move" && v > 50)) { toast(k === "move" ? "Enter a % between 0 and 50" : "Enter a price above 0"); return; }
+    const { error } = await sb.from("price_alerts").insert({ user_id: state.user.id, ticker: t, kind: k, value: v });
+    if (error) { toast(`Could not save: ${esc(error.message)}`); return; }
+    return loadAlerts();
+  }
+  if (el.dataset.paRm) { await sb.from("price_alerts").delete().eq("id", el.dataset.paRm); return loadAlerts(); }
+  if (el.dataset.paOn) { await sb.from("price_alerts").update({ active: true }).eq("id", el.dataset.paOn); return loadAlerts(); }
+  if (el.dataset.stock) { // a stock in the prices, the dock or a story's tags: show only its news
+    state.filter = "$" + el.dataset.stock; state.feedLimit = FEED_STEP;
+    if (location.hash && location.hash !== "#/") { location.hash = "#/"; return; }
+    render("soft"); window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" }); return;
+  }
+  if (el.dataset.act === "more-stories") { state.feedLimit += FEED_STEP; return render(false); }
+  if (el.dataset.scroll !== undefined) { app.querySelector(".filters .track")?.scrollBy({ left: 320 * (Number(el.dataset.scroll) || 1), behavior: calm() ? "auto" : "smooth" }); return; }
   if (el.dataset.dock !== undefined) {
     state.dockOpen = !state.dockOpen;
     el.closest(".dock").classList.toggle("open", state.dockOpen);
@@ -1193,6 +1423,12 @@ app.addEventListener("click", async (e) => {
   }
   if (d && el.dataset.rm) { d.watchlist = d.watchlist.filter((t) => t !== el.dataset.rm); delete d.watch_names[el.dataset.rm]; return render(false); }
   if (d && el.dataset.rmT) { d.custom_topics = d.custom_topics.filter((t) => t !== el.dataset.rmT); return render(false); }
+  if (d && el.dataset.stopicAdd) {
+    const on = new Set([...d.topics, el.dataset.stopicAdd]);
+    d.topics = CFG.topics.filter((x) => on.has(x)); // keep the catalog order
+    render(false); return pop(`[data-chip="${CSS.escape(el.dataset.stopicAdd)}"]`);
+  }
+  if (d && el.dataset.rmSt) { d.topics = d.topics.filter((t) => t !== el.dataset.rmSt); return render(false); }
   const act = el.dataset.act;
   if (act === "eye") {
     const pw = document.getElementById("password");
@@ -1224,11 +1460,10 @@ app.addEventListener("change", (e) => {
     state.cal.range = { days: r.days, from: f || null, to: t2 && (!f || t2 >= f) ? t2 : null };
     return render(false);
   }
-  const t = e.target.dataset?.topic;
-  if (!t || !state.draft) return;
-  const on = new Set(state.draft.topics);
-  e.target.checked ? on.add(t) : on.delete(t);
-  state.draft.topics = CFG.topics.filter((x) => on.has(x));
+});
+// Empty search box on Topics & watchlist: show every topic to browse
+app.addEventListener("focusin", (e) => {
+  if (e.target.id === "q" && !e.target.value.trim() && state.draft) document.getElementById("res").innerHTML = viewBrowse();
 });
 
 app.addEventListener("input", (e) => {
@@ -1236,7 +1471,7 @@ app.addEventListener("input", (e) => {
   if (e.target.id !== "q") return;
   const q = e.target.value.trim();
   clearTimeout(searchTimer);
-  if (!q) { searchSeq++; document.getElementById("res").innerHTML = ""; return; }
+  if (!q) { searchSeq++; document.getElementById("res").innerHTML = state.draft ? viewBrowse() : ""; return; }
   searchTimer = setTimeout(() => runSearch(q), 300); // wait until you stop typing
 });
 

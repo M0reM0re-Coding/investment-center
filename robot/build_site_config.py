@@ -27,6 +27,7 @@ def main():
         "supabaseUrl": os.environ["SUPABASE_URL"].rstrip("/"),
         "supabaseKey": key,
         "topics": list(catalog["topics"].keys()),
+        "topic_words": catalog["topics"],  # so the site's search finds "Crypto" when you type "bitcoin"
         "tickers": list(catalog["tickers"].keys()),
         "yahoo": {k: v for k, v in catalog.get("yahoo_symbols", {}).items() if not k.startswith("_")},
     }

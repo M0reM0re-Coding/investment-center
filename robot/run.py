@@ -25,10 +25,13 @@ import prices  # noqa: E402
 import re  # noqa: E402
 from datetime import date, datetime, timedelta, timezone  # noqa: E402
 import notify  # noqa: E402
+import price_alerts  # noqa: E402
 
-GEMINI_DAILY_CAP = int(os.environ.get("GEMINI_DAILY_CAP", "120"))  # safety cap; free tier limits are separate
+GEMINI_DAILY_CAP = int(os.environ.get("GEMINI_DAILY_CAP", "300"))  # safety cap; free tier limits are separate
+# 300 = ~48 merge calls + ~100 writing calls + retries. Billing is OFF on the AI Studio project, so Google can't charge.
 MIN_RULE_SCORE = 4          # stories below this are skipped unless widely covered
-MERGE_WHEN_MORE_THAN = 25   # spend a merge call only when many new stories arrive at once
+MERGE_WHEN_MORE_THAN = 3    # merge on (almost) every run: the headline matcher misses re-worded copies of one event
+                            # (test 2026-11-24: the AI folded 39 headlines into 6 stories). Uses Lite models, ~48 calls/day.
 
 
 def db_counter():
@@ -38,7 +41,8 @@ def db_counter():
     return n
 
 
-NEW_COLUMNS = ("image_credit", "prices_at", "upcoming")  # added by supabase/005_reading.sql
+NEW_COLUMNS = ("image_credit", "prices_at", "upcoming",   # added by supabase/005_reading.sql
+               "full_story", "story_from", "for_you", "terms")  # added by supabase/007_full_story.sql
 
 
 def clean_upcoming(items):
@@ -73,7 +77,22 @@ def to_row(s, watchlist=()):
         "image_url": img, "image_credit": credit,
         "prices_at": prices.prices_now(prices.real_tickers(tickers, watchlist)),  # for "+1.6% since this news"
         "upcoming": clean_upcoming(a.get("upcoming")),
+        "full_story": [p for p in (a.get("full_story") or []) if p.strip()][:5],
+        "story_from": [o for o, _ in s.get("articles") or []] if a.get("full_story") else [],  # outlets the AI read
+        "for_you": (a.get("for_you") or "").strip()[:240] or None,
+        "terms": clean_terms(a.get("terms"), a),
     }
+
+
+def clean_terms(items, a):
+    """Keep only terms that really appear in the text the site shows (so the hover box has a word to sit on)."""
+    text = " ".join((a.get("summary") or []) + (a.get("full_story") or []) + [a.get("what_it_means") or ""])
+    out = []
+    for t in items or []:
+        term, why = str(t.get("term", "")).strip(), str(t.get("explain", "")).strip()
+        if 2 <= len(term) <= 40 and why and term in text and term.lower() not in {x["term"].lower() for x in out}:
+            out.append({"term": term, "explain": why[:200]})
+    return out[:4]
 
 
 def save_new(rows):
@@ -83,7 +102,7 @@ def save_new(rows):
     except RuntimeError as e:
         if not any(c in str(e) for c in NEW_COLUMNS):
             raise
-        print("  Note: run supabase/005_reading.sql to store photo credits, prices and events")
+        print("  Note: run supabase/005_reading.sql and 007_full_story.sql to store photo credits, prices, events and full stories")
         return db.insert_stories([{k: v for k, v in r.items() if k not in NEW_COLUMNS} for r in rows])
 
 
@@ -175,7 +194,9 @@ def main():
             worth = ai.merge_duplicates(worth[:60])
             worth.sort(key=lambda s: (-(s["n_sources"] >= 3), -s["score"]))
         picked = ai.diverse(worth, limit=args.max, cap=2)
-        analyzed = ai.drop_same_event(ai.analyze(picked, [(r["event"], r["headline"]) for r in recent])) if picked else []
+        reader = {"watchlist": settings.get("watchlist") or [], "watch_names": settings.get("watch_names") or {},
+                  "topics": (settings.get("topics") or []) + (settings.get("custom_topics") or [])}
+        analyzed = ai.drop_same_event(ai.analyze(picked, [(r["event"], r["headline"]) for r in recent], reader)) if picked else []
     except (ai.QuotaReached, RuntimeError, ValueError, KeyError) as e:
         # Analysis failed this run: save nothing new, leave these stories unseen so the next run retries them
         print(f"Stopped AI step safely: {str(e)[:200]}")
@@ -220,6 +241,10 @@ def main():
     # Telegram: alerts for new high-impact stories, then the morning brief if it's due
     notify.run_alerts()
     notify.maybe_brief()
+    try:
+        price_alerts.run()
+    except Exception as e:  # a price problem must never stop the rest of the run
+        print(f"Price alerts skipped: {str(e)[:150]}")
     maybe_refresh_earnings(settings.get("watchlist") or [])
 
 

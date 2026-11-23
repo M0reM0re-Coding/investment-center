@@ -28,6 +28,11 @@ def real_tickers(tickers, watchlist=()):
 
 def prices_now(tickers):
     """{ticker: price} for up to 40 tickers, in one or two Yahoo requests. Missing ones are left out."""
+    return {t: q[0] for t, q in quotes(tickers).items()}
+
+
+def quotes(tickers):
+    """{ticker: (price, previous_close or None)} for up to 40 tickers. Missing ones are left out."""
     tickers = list(dict.fromkeys(tickers))[:40]
     out = {}
     for i in range(0, len(tickers), 20):
@@ -42,8 +47,9 @@ def prices_now(tickers):
             for item in data.get("spark", {}).get("result", []):
                 meta = (item.get("response") or [{}])[0].get("meta", {})
                 price = meta.get("regularMarketPrice")
+                prev = meta.get("previousClose") or meta.get("chartPreviousClose")
                 if price is not None and item.get("symbol") in syms:
-                    out[syms[item["symbol"]]] = round(float(price), 4)
+                    out[syms[item["symbol"]]] = (round(float(price), 4), float(prev) if prev else None)
         except Exception as e:
             print(f"  Price lookup failed: {str(e)[:80]}")
     return out
