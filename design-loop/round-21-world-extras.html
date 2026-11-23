@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 21 · World Brief extras</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<style>
+:root{--bg:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--line2:#e2e2e2;--chip:#f3f3f3;--surface:#fff;--accent:#ff4500;--up:#16a34a;--down:#ef4444;
+  --r-eu:#3b82f6;--r-am:#8b5cf6;--r-me:#f59e0b;--r-as:#10b981;--r-af:#ef4444;--r-gl:#64748b;--land:#e9ebee;--sea:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#f6f6f6;color:var(--ink);font-size:14px;line-height:1.45}
+button{font:inherit;cursor:pointer;color:inherit}
+.doc{max-width:1460px;margin:0 auto;padding:28px 16px 80px}
+.doc>h1{font:800 28px "Inter Tight";letter-spacing:-.02em}
+.lead{color:var(--soft);max-width:920px;margin:6px 0}
+.part{margin:44px 0 10px;padding-top:22px;border-top:2px solid #ddd}
+.part h2{font:800 24px "Inter Tight";letter-spacing:-.01em}.part h2 span{color:var(--accent)}
+.opt{margin:26px 0 40px}
+.opt h3{font:800 19px "Inter Tight"}.opt h3 em{font-style:normal;color:var(--accent)}
+.opt .note{color:var(--soft);margin:4px 0 12px;max-width:920px}
+.frames{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.dw{flex:1 1 820px;min-width:0}
+.desk{background:var(--bg);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.phone{width:390px;max-width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:28px;overflow:hidden;height:780px;display:flex;flex-direction:column;position:relative}
+.phone .scroll{flex:1;overflow:auto}
+.lbl{font:600 11px Inter;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.hd{display:flex;align-items:center;gap:22px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.logo{font:900 16px "Inter Tight";letter-spacing:-.02em}.logo i{color:var(--accent);font-style:normal}
+.nav{display:flex;gap:18px;font-weight:600;color:var(--soft)}.nav .on{color:var(--ink);box-shadow:0 2px 0 var(--accent)}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.pad{padding:18px 22px}.mpad{padding:14px 16px}
+.reco{background:#fff4ef;border:1px solid #ffd2c0;border-radius:10px;padding:12px 16px;margin-top:12px}
+.sample{font-size:11px;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 6px;font-weight:700}
+/* shared bits */
+.r-eu{--rc:var(--r-eu)}.r-am{--rc:var(--r-am)}.r-me{--rc:var(--r-me)}.r-as{--rc:var(--r-as)}.r-af{--rc:var(--r-af)}.r-gl{--rc:var(--r-gl)}
+.wrg{font:600 11px Inter;border-radius:5px;padding:2px 7px;background:var(--chip);color:var(--soft);white-space:nowrap}
+.wrg.c{color:var(--rc);background:color-mix(in srgb,var(--rc) 12%,transparent)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dev{font:700 11px Inter;color:#fff;background:var(--accent);border-radius:5px;padding:2px 7px;display:inline-flex;gap:5px;align-items:center}
+.dev i{width:6px;height:6px;border-radius:50%;background:#fff;animation:p 1.4s infinite}@keyframes p{50%{opacity:.3}}
+.wbar{display:flex;gap:2px;height:7px;border-radius:4px;overflow:hidden;background:var(--chip)}.wbar i{display:block;background:var(--rc)}
+h4{font:700 16px/1.3 Inter}
+.pic{border-radius:10px;overflow:hidden;background:var(--chip)}.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.ico{width:18px;height:18px}
+.btn{border:1px solid var(--line2);background:#fff;border-radius:9px;padding:7px 12px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn svg{width:16px;height:16px}
+/* ---------- PART 1: story page additions ---------- */
+.sp{display:grid;grid-template-columns:1fr 300px;gap:28px}
+.sp h1{font:800 30px/1.1 "Inter Tight";letter-spacing:-.6px;margin:8px 0 12px}
+.box{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.box h5{font:800 11px Inter;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.box ul{margin-left:18px}.box li{margin-bottom:5px;font-size:15px}
+.th{border:1px solid #ffd2c0;background:#fff7f3;border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.th h5{color:var(--accent)}
+.th .lines{display:grid;gap:8px}
+.th .ln{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+.th .ln b{font-weight:700}
+.th .stk{display:inline-flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.th .stk button{border:1px solid #ffc9b2;background:#fff;border-radius:99px;padding:3px 10px;font:700 12px Inter;color:var(--ink)}
+.th .stk button span{color:var(--up);margin-left:4px}.th .stk button span.dn{color:var(--down)}
+.term{border-bottom:1.5px dotted var(--accent);cursor:help;position:relative}
+.term .tip{position:absolute;left:0;bottom:calc(100% + 8px);width:240px;background:#111;color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45;font-weight:500;box-shadow:0 10px 24px #0003;z-index:5}
+.term .tip b{display:block;color:#ffb199;margin-bottom:2px}
+.phone .term .tip{display:none}
+.grow{display:flex;align-items:center;gap:12px}
+.grow svg{flex:none}
+.grow .big{font:900 26px "Inter Tight"}.grow .big small{font:600 12px Inter;color:var(--muted);margin-left:4px}
+.tl{list-style:none;margin:10px 0 0!important}
+.tl li{display:grid;grid-template-columns:62px 1fr;gap:8px;font-size:13px!important;padding:6px 0;border-top:1px solid var(--line)}
+.tl li b{color:var(--muted);font-weight:600}
+.share{position:absolute;inset:auto 0 0 0;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -10px 30px #0002;padding:14px 16px 20px}
+.share .grab{width:36px;height:4px;border-radius:2px;background:#ddd;margin:0 auto 12px}
+.share .prev{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.share .prev b{display:block;margin-bottom:3px}.share .prev u{color:#2563eb;text-decoration:none}
+.share .apps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;font-size:11px;color:var(--soft)}
+.share .apps span{display:block;width:48px;height:48px;border-radius:14px;margin:0 auto 4px}
+.dim{position:absolute;inset:0;background:#0006}
+/* search */
+.sr{border:1px solid var(--line2);border-radius:14px;box-shadow:0 14px 30px #0001;overflow:hidden}
+.sr .q{display:flex;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.sr .grp{padding:8px 14px 4px;font:800 11px Inter;letter-spacing:1px;color:var(--muted);background:#fafafa;border-bottom:1px solid var(--line)}
+.sr .it{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sr .it h6{font:600 14px Inter}.sr .it small{color:var(--muted)}
+.kind{font:700 10px Inter;letter-spacing:.5px;border-radius:4px;padding:2px 6px;background:var(--chip);color:var(--soft);align-self:start}
+.kind.w{background:#eef2ff;color:#4338ca}
+/* telegram */
+.tg{background:#dfe7ef;border-radius:14px;padding:16px;max-width:420px}
+.tg .msg{background:#fff;border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:13.5px;line-height:1.5;box-shadow:0 1px 1px #0001}
+.tg .msg b{font-weight:700}.tg .msg i{color:#666}.tg .msg a{color:#2481cc}
+.tg small{display:block;text-align:right;color:#8aa;font-size:11px;margin-top:4px}
+/* ---------- PART 2: map ---------- */
+.mapwrap{position:relative}
+.mapwrap svg{display:block;width:100%;height:auto}
+.land{fill:var(--land);stroke:#fff;stroke-width:.5}
+.land.hot1{fill:#ffe1d3}.land.hot2{fill:#ffb393}.land.hot3{fill:#ff7d4d}.land.hot4{fill:#ff4500}
+.bub{fill:var(--rc);fill-opacity:.22;stroke:var(--rc);stroke-width:1.5}
+.bubn{font:800 13px Inter;fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.bubl{font:600 10px Inter;fill:var(--soft);text-anchor:middle;pointer-events:none}
+.pin circle.o{fill:var(--accent);fill-opacity:.18}.pin circle.i{fill:var(--accent);stroke:#fff;stroke-width:1.5}
+.pin.sel circle.i{fill:var(--ink)}
+.pin{cursor:pointer}
+.mcard{position:absolute;width:250px;background:#fff;border:1px solid var(--line2);border-radius:12px;box-shadow:0 14px 30px #0002;padding:12px;font-size:13px}
+.mcard h4{font-size:14px;margin:6px 0 4px}
+.mcard .row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)}
+.mside{display:grid;grid-template-columns:1fr 300px;gap:18px}
+.mlist{border-left:1px solid var(--line);padding-left:16px}
+.mlist .it{padding:9px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:22px 1fr;gap:8px}
+.mlist .it b.n{font:900 15px "Inter Tight";color:#ccc}
+.mlist .it h6{font:600 13px/1.35 Inter}
+.mlist .it.sel h6{color:var(--accent)}
+.legendh{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:8px}
+.legendh i{width:22px;height:8px;border-radius:2px;display:inline-block}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-bottom:10px}
+.seg span{padding:6px 12px;font:600 12px Inter;color:var(--soft);border-right:1px solid var(--line2)}.seg span:last-child{border:0}
+.seg span.on{background:var(--ink);color:#fff}
+/* ---------- PART 3: chat ---------- */
+.bubs{display:flex;flex-direction:column;gap:10px}
+.b{max-width:86%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.5}
+.b.ai{background:#f3f4f6;border-bottom-left-radius:5px;align-self:flex-start}
+.b.me{background:var(--ink);color:#fff;border-bottom-right-radius:5px;align-self:flex-end}
+.b.her{background:#ede9fe;border-bottom-left-radius:5px;align-self:flex-start}
+.who{font:700 11px Inter;color:var(--muted);margin-bottom:3px;display:flex;gap:6px;align-items:center}
+.who .av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:800 9px Inter;color:#fff}
+.av.ai{background:linear-gradient(135deg,#ff4500,#ff9a6b)}.av.me{background:#111}.av.her{background:#8b5cf6}
+.b.ai .src{display:block;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.b.ai ul{margin:6px 0 0 16px}
+.sugg{display:flex;gap:6px;flex-wrap:wrap}
+.sugg button{border:1px solid var(--line2);background:#fff;border-radius:99px;padding:6px 11px;font:600 12.5px Inter;color:var(--soft)}
+.sugg button:hover{border-color:var(--accent);color:var(--accent)}
+.inp{display:flex;gap:8px;align-items:center;border:1px solid var(--line2);border-radius:14px;padding:6px 6px 6px 14px;background:#fff}
+.inp input{flex:1;border:0;outline:0;font:500 14px Inter;background:transparent;min-width:0}
+.inp .send{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;border:0;display:grid;place-items:center}
+.inp .send svg{width:16px;height:16px}
+.typing{display:inline-flex;gap:4px;padding:12px 14px;background:#f3f4f6;border-radius:16px;border-bottom-left-radius:5px;align-self:flex-start}
+.typing i{width:6px;height:6px;border-radius:50%;background:#aaa;animation:t 1.2s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes t{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.cap{font-size:11px;color:var(--muted);text-align:center}
+/* A side panel */
+.cA{display:grid;grid-template-columns:1fr 360px;min-height:620px}
+.cA .story{padding:18px 22px;border-right:1px solid var(--line)}
+.cA .panel{display:flex;flex-direction:column;background:#fcfcfc}
+.cA .ph{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;font-weight:700}
+.cA .ph small{font-weight:500;color:var(--muted);margin-left:auto}
+.cA .body{flex:1;padding:14px 16px;overflow:auto}
+.cA .foot{padding:12px 16px;border-top:1px solid var(--line);display:grid;gap:8px}
+/* B inline discussion */
+.cB .thread{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+.cB .thread h5{font:800 18px "Inter Tight";margin-bottom:4px}
+.cB .msgs{display:grid;gap:14px;margin:14px 0}
+.cB .m{display:grid;grid-template-columns:30px 1fr;gap:10px}
+.cB .m .av{width:30px;height:30px;font-size:11px}
+.cB .m .hd2{font-size:13px}.cB .m .hd2 b{font-weight:700}.cB .m .hd2 span{color:var(--muted);margin-left:6px}
+.cB .m p{font-size:14.5px;margin-top:2px}
+.cB .m.ai p{background:#fff7f3;border:1px solid #ffe0d2;border-radius:12px;padding:10px 12px}
+.cB .m .acts{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:4px;font-weight:600}
+.cB .compose{display:grid;gap:8px}
+.cB .compose .row{display:flex;gap:8px;align-items:center}
+.cB .askai{border:1px solid #ffc9b2;background:#fff7f3;color:var(--accent);border-radius:9px;padding:7px 11px;font-weight:700;display:inline-flex;gap:6px;align-items:center}
+/* C chat-first briefing */
+.cC{display:flex;flex-direction:column;height:640px;background:#fafafa}
+.cC .top{padding:14px 18px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:10px}
+.cC .top .av{width:34px;height:34px;font-size:12px}
+.cC .top b{font:800 16px "Inter Tight"}.cC .top small{display:block;color:var(--up);font-weight:600;font-size:11.5px}
+.cC .body{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px;max-width:760px;width:100%;margin:0 auto}
+.cC .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:grid;grid-template-columns:110px 1fr;max-width:86%;align-self:flex-start}
+.cC .card .pic{border-radius:0;height:100%}
+.cC .card div.t{padding:10px 12px}.cC .card h6{font:700 13.5px/1.3 Inter;margin:4px 0}
+.cC .card .wbar{margin-top:6px}
+.cC .foot{padding:12px 18px;background:#fff;border-top:1px solid var(--line);display:grid;gap:8px;max-width:760px;width:100%;margin:0 auto}
+.cC.ph .card{grid-template-columns:84px 1fr;max-width:94%}
+</style></head><body><div class="doc">
+<h1>Round 21 · World Brief extras</h1>
+<p class="lead">Two parts. <b>Part 1</b> shows the small additions in place (one design each: tell me what to change). <b>Part 2</b> gives 3 different styles for the world map. Headlines are real ones from this morning; <span class="sample">SAMPLE</span> marks AI text I wrote by hand to show the idea. The real AI writes it from the outlets' reports.</p>
+
+<!-- ================= PART 1 ================= -->
+<section class="part"><h2><span>Part 1.</span> Small additions on the story page, plus search and the weekly recap</h2>
+<p class="lead">① <b>Thailand &amp; your stocks</b> (orange box) · ② <b>Developing</b> tag plus an outlet-growth chart and short timeline · ④ <b>term explainer</b> (dotted words; hover "sanctions" is shown open). ③ and ⑤ are below.</p>
+<div class="opt"><div class="frames">
+ <div class="dw"><p class="lbl">Desktop · story page</p><div class="desk" id="p1d"></div></div>
+ <div><p class="lbl">Phone · story page</p><div class="phone" id="p1m"></div></div>
+</div></div>
+<div class="opt"><div class="frames" style="gap:40px">
+ <div style="flex:1 1 460px;min-width:0"><h3><em>③</em> Search finds World stories too</h3><p class="note">Same search box in the header. World results get a blue WORLD tag and open the World story page.</p><div class="sr" id="p1s"></div></div>
+ <div style="flex:1 1 420px;min-width:0"><h3><em>⑤</em> Weekly recap (Sunday morning, Telegram)</h3><p class="note">One extra message on Sundays at 07:00: the week's most-covered world stories, plus which of them touched your stocks. Also a "This week" chip on the World Brief page.</p><div class="tg" id="p1t"></div></div>
+</div></div>
+</section>
+
+<!-- ================= PART 2 ================= -->
+<section class="part"><h2><span>Part 2.</span> World map: 3 styles</h2>
+<p class="lead">A "Map" switch next to the list on World Brief. To put stories on a map, the AI also gives each story a <b>country</b> (same AI call, no extra cost). Click a pin or bubble to see the stories there.</p>
+<div id="maps"></div>
+<div class="reco"><b>My recommendation: B (pins + list).</b> It's the only one where you can read the stories without leaving the map. A is good for "which part of the world is busy today" but hides the stories. C is the prettiest but makes big countries look more important than they are.</div>
+</section>
+
+</div>
+<script>
+const R={Europe:"eu",Americas:"am","Middle East":"me","Asia-Pacific":"as",Africa:"af",Global:"gl"};
+const S=[
+{h:"Ukraine sinks Russian warship off Libya with naval drones",reg:"Europe",cat:"Conflict",n:23,ago:"1h",cov:{Europe:7,Americas:7,"Asia-Pacific":5,Africa:3,"Middle East":1},img:"https://i.guim.co.uk/img/media/cfb76673617a9119c98c92a444bacae6ca40eb5c/404_0_1800_1440/master/1800.jpg?width=700&quality=85&auto=format&fit=max&s=c4a69ea62927aff6e8c2ef333eb96e29",c:"Libya",ll:[13.2,32.1],dev:true},
+{h:"COP31 climate talks end with no deal on fossil fuels",reg:"Global",cat:"Climate",n:20,ago:"3h",cov:{Europe:6,Americas:6,"Asia-Pacific":5,Africa:2,"Middle East":1},img:"https://s.france24.com/media/display/1ad85f0e-e751-11f1-9135-e56ab3dc0809/w:1024/p:16x9/202611200168WD-CLIMATE-COP31PROTEST-O.jpg",c:"Turkey",ll:[30.7,36.9]},
+{h:"Deadly fire at Indonesian confectionery factory kills 24",reg:"Asia-Pacific",cat:"Society",n:14,ago:"4h",cov:{Europe:5,Americas:4,"Asia-Pacific":4,"Middle East":1},img:"https://dam.mediacorp.sg/image/upload/s--Ca5Tu-JR--/c_crop,h_450,w_800,x_0,y_0/fl_relative,g_south_east,l_mediacorp:cna:watermark:2024-04:reuters_1,w_0.1/f_auto,q_auto/c_fill,g_auto,h_468,w_830/v1/one-cms/core/2026-11-23T054449Z_2_LYNXNPEMAM08S_RTROPTP_3_INDONESIA-EGYPT.JPG?itok=FoozTJ2G",c:"Indonesia",ll:[106.8,-6.2]},
+{h:"Nvidia brings back Jensen Huang as CEO after Trump steps in",reg:"Americas",cat:"Economy",n:9,ago:"3h",cov:{Americas:6,Europe:2,"Asia-Pacific":1},img:"https://i.guim.co.uk/img/media/d43043e64abd1e9a3d80d7870de50d134c45b4dd/199_0_5507_4407/master/5507.jpg?width=700&quality=85&auto=format&fit=max&s=658e86246071171621361c388415456a",c:"United States",ll:[-122,37.4]},
+{h:"Iran flogs singer who performed without a headscarf",reg:"Middle East",cat:"Society",n:7,ago:"1h",cov:{Europe:4,Americas:2,"Middle East":1},img:"https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/6a11/live/e201bf70-bb4c-11f1-bc1f-3f186ca4140c.jpg",c:"Iran",ll:[51.4,35.7]},
+{h:"Poland to get NATO early-warning planes after missile strikes",reg:"Europe",cat:"Conflict",n:7,ago:"3h",cov:{Americas:3,Europe:3,"Middle East":1},c:"Poland",ll:[21,52.2],dev:true},
+{h:"Zimbabwean preacher arrested on sexual assault allegations",reg:"Africa",cat:"Society",n:7,ago:"7h",cov:{Africa:6,Europe:1},c:"Zimbabwe",ll:[31,-17.8]},
+{h:"Mexican soldiers attacked after drug lord's arrest",reg:"Americas",cat:"Conflict",n:9,ago:"7h",cov:{Europe:3,Africa:3,Americas:2,"Middle East":1},c:"Mexico",ll:[-103.3,20.7]},
+{h:"North Korea's Kim vows wider foreign ties after rebuffing Trump",reg:"Asia-Pacific",cat:"Politics",n:8,ago:"12h",cov:{"Asia-Pacific":4,Americas:3,Europe:1},c:"North Korea",ll:[125.7,39]},
+{h:"Thai appeal court halves jail term of opposition MP",reg:"Asia-Pacific",cat:"Politics",n:3,ago:"11h",cov:{"Asia-Pacific":3},img:"https://dam.mediacorp.sg/image/upload/s---KiMCUvk--/fl_relative,g_south_east,l_one-cms:core:watermark:ap_data-1,w_0.1/f_auto,q_auto/c_fill,g_auto,h_468,w_830/v1/one-cms/core/Thailand_Royal_Defamation_22353.jpg?itok=ilqq_b0b",c:"Thailand",ll:[100.5,13.75]},
+{h:"Belgium shuts airports and transport in national strike",reg:"Europe",cat:"Economy",n:6,ago:"6h",cov:{Europe:2,"Asia-Pacific":2,"Middle East":1,Americas:1},c:"Belgium",ll:[4.35,50.85]},
+{h:"Russia threatens 'hostile' Estonia with 'open war'",reg:"Europe",cat:"Conflict",n:6,ago:"3h",cov:{"Asia-Pacific":3,Europe:2,"Middle East":1},c:"Estonia",ll:[24.75,59.4]},
+];
+const svg=(d)=>`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const I={share:svg('<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>'),send:svg('<path d="M4 12l16-8-6 16-2.5-6.5z"/>'),spark:svg('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'),chat:svg('<path d="M4 5h16v11H9l-5 4z"/>'),check:svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),up:svg('<path d="M7 10v11H3V10zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/>'),search:svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),list:svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'),map:svg('<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>')};
+const bar=s=>`<div class="wbar">${Object.entries(s.cov).map(([r,n])=>`<i class="r-${R[r]}" style="width:${n/s.n*100}%"></i>`).join("")}</div>`;
+const tags=s=>`<span class="wrg c r-${R[s.reg]}">${s.reg}</span><span class="wrg">${s.cat}</span>${s.dev?`<span class="dev"><i></i>Developing · day 2</span>`:""}`;
+const hd=`<div class="hd"><span class="logo">investment center</span><span class="nav"><span>My News</span><span class="on">World Brief</span><span>Charts</span></span><span style="margin-left:auto" class="btn">${I.search}Search news &amp; notes</span></div>`;
+const mhd=`<div class="mhd"><span class="logo">investment center</span><span style="display:flex;gap:10px;color:var(--soft)">${I.search}</span></div>`;
+const s0=S[0];
+
+/* ---------- PART 1 ---------- */
+const growSvg=(w,h)=>{const p=[3,5,8,12,15,19,21,23],mx=23;return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${p.map((v,i)=>`${i/(p.length-1)*w},${h-2-v/mx*(h-4)}`).join(" ")}"/><circle cx="${w}" cy="2" r="3" fill="var(--accent)"/></svg>`};
+const thai=`<div class="th"><h5>${I.spark.replace('class="ico"','class="ico" style="width:13px;height:13px;vertical-align:-2px"')} Thailand &amp; your stocks <span class="sample">SAMPLE</span></h5><div class="lines">
+ <div class="ln"><span>🇹🇭</span><span>Attacks on shipping near North Africa can push <b>oil and freight costs</b> up. Thailand imports most of its oil, so watch fuel prices and the baht.</span></div>
+ </div><div class="stk"><button>PTT<span>+0.8%</span></button><button>PTTEP<span>+1.4%</span></button><button>AOT<span class="dn">−0.6%</span></button></div></div>`.replace("<span>🇹🇭</span>",'<span class="wrg c r-as" style="flex:none">TH</span>');
+const devBox=`<div class="box"><h5>Developing · day 2</h5><div class="grow">${growSvg(150,40)}<div class="big">3 → 23<small>outlets since yesterday</small></div></div>
+ <ul class="tl"><li><b>Mon 21:40</b>Ukraine says naval drones hit two Russian ships at a Benghazi base</li><li><b>Tue 06:10</b>Russian warship confirmed sunk; Libya's east asks the UN to investigate</li><li><b>Tue 09:30</b>Kremlin calls it "terrorist activity"</li></ul></div>`;
+const shareBtn=`<button class="btn">${I.share}Share</button>`;
+const facts=`<div class="box"><h5>What happened</h5><ul><li>Ukraine says its naval drones hit two Russian ships docked at a base near Benghazi.</li><li>One Russian corvette is reported sunk; Russia calls the attack <span class="term">"terrorist activity"<span class="tip"><b>Terrorist activity</b>A label governments use for attacks they see as illegitimate. Here it is Russia's description, not a neutral finding.</span></span>.</li><li>It is the first reported Ukrainian strike in Africa, as Western <span class="term" style="border-bottom-style:dotted">sanctions</span> on Russian shipping tighten.</li></ul></div>`;
+document.getElementById("p1d").innerHTML=`${hd}<div class="pad"><div class="sp"><div>
+ <div class="tags">${tags(s0)}<span style="color:var(--muted);font-size:12px">1 hr ago</span></div>
+ <h1>${s0.h}</h1>
+ <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"><button class="btn">${I.check}Mark as read</button><button class="btn">${I.up}</button></div>
+ <div class="pic" style="height:240px;margin-bottom:14px"><img src="${s0.img}" referrerpolicy="no-referrer"></div>
+ ${thai}${facts}</div>
+ <div>${devBox}<div class="box"><h5>Who covers it · 23 outlets</h5>${bar(s0)}</div></div></div></div>`;
+document.getElementById("p1m").innerHTML=`${mhd}<div class="scroll mpad"><div class="tags">${tags(s0)}</div><h4 style="font:800 22px/1.15 'Inter Tight';margin:8px 0 10px">${s0.h}</h4><div class="pic" style="height:180px;margin-bottom:12px"><img src="${s0.img}" referrerpolicy="no-referrer"></div>${thai}${facts}</div>
+ `;
+document.getElementById("p1s").innerHTML=`<div class="q">${I.search}ukraine</div><div class="grp">MY NEWS · 2</div>
+ <div class="it"><div><h6>Oil jumps as Ukraine strikes raise Black Sea shipping risk</h6><small>Energy &amp; oil · PTT · 2 days ago</small></div><span class="kind">NEWS</span></div>
+ <div class="it"><div><h6>European defence stocks extend rally on Ukraine aid package</h6><small>Global macro · 4 days ago</small></div><span class="kind">NEWS</span></div>
+ <div class="grp">WORLD BRIEF · 3</div>
+ <div class="it"><div><h6>Ukraine sinks Russian warship off Libya with naval drones</h6><small>Europe · Conflict · 23 outlets · 1 hr ago</small></div><span class="kind w">WORLD</span></div>
+ <div class="it"><div><h6>Kremlin accuses Ukraine of "terrorist activity" in Baltic</h6><small>Europe · Conflict · 15 outlets · 11 hr ago</small></div><span class="kind w">WORLD</span></div>
+ <div class="it"><div><h6>Russian drone lands near UK minister in Kyiv</h6><small>Europe · Conflict · 9 outlets · 7 hr ago</small></div><span class="kind w">WORLD</span></div>`;
+document.getElementById("p1t").innerHTML=`<div class="msg"><b>Week in the world</b> · 17–23 Nov<br><br><b>1.</b> COP31 climate talks end with no deal <i>(41 outlets)</i><br><b>2.</b> Ukraine strikes Russian ships off Libya <i>(23)</i><br><b>3.</b> Democrats win biggest House majority since 1992 <i>(19)</i><br><b>4.</b> Indonesia factory fire kills 24 <i>(14)</i><br><b>5.</b> Nvidia reinstates Jensen Huang <i>(12)</i><br><br><b>Touched your stocks:</b> NVDA (story 5), PTT (oil, story 2)<br>You read 9 of this week's top 10.<br><a>Open World Brief</a></div><small>07:00</small>`;
+
+/* ---------- PART 2: maps ---------- */
+const MAPS=[
+ ["A","Region bubbles","calm, big picture","One bubble per region, sized by how many stories happen there, coloured like the coverage bar. Click a bubble to filter the list to that region. Honest and simple, but you can't see single stories."],
+ ["B","Pins + list","practical, readable","A pin on each story's country (bigger = more outlets), with the ranked list beside it. Hover or click a pin and the story lights up in the list (and the other way round). On phone the list sits under the map."],
+ ["C","Heat map by country","striking, at-a-glance","Countries are shaded by how much coverage their stories got today (light → deep orange). Click a country for its stories. Looks great, but big countries draw the eye even with little news."],
+];
+document.getElementById("maps").innerHTML=MAPS.map(([k,n,m,d])=>`<div class="opt"><h3><em>${k}.</em> ${n}: <span style="color:var(--muted);font-weight:600">${m}</span></h3><p class="note">${d}</p><div class="frames"><div class="dw"><p class="lbl">Desktop</p><div class="desk"><div class="pad"><div class="seg"><span>${I.list.replace('class="ico"','class="ico" style="width:13px;height:13px;vertical-align:-2px"')} List</span><span class="on">Map</span></div><div id="m${k}d"></div></div></div></div><div><p class="lbl">Phone (390 px)</p><div class="phone">${mhd}<div class="scroll mpad"><div class="seg"><span>List</span><span class="on">Map</span></div><div id="m${k}m"></div></div></div></div></div></div>`).join("");
+const REGC={Europe:[15,50],Americas:[-90,15],"Middle East":[45,30],"Asia-Pacific":[110,15],Africa:[20,0],Global:[-30,-40]};
+d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(w=>{
+ const land=topojson.feature(w,w.objects.countries).features.filter(f=>f.properties.name!=="Antarctica");
+ function draw(el,W,H,kind,phone){
+  const proj=d3.geoNaturalEarth1().fitExtent([[4,4],[W-4,H-4]],{type:"FeatureCollection",features:land}), path=d3.geoPath(proj);
+  const cn={};S.forEach(s=>cn[s.c]=(cn[s.c]||0)+s.n);
+  const lvl=v=>!v?"":v>=20?"hot4":v>=10?"hot3":v>=6?"hot2":"hot1";
+  let out=`<svg viewBox="0 0 ${W} ${H}">${land.map(f=>{const nm=f.properties.name==="United States of America"?"United States":f.properties.name;return `<path class="land ${kind==="C"?lvl(cn[nm]):""}" d="${path(f)}"><title>${nm}${cn[nm]?` · ${cn[nm]} outlets`:""}</title></path>`}).join("")}`;
+  if(kind==="A"){const rc={};S.forEach(s=>rc[s.reg]=(rc[s.reg]||0)+1);
+   out+=Object.entries(rc).map(([r,c])=>{const [x,y]=proj(REGC[r]);const rad=(phone?10:16)+c*(phone?4:7);return `<g class="r-${R[r]}"><circle class="bub" cx="${x}" cy="${y}" r="${rad}"/><text class="bubn" x="${x}" y="${y-4}">${c}</text><text class="bubl" x="${x}" y="${y+10}">${phone?"":r}</text></g>`}).join("")}
+  if(kind==="B"){out+=S.map((s,i)=>{const [x,y]=proj(s.ll);const r=3+Math.sqrt(s.n)*(phone?1:1.4);return `<g class="pin${i===0?" sel":""}" data-i="${i}"><circle class="o" cx="${x}" cy="${y}" r="${r*2}"/><circle class="i" cx="${x}" cy="${y}" r="${r}"/></g>`}).join("")}
+  out+="</svg>";
+  if(kind==="A") el.innerHTML=`<div class="mapwrap">${out}</div><div class="tags" style="margin-top:8px">${Object.keys(REGC).map(r=>`<span class="wrg c r-${R[r]}">${r}</span>`).join("")}</div><p class="cap" style="margin-top:8px;text-align:left">Bubble = stories happening there today. Click to filter the list.</p>`;
+  if(kind==="B"){const list=`<div class="${phone?"":"mlist"}">${S.slice(0,phone?5:9).map((s,i)=>`<div class="it ${i===0?"sel":""}" style="${phone?"display:grid;grid-template-columns:22px 1fr;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)":""}"><b class="n">${i+1}</b><div><h6 style="font:600 13px/1.35 Inter">${s.h}</h6><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.c} · ${s.n} outlets</div></div></div>`).join("")}</div>`;
+   const [x,y]=proj(S[0].ll);
+   el.innerHTML=phone?`<div class="mapwrap">${out}</div>${list}`:`<div class="mside"><div class="mapwrap">${out}<div class="mcard" style="left:${Math.min(x+14,W-260)}px;top:${y-20}px"><div class="tags">${tags(S[0])}</div><h4>${S[0].h}</h4>${bar(S[0])}<div class="row"><span>${S[0].c} · ${S[0].n} outlets · 1h</span><b style="color:var(--accent)">Open →</b></div></div></div>${list}</div>`}
+  if(kind==="C") el.innerHTML=`<div class="mapwrap">${out}</div><div class="legendh">Less<i style="background:#ffe1d3"></i><i style="background:#ffb393"></i><i style="background:#ff7d4d"></i><i style="background:#ff4500"></i>More outlets today</div>${phone?`<div style="margin-top:12px">${S.slice(0,4).map((s,i)=>`<div style="padding:8px 0;border-top:1px solid var(--line);font:600 13px Inter">${s.c}: <span style="font-weight:500">${s.h}</span></div>`).join("")}</div>`:""}`;
+ }
+ ["A","B","C"].forEach(k=>{draw(document.getElementById(`m${k}d`),k==="B"?560:880,k==="B"?330:440,k,false);draw(document.getElementById(`m${k}m`),358,200,k,true)});
+}).catch(()=>{document.getElementById("maps").insertAdjacentHTML("afterbegin",'<p class="sample">Map data could not load (internet needed for this preview).</p>')});
+
+</script></body></html>

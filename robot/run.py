@@ -26,6 +26,8 @@ import re  # noqa: E402
 from datetime import date, datetime, timedelta, timezone  # noqa: E402
 import notify  # noqa: E402
 import price_alerts  # noqa: E402
+import world  # noqa: E402
+import developing  # noqa: E402
 
 GEMINI_DAILY_CAP = int(os.environ.get("GEMINI_DAILY_CAP", "300"))  # safety cap; free tier limits are separate
 # 300 = ~48 merge calls + ~100 writing calls + retries. Billing is OFF on the AI Studio project, so Google can't charge.
@@ -42,7 +44,8 @@ def db_counter():
 
 
 NEW_COLUMNS = ("image_credit", "prices_at", "upcoming",   # added by supabase/005_reading.sql
-               "full_story", "story_from", "for_you", "terms")  # added by supabase/007_full_story.sql
+               "full_story", "story_from", "for_you", "terms",  # added by supabase/007_full_story.sql
+               "growth", "timeline")                            # added by supabase/008_world.sql
 
 
 def clean_upcoming(items):
@@ -81,6 +84,7 @@ def to_row(s, watchlist=()):
         "story_from": [o for o, _ in s.get("articles") or []] if a.get("full_story") else [],  # outlets the AI read
         "for_you": (a.get("for_you") or "").strip()[:240] or None,
         "terms": clean_terms(a.get("terms"), a),
+        **developing.start(s["n_sources"], a["headline"], s["published"]),  # Developing (008_world.sql)
     }
 
 
@@ -159,6 +163,7 @@ def main():
     ap.add_argument("--backfill-images", action="store_true", help="only add pictures to saved stories, then stop")
     ap.add_argument("--test-alert", action="store_true", help="send the best recent story to Telegram as a test, then stop")
     ap.add_argument("--test-brief", action="store_true", help="send the morning brief now as a test, then stop")
+    ap.add_argument("--test-weekly", action="store_true", help="send the Sunday world recap now as a test, then stop")
     args = ap.parse_args()
     if args.backfill_images:
         return backfill_images()
@@ -166,6 +171,8 @@ def main():
         return notify.run_alerts(force_one=True)
     if args.test_brief:
         return notify.maybe_brief(force=True)
+    if args.test_weekly:
+        return notify.maybe_weekly(force=True)
     ai.COUNTER = db_counter
 
     settings = db.user_settings() or {}
@@ -210,8 +217,10 @@ def main():
             known = {l["link"] for l in old["links"]}
             links = old["links"] + [l for l in s["all_links"] if l["link"] not in known]
             outlets = sorted({l["outlet"] for l in links})
-            db.update_story(old["id"], {"links": links, "outlets": outlets, "n_sources": len(outlets),
-                                        "updated_at": "now()"})
+            fields = {"links": links, "outlets": outlets, "n_sources": len(outlets), "updated_at": "now()"}
+            if "growth" in old:  # Developing: remember how coverage grows (columns from 008_world.sql)
+                fields.update(developing.grow(old, len(outlets), [l["title"] for l in s["all_links"] if l["link"] not in known]))
+            db.update_story(old["id"], fields)
             for l in s["all_links"]:
                 link_to_story[l["link"]] = old["id"]
             updated += 1
@@ -242,10 +251,18 @@ def main():
     notify.run_alerts()
     notify.maybe_brief()
     try:
+        notify.maybe_weekly()  # Sundays only
+    except Exception as e:
+        print(f"Weekly recap skipped: {str(e)[:150]}")
+    try:
         price_alerts.run()
     except Exception as e:  # a price problem must never stop the rest of the run
         print(f"Price alerts skipped: {str(e)[:150]}")
     maybe_refresh_earnings(settings.get("watchlist") or [])
+    try:
+        world.run(reader={"watchlist": settings.get("watchlist") or []})  # World Brief (page 2): at most once an hour
+    except Exception as e:  # a World Brief problem must never break My News
+        print(f"World Brief skipped: {str(e)[:150]}")
 
 
 if __name__ == "__main__":

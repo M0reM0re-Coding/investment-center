@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 20 · World Brief pictures</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--line2:#e2e2e2;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;
+  --eu:#3b82f6;--am:#8b5cf6;--me:#f59e0b;--as:#10b981;--af:#ef4444;--gl:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#f6f6f6;color:var(--ink);font-size:14px;line-height:1.45}
+.doc{max-width:1460px;margin:0 auto;padding:28px 16px 80px}
+.doc>h1{font:800 28px "Inter Tight";letter-spacing:-.02em}
+.doc>p.lead{color:var(--soft);max-width:900px;margin:6px 0 4px}
+.taste{position:sticky;top:0;z-index:5;background:#111;color:#fff;border-radius:10px;padding:10px 14px;margin:16px 0 26px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
+.taste b{color:#ffb199}.taste .tw{display:flex;gap:6px;flex-wrap:wrap}
+.taste .tw span{background:#2a2a2a;border-radius:99px;padding:2px 9px}
+.taste .tw span.p{background:#14361f;color:#7ee2a0}.taste .tw span.n{background:#3a1616;color:#ff9b9b}
+.taste button{margin-left:auto;background:#333;color:#fff;border:0;border-radius:6px;padding:5px 10px;font:600 12px Inter;cursor:pointer}
+section.opt{margin:0 0 56px}
+.opt h2{font:800 22px "Inter Tight";letter-spacing:-.01em}.opt h2 em{font-style:normal;color:var(--accent)}
+.opt .note{color:var(--soft);margin:4px 0 14px;max-width:900px}
+.frames{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.desk{background:var(--bg);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.phone{width:390px;max-width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:28px;overflow:hidden;height:780px;display:flex;flex-direction:column}
+.phone .scroll{flex:1;overflow:auto}
+.lbl{font:600 11px Inter;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.hd{display:flex;align-items:center;gap:22px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.logo{font:900 17px "Inter Tight";letter-spacing:-.02em}.logo i{color:var(--accent);font-style:normal}
+.nav{display:flex;gap:18px;font-weight:600;color:var(--soft)}.nav .on{color:var(--ink);box-shadow:0 2px 0 var(--accent)}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.tabbar{display:flex;border-top:1px solid var(--line);background:#fff}
+.tabbar a{flex:1;text-align:center;padding:8px 0 10px;font:600 11px Inter;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar a.on{color:var(--accent)}.tabbar svg{width:20px;height:20px}
+.pad{padding:18px 22px}.mpad{padding:14px 16px}
+.edhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+.edhead h3{font:800 26px "Inter Tight";letter-spacing:-.02em}.edhead small{color:var(--muted);font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px}
+.chip{background:var(--chip);border-radius:99px;padding:4px 11px;font-weight:600;font-size:12px;color:var(--soft);white-space:nowrap}.chip.on{background:var(--ink);color:#fff}
+.mchips{display:flex;gap:6px;overflow:auto;scrollbar-width:none;margin:10px -16px 4px;padding:0 16px 4px}
+.meta{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rg{font-weight:600;font-size:11px;border-radius:4px;padding:1px 6px;background:var(--chip);color:var(--soft)}
+.why{font-size:12px;color:var(--soft);margin-top:5px}.why b{font-weight:600;color:var(--ink)}
+.why .pl{color:var(--up);font-weight:600}.why .mi{color:var(--down);font-weight:600}
+.vote{display:inline-flex;gap:4px;flex:none}
+.vote button{border:1px solid var(--line2);background:#fff;border-radius:7px;width:32px;height:30px;display:grid;place-items:center;cursor:pointer;color:var(--soft)}
+.vote button:hover{border-color:#bbb;color:var(--ink)}
+.vote button.w.on{background:#e8f7ee;border-color:#9ad8b1;color:var(--up)}
+.vote button.x.on{background:#fdecec;border-color:#f3a9a9;color:var(--down)}
+.vote svg{width:16px;height:16px}
+/* coverage bar (from D) */
+.cv{margin-top:8px}
+.cv .t{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;gap:8px}
+.cv .t b{color:var(--ink);font-weight:700}
+.bar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--chip);gap:1px}
+.bar i{display:block}
+.flag{font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 6px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:12px}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:var(--c)}
+/* picture: no frame, no badge, rounded, cover */
+.pic{display:block;border-radius:8px;overflow:hidden;background:var(--chip);flex:none;position:relative}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pic.fb{display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c)}
+.pic.fb svg{width:28px;height:28px;opacity:.85}
+.credit{font-size:10px;color:var(--muted);margin-top:3px}
+h4{font:700 16px/1.3 Inter;letter-spacing:-.01em}
+.sum{color:var(--soft);font-size:13px;margin-top:3px}
+.num{font:900 30px/1 "Inter Tight";color:#d4d4d4}.first .num{color:var(--accent)}
+/* V1: picture right */
+.v1 .row{display:grid;grid-template-columns:44px 1fr 200px;gap:16px;padding:16px 0;border-top:1px solid var(--line);align-items:start}
+.v1 .pic{width:200px;height:112px}
+.v1 .side{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.v1 .foot{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-top:2px}.v1 .foot .cv{flex:1;max-width:360px}
+.v1m .row{grid-template-columns:24px 1fr 104px;gap:10px;padding:13px 0}
+.v1m .pic{width:104px;height:70px}.v1m .num{font-size:20px}.v1m h4{font-size:14px}
+.v1m .full{grid-column:2/4}
+/* V2: picture left, number on picture corner? no badge: number above headline */
+.v2 .row{display:grid;grid-template-columns:240px 1fr auto;gap:18px;padding:16px 0;border-top:1px solid var(--line);align-items:start}
+.v2 .pic{width:240px;height:150px}
+.v2 .kick{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}.v2 .kick .num{font-size:24px}
+.v2m .row{display:block;padding:14px 0}
+.v2m .pic{width:100%;height:auto;aspect-ratio:16/9;margin-bottom:10px}
+.v2m .bot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.v2m .bot .cv{flex:1}
+/* V3: top 3 big, rest compact */
+.v3 .top3{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:18px;padding:6px 0 18px}
+.v3 .top3 .pic{width:100%;aspect-ratio:16/10;height:auto;margin-bottom:10px}
+.v3 .top3 .big .pic{aspect-ratio:16/10}
+.v3 .top3 .big h4{font:800 22px/1.2 "Inter Tight"}
+.v3 .top3 .kick{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}.v3 .top3 .kick .num{font-size:24px}
+.v3 .top3 .bot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:6px}.v3 .top3 .bot .cv{flex:1}
+.v3 .row{display:grid;grid-template-columns:36px 1fr 260px auto 128px;gap:16px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.v3 .row .pic{width:128px;height:72px}.v3 .row .num{font-size:22px}.v3 .row .cv{margin:0}
+.v3m .lead .pic{width:100%;aspect-ratio:16/9;height:auto;margin-bottom:10px}.v3m .lead h4{font:800 20px/1.2 "Inter Tight"}
+.v3m .lead .bot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.v3m .lead .bot .cv{flex:1}
+.v3m .row{grid-template-columns:22px 1fr 88px;gap:10px;padding:12px 0}
+.v3m .row .pic{width:88px;height:60px}.v3m .row .num{font-size:18px}.v3m .row h4{font-size:14px}
+.v3m .full{grid-column:2/4}
+.reco{background:#fff4ef;border:1px solid #ffd2c0;border-radius:10px;padding:14px 16px;margin-top:10px}
+.desk-wrap{flex:1 1 860px;min-width:0}
+@media (max-width:900px){.v1 .row{grid-template-columns:30px 1fr}.v1 .pic{width:100%;height:auto;aspect-ratio:16/9}.v1 .side{grid-column:2}.v2 .row{grid-template-columns:1fr}.v2 .pic{width:100%;height:auto;aspect-ratio:16/9}.v3 .top3{grid-template-columns:1fr}.v3 .row{grid-template-columns:30px 1fr 100px}.v3 .row .cv,.v3 .row .vote{grid-column:2}}
+</style></head><body><div class="doc">
+<h1>Round 20 · World Brief: numbered edition + coverage bar + pictures</h1>
+<p class="lead">Your pick: <b>A's numbered top 10</b>, with <b>D's "who covers it" bar</b> and <b>a picture on every row</b>. These are three ways to place the picture. The photos are real ones from this morning's feeds (BBC, Guardian, France 24, CNA, SCMP). Two stories had no photo, so they show the <b>fallback tile</b> (region colour plus a category icon). Pictures have no frame and no badge, because you found that look weird on the phone design. Outlet counts are still sample numbers.</p>
+<p class="lead"><b>Try it:</b> Want / No want re-ranks all three, the same as round 19.</p>
+<div class="taste" id="taste"></div>
+<div id="opts"></div>
+<div class="reco"><b>My recommendation: V1 (picture on the right).</b> The rank number and headline stay on the left, where your eye starts, so it still reads like a numbered brief. The picture supports the story without taking over, and it matches My News's phone rows, so both pages feel like one app. V3 is the most striking; choose it if you want the page to feel like a magazine front. V2 is the most visual but turns 10 stories into a long scroll.</div>
+</div>
+<script>
+const R={Europe:"--eu",Americas:"--am","Middle East":"--me",Asia:"--as",Africa:"--af",Global:"--gl"};
+const S=[
+{h:"Ukraine sinks Russian warship off Libya with naval drones",s:"Kyiv confirms drones hit two Russian ships at a Benghazi base, the war's first strike in Africa.",reg:"Europe",cat:"Conflict",n:14,ago:"2h",split:{Europe:8,Americas:3,"Middle East":2,Asia:1},img:"https://i.guim.co.uk/img/media/cfb76673617a9119c98c92a444bacae6ca40eb5c/404_0_1800_1440/master/1800.jpg?width=700&quality=85&auto=format&fit=max&s=c4a69ea62927aff6e8c2ef333eb96e29",cr:"The Guardian"},
+{h:"COP31 climate talks end with no deal on fossil fuels",s:"Talks collapsed in the final hours; calls grow to reform how UN climate summits work.",reg:"Global",cat:"Climate",n:11,ago:"5h",split:{Europe:5,Americas:3,Asia:2,Africa:1},img:"https://s.france24.com/media/display/1ad85f0e-e751-11f1-9135-e56ab3dc0809/w:1024/p:16x9/202611200168WD-CLIMATE-COP31PROTEST-O.jpg",cr:"France 24"},
+{h:"Nvidia brings back Jensen Huang as CEO after Trump steps in",s:"The board reverses course; a top Democrat promises an inquiry into the White House role.",reg:"Americas",cat:"Economy",n:9,ago:"3h",split:{Americas:6,Europe:2,Asia:1},img:"https://i.guim.co.uk/img/media/d43043e64abd1e9a3d80d7870de50d134c45b4dd/199_0_5507_4407/master/5507.jpg?width=700&quality=85&auto=format&fit=max&s=658e86246071171621361c388415456a",cr:"The Guardian"},
+{h:"Iran flogs singer who performed without a headscarf",s:"Lawyers say Parastoo Ahmadi was punished for an online concert, drawing wide condemnation.",reg:"Middle East",cat:"Society",n:7,ago:"6h",split:{Europe:3,"Middle East":3,Americas:1},img:"https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/6a11/live/e201bf70-bb4c-11f1-bc1f-3f186ca4140c.jpg",cr:"BBC"},
+{h:"Poland to get NATO early-warning planes after missile strikes",s:"The alliance moves surveillance aircraft east after Russian missiles hit Polish territory.",reg:"Europe",cat:"Conflict",n:6,ago:"4h",split:{Europe:4,Americas:2}},
+{h:"Democrats win the US House by the largest margin in 50 years",s:"The result reshapes Congress for the second half of the presidential term.",reg:"Americas",cat:"Politics",n:6,ago:"9h",split:{Americas:5,Europe:1},img:"https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/4632/live/52e19140-e715-11f1-99b6-a35a62fa4264.jpg",cr:"BBC"},
+{h:"UN chief asks for a global AI safety framework within a year",s:"Guterres wants countries to agree shared rules so that humans 'maintain control'.",reg:"Global",cat:"Science & tech",n:5,ago:"7h",split:{Europe:3,Asia:1,Americas:1},img:"https://s.france24.com/media/display/f4a8030a-e770-11f1-af10-1bac47ab2f5d/w:1024/p:16x9/5895753bc31b1812a003e5c2e753f80a2e178777.jpg",cr:"France 24"},
+{h:"Israel's push into southern Syria brings fear and destruction",s:"Residents describe demolished homes as troops widen their presence near the border.",reg:"Middle East",cat:"Conflict",n:5,ago:"8h",split:{"Middle East":4,Europe:1}},
+{h:"China and ASEAN still split over South China Sea rules",s:"Negotiators miss another deadline on a code of conduct for the disputed waters.",reg:"Asia",cat:"Politics",n:3,ago:"10h",split:{Asia:3},img:"https://dam.mediacorp.sg/image/upload/s--hyb25OrO--/fl_relative,g_south_east,l_one-cms:core:watermark:ap_data-1,w_0.1/f_auto,q_auto/c_fill,g_auto,h_468,w_830/v1/one-cms/core/South_China_Sea_Pact_67925.jpg?itok=5rrWe5Ub",cr:"CNA"},
+{h:"Prabowo names two candidates to replace Gibran as Indonesia's VP",s:"Parliament will pick one; markets watch for signals on the economic agenda.",reg:"Asia",cat:"Politics",n:3,ago:"5h",split:{Asia:3},img:"https://cdn.i-scmp.com/sites/default/files/styles/1280x720/public/d8/images/canvas/2026/11/23/bd21a60e-3f39-4849-bd0b-19a10658af2c_d2d097b9.jpg?itok=v6gLtrcX&v=1795441768",cr:"SCMP"},
+{h:"Thai appeal court halves jail term of opposition MP",s:"The lawmaker was convicted of royal insult; the case is seen as a test for the courts.",reg:"Asia",cat:"Politics",n:2,ago:"11h",split:{Asia:2},img:"https://dam.mediacorp.sg/image/upload/s---KiMCUvk--/fl_relative,g_south_east,l_one-cms:core:watermark:ap_data-1,w_0.1/f_auto,q_auto/c_fill,g_auto,h_468,w_830/v1/one-cms/core/Thailand_Royal_Defamation_22353.jpg?itok=ilqq_b0b",cr:"CNA"},
+{h:"South Africa races to replant five baobabs after export blocked",s:"The ancient trees were bound for an overseas collector before officials stepped in.",reg:"Africa",cat:"Climate",n:2,ago:"12h",split:{Europe:1,Africa:1},img:"https://i.guim.co.uk/img/media/048c1619883c277fcef86d2ceda7a59071397137/0_191_1360_1088/master/1360.jpg?width=700&quality=85&auto=format&fit=max&s=f8d4ebf248dd5f465aa1c2c494cb6c8f",cr:"The Guardian"},
+];
+S.forEach((s,i)=>s.id=i);
+const votes={};
+function taste(){const t={};for(const id in votes){const s=S[id],v=votes[id];t[s.reg]=(t[s.reg]||0)+v;t[s.cat]=(t[s.cat]||0)+v}for(const k in t)t[k]=Math.max(-5,Math.min(5,t[k]));return t}
+function score(s,t){return Math.min(s.n,15)*2+Math.max(0,12-parseInt(s.ago))*.5+((t[s.reg]||0)+(t[s.cat]||0))*3+(votes[s.id]===-1?-100:0)}
+function ranked(){const t=taste();return S.map(s=>({...s,sc:score(s,t)})).sort((a,b)=>b.sc-a.sc).slice(0,10)}
+const up='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v11H3V10zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/></svg>';
+const dn='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V3h4v11zM17 14l-4 8a3 3 0 0 1-3-3v-4H4a2 2 0 0 1-2-2.3l1.4-8A2 2 0 0 1 5.4 3H17"/></svg>';
+const CI={Conflict:'<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/>',Climate:'<path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/>',Economy:'<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',Society:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 4"/>',Politics:'<path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-6 10 6z"/>',"Science & tech":'<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/>'};
+const vote=s=>`<span class="vote"><button class="w ${votes[s.id]===1?"on":""}" data-v="1" data-id="${s.id}" title="Want: more like this">${up}</button><button class="x ${votes[s.id]===-1?"on":""}" data-v="-1" data-id="${s.id}" title="No want: less like this">${dn}</button></span>`;
+const pic=s=>s.img?`<span class="pic"><img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer"></span>`:`<span class="pic fb" style="--c:var(${R[s.reg]})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${CI[s.cat]}</svg></span>`;
+const lean=s=>{const [r,c]=Object.entries(s.split).sort((a,b)=>b[1]-a[1])[0];return c/s.n>=.75&&s.n>=3?`<span class="flag">Mostly ${r} outlets</span>`:""};
+const cv=s=>`<div class="cv"><div class="t"><span>Who covers it</span><b>${s.n} outlets</b></div><div class="bar">${Object.entries(s.split).map(([r,c])=>`<i style="width:${c/s.n*100}%;background:var(${R[r]})"></i>`).join("")}</div></div>`;
+const rg=s=>`<span class="rg" style="color:var(${R[s.reg]})">${s.reg}</span><span class="rg">${s.cat}</span>${lean(s)}`;
+function why(s){const t=taste(),bits=[`<b>${s.n} outlets</b>`];for(const k of [s.reg,s.cat]){const v=t[k];if(v)bits.push(`<span class="${v>0?"pl":"mi"}">${k} ${v>0?"+":""}${v}</span>`)}bits.push(s.ago+" ago");return `<div class="why">Why here: ${bits.join(" · ")}</div>`}
+const legend=`<div class="legend">${Object.entries(R).map(([r,c])=>`<span style="--c:var(${c})">${r}</span>`).join("")}</div>`;
+const ico={news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>',world:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',topic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>'};
+const hd=`<div class="hd"><span class="logo">Investment<i>.</i>Center</span><span class="nav"><span>My News</span><span class="on">World Brief</span><span>Calendar</span><span>Charts</span></span></div>`;
+const mhd=`<div class="mhd"><span class="logo">Investment<i>.</i>Center</span><span class="meta">Mon 24 Nov</span></div>`;
+const tabbar=`<div class="tabbar"><a>${ico.news}My News</a><a class="on">${ico.world}World</a><a>${ico.cal}Calendar</a><a>${ico.topic}Topics</a></div>`;
+const edhead=m=>`<div class="edhead"><h3 style="${m?"font-size:22px":""}">Today's brief</h3><small>Mon 24 Nov · 08:00${m?"":" · 12 stories"}</small></div>`;
+const chips=`<span class="chip on">All</span>${Object.keys(R).map(r=>`<span class="chip">${r}</span>`).join("")}`;
+const shell=(inner,cls)=>[`${hd}<div class="pad ${cls}">${edhead()}<div class="chips">${chips}</div>${inner[0]}${legend}</div>`,`${mhd}<div class="scroll mpad ${cls} ${cls}m">${edhead(1)}<div class="mchips">${chips}</div>${inner[1]}</div>${tabbar}`];
+
+function V1(){const L=ranked();return shell([
+ L.map((s,i)=>`<div class="row ${i?"":"first"}"><span class="num">${i+1}</span><div><div class="meta">${rg(s)}</div><h4 style="margin-top:4px">${s.h}</h4><div class="sum">${s.s}</div><div class="foot">${cv(s)}${vote(s)}</div>${why(s)}</div><div class="side">${pic(s)}${s.cr?`<span class="credit">Photo: ${s.cr}</span>`:""}</div></div>`).join(""),
+ L.map((s,i)=>`<div class="row ${i?"":"first"}"><span class="num">${i+1}</span><div><div class="meta">${rg(s)}</div><h4 style="margin-top:4px">${s.h}</h4></div>${pic(s)}<div class="full">${cv(s)}<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">${why(s).replace('class="why"','class="why" style="margin:0"')}${vote(s)}</div></div></div>`).join("")],"v1")}
+function V2(){const L=ranked();return shell([
+ L.map((s,i)=>`<div class="row ${i?"":"first"}">${pic(s)}<div><div class="kick"><span class="num">${i+1}</span><span class="meta">${rg(s)}</span></div><h4>${s.h}</h4><div class="sum">${s.s}</div>${cv(s)}${why(s)}</div>${vote(s)}</div>`).join(""),
+ L.map((s,i)=>`<div class="row ${i?"":"first"}">${pic(s)}<div class="kick" style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span class="num" style="font-size:22px">${i+1}</span><span class="meta">${rg(s)}</span></div><h4>${s.h}</h4><div class="bot">${cv(s)}${vote(s)}</div></div>`).join("")],"v2")}
+function V3(){const L=ranked(),t3=L.slice(0,3),rest=L.slice(3);
+ const big=(s,i)=>`<div class="${i?"":"big first"}">${pic(s)}<div class="kick"><span class="num">${i+1}</span><span class="meta">${rg(s)}</span></div><h4>${s.h}</h4>${i?"":`<div class="sum">${s.s}</div>`}<div class="bot">${cv(s)}${vote(s)}</div></div>`;
+ return shell([
+ `<div class="top3">${t3.map(big).join("")}</div>${rest.map((s,i)=>`<div class="row"><span class="num">${i+4}</span><div><div class="meta">${rg(s)}</div><h4 style="font-size:15px;margin-top:3px">${s.h}</h4></div>${cv(s)}${vote(s)}${pic(s)}</div>`).join("")}`,
+ `<div class="lead first">${pic(t3[0])}<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span class="num" style="font-size:22px">1</span><span class="meta">${rg(t3[0])}</span></div><h4>${t3[0].h}</h4><div class="sum">${t3[0].s}</div><div class="bot">${cv(t3[0])}${vote(t3[0])}</div></div>${L.slice(1).map((s,i)=>`<div class="row" style="display:grid"><span class="num">${i+2}</span><div><div class="meta">${rg(s)}</div><h4 style="margin-top:3px">${s.h}</h4></div>${pic(s)}<div class="full" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">${cv(s).replace('class="cv"','class="cv" style="flex:1"')}${vote(s)}</div></div>`).join("")}`],"v3")}
+
+const OPTS=[
+ ["V1","Picture on the right","calm, list-first","The number and headline lead on the left, and a 16:9 picture sits on the right (200 px on desktop, 104 px on phone). The coverage bar and vote buttons sit under the summary. On phone it's the same row shape as My News.",V1],
+ ["V2","Picture on the left, larger","visual, magazine list","A big 16:10 picture first, then the number, tags and headline. On phone the picture spans the full width above each story. Most visual, but 10 stories become a long scroll.",V2],
+ ["V3","Top 3 big, then a compact list","front page + brief","The top 3 get big pictures in a row (#1 widest); 4 to 10 become one-line rows with a small picture. It's striking, and it makes the top 3 feel important. It mixes two styles on one page.",V3],
+];
+function draw(){
+ const t=taste(),ks=Object.keys(t).filter(k=>t[k]);
+ document.getElementById("taste").innerHTML=`<b>What the page has learned</b><span class="tw">${ks.length?ks.map(k=>`<span class="${t[k]>0?"p":"n"}">${k} ${t[k]>0?"+":""}${t[k]}</span>`).join(""):"<span>nothing yet: vote on a story</span>"}</span><span style="color:#aaa">Rank = outlets x2 + freshness + (region + category taste) x3</span><button id="reset">Reset votes</button>`;
+ document.getElementById("opts").innerHTML=OPTS.map(([k,n,m,d,f])=>{const [a,b]=f();return `<section class="opt"><h2><em>${k}.</em> ${n}: <span style="color:var(--muted);font-weight:600">${m}</span></h2><p class="note">${d}</p><div class="frames"><div class="desk-wrap"><p class="lbl">Desktop</p><div class="desk">${a}</div></div><div><p class="lbl">Phone (390 px)</p><div class="phone">${b}</div></div></div></section>`}).join("");
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b){const id=b.dataset.id,v=+b.dataset.v;if(votes[id]===v)delete votes[id];else votes[id]=v;draw();return}if(e.target.id==="reset"){for(const k in votes)delete votes[k];draw()}});
+draw();
+</script></body></html>

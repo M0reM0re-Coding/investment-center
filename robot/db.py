@@ -46,9 +46,14 @@ def mark_seen(link_to_story):
 
 def recent_stories(hours=72):
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
-    return _req("GET", "stories", params={
-        "select": "id,event,headline,links,outlets,n_sources,impact_score,alerted_at",
-        "created_at": f"gte.{since}", "order": "created_at.desc", "limit": "500"})
+    cols = "id,event,headline,links,outlets,n_sources,impact_score,alerted_at,created_at"
+    params = {"created_at": f"gte.{since}", "order": "created_at.desc", "limit": "500"}
+    try:  # growth/timeline (Developing) exist once supabase/008_world.sql has been run
+        return _req("GET", "stories", params={"select": cols + ",growth,timeline", **params})
+    except RuntimeError as e:
+        if "growth" not in str(e) and "timeline" not in str(e):
+            raise
+        return _req("GET", "stories", params={"select": cols, **params})
 
 
 def insert_stories(rows):

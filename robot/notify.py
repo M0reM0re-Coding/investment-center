@@ -119,10 +119,61 @@ def brief_text(stories, now):
         lines.append(f"<b>{i}. {e(s['headline'])}</b>\n"
                      f"Impact {s['impact_score']}/10 · ▲ {s['n_sources']} · {e(' '.join(s.get('tickers') or []))}\n"
                      f"{e((s.get('what_it_means') or '').split('. ')[0].rstrip('.'))}.\n")
+    try:  # World Brief: top 3 in the world (never blocks the brief)
+        import world
+        top = world.top_for_brief()
+    except Exception:
+        top = []
+    if top:
+        lines.append("<b>Top 3 in the world</b>")
+        for s in top:
+            lines.append(f"• {e(s['headline'])} <i>({s['n_sources']} outlets · {e(s.get('region') or '')})</i>")
+        lines.append("")
     site = os.environ.get("SITE_URL", "").rstrip("/")
     if site:
         lines.append(f'<a href="{e(site)}">Open Investment Center</a>')
     return "\n".join(lines)
+
+
+def maybe_weekly(now=None, force=False):
+    """Sunday recap (design round 21): the week's most-covered world stories, which touched your stocks,
+    and how many of the top 10 you read. Once, in the first run on Sunday at or after 07:00 Bangkok."""
+    now = now or datetime.now(BANGKOK)
+    marker = f"weekly:{now.date().isoformat()}"
+    if not force and (now.weekday() != 6 or now.hour < BRIEF_HOUR or db.seen_links([marker])):
+        return False
+    since = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    try:
+        rows = db._req("GET", "world_stories", params={"select": "*", "created_at": f"gte.{since}",
+                                                        "order": "n_sources.desc", "limit": "10"})
+    except RuntimeError:
+        return False  # World Brief not set up yet
+    if not rows:
+        return False
+    start = (now - timedelta(days=6)).strftime("%d %b")
+    lines = [f"<b>Week in the world</b> · {start} – {now.strftime('%d %b')}", ""]
+    for i, s in enumerate(rows[:5], 1):
+        lines.append(f"<b>{i}.</b> {e(s['headline'])} <i>({s['n_sources']} outlets)</i>")
+    touched = [(i, t) for i, s in enumerate(rows[:10], 1) for t in (s.get("stocks") or [])]
+    if touched:
+        lines += ["", "<b>Touched your stocks:</b> " + ", ".join(f"{e(t)} (story {i})" for i, t in touched[:6])]
+    try:
+        owner = os.environ.get("OWNER_USER_ID")
+        params = {"select": "story_id", "status": "eq.done", "story_id": "in.(" + ",".join(r["id"] for r in rows) + ")"}
+        if owner:
+            params["user_id"] = f"eq.{owner}"
+        read = len(db._req("GET", "world_status", params=params))
+        lines += ["", f"You read {read} of this week's top {len(rows)}."]
+    except RuntimeError:
+        pass
+    site = os.environ.get("SITE_URL", "").rstrip("/")
+    if site:
+        lines += ["", f'<a href="{e(site)}/#/world">Open World Brief</a>']
+    ok = send("\n".join(lines))
+    if ok and not force:
+        db.mark_seen({marker: None})
+    print(f"Weekly recap: {'sent' if ok else 'FAILED'}")
+    return ok
 
 
 def maybe_brief(now=None, force=False):

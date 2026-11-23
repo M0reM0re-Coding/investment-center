@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 23 · Clear map situations</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<style>
+:root{--ink:#111;--soft:#555;--muted:#888;--line:#eee;--line2:#e2e2e2;--chip:#f3f3f3;--accent:#ff4500;
+  --c-eu:#dbe7fb;--c-am:#e9e0fb;--c-me:#fbe9c4;--c-as:#d2f0e2;--c-af:#f9dcd6;
+  --f-conflict:#dc2626;--f-pressure:#d97706;--f-deal:#16a34a;--f-help:#2563eb;--f-event:#7c3aed}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#f6f6f6;color:var(--ink);font-size:14px;line-height:1.45}
+button{font:inherit;cursor:pointer;color:inherit}
+.doc{max-width:1460px;margin:0 auto;padding:28px 16px 80px}
+.doc>h1{font:800 28px "Inter Tight";letter-spacing:-.02em}
+.lead{color:var(--soft);max-width:960px;margin:6px 0}
+.part{margin:40px 0 10px;padding-top:22px;border-top:2px solid #ddd}
+.part h2{font:800 24px "Inter Tight"}.part h2 span{color:var(--accent)}
+.opt{margin:22px 0 36px}.opt h3{font:800 19px "Inter Tight"}.opt h3 em{font-style:normal;color:var(--accent)}
+.note{color:var(--soft);margin:4px 0 12px;max-width:960px}
+.frames{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.dw{flex:1 1 880px;min-width:0}
+.desk{background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.phone{width:390px;max-width:100%;background:#fff;border:1px solid var(--line2);border-radius:28px;overflow:hidden;height:780px;display:flex;flex-direction:column}
+.phone .scroll{flex:1;overflow:auto}
+.lbl{font:600 11px Inter;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.pad{padding:18px 22px}.mpad{padding:14px 16px}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.logo{font:900 16px "Inter Tight"}
+.reco{background:#fff4ef;border:1px solid #ffd2c0;border-radius:10px;padding:12px 16px;margin-top:12px}
+.real{font-size:10.5px;color:#166534;background:#dcfce7;border-radius:4px;padding:1px 6px;font-weight:800;letter-spacing:.3px}
+.fake{font-size:10.5px;color:#92400e;background:#fef3c7;border-radius:4px;padding:1px 6px;font-weight:800;letter-spacing:.3px}
+/* families legend */
+.fams{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}
+.fam{border-radius:12px;padding:12px 14px;color:#fff}
+.fam b{font:800 15px "Inter Tight";display:block}.fam small{opacity:.9;font-size:12px}
+/* map */
+.mapbox{position:relative;border-radius:12px;overflow:hidden;background:#f5f8fb}
+.mapbox svg{display:block;width:100%;height:auto}
+.land{stroke:#fff;stroke-width:.6}
+.land.eu{fill:var(--c-eu)}.land.am{fill:var(--c-am)}.land.me{fill:var(--c-me)}.land.as{fill:var(--c-as)}.land.af{fill:var(--c-af)}
+.land.hit{stroke:#111;stroke-width:1.1}
+.ln{fill:none;stroke-width:3;stroke-linecap:round}
+.ln.dot{stroke-dasharray:1 7}.ln.dash{stroke-dasharray:10 6}.ln.zig{stroke-dasharray:3 3}
+.mv-missile{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:26 400;animation:mv 2.2s linear infinite}
+@keyframes mv{from{stroke-dashoffset:26}to{stroke-dashoffset:-400}}
+.mv-flow{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:3 13;animation:fl 1.1s linear infinite}
+.mv-chev{fill:none;stroke-width:7;stroke-linecap:butt;stroke-dasharray:6 10;opacity:.55;animation:fl 1.4s linear infinite}
+@keyframes fl{to{stroke-dashoffset:-16}}
+.mv-blink{animation:bk 1.2s ease-in-out infinite}@keyframes bk{50%{opacity:.25}}
+.boom{transform-box:fill-box;transform-origin:center;animation:boom 2.2s ease-out infinite}
+@keyframes boom{0%,68%{transform:scale(.2);opacity:0}74%{opacity:.75}100%{transform:scale(2.6);opacity:0}}
+.ring{fill:none;stroke-width:2.2;transform-box:fill-box;transform-origin:center;animation:ring 2.2s ease-out infinite}.ring.b{animation-delay:1.1s}
+@keyframes ring{from{transform:scale(.4);opacity:.9}to{transform:scale(2.8);opacity:0}}
+.badge circle{stroke:#fff;stroke-width:2.5}
+.cn{font:700 11px Inter;fill:#222;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round}
+.badge .nb{font:800 10px Inter;fill:#fff;text-anchor:middle;dominant-baseline:central}
+.pill rect{fill:#fff;stroke-width:1.5}
+.pill text{font:600 11.5px Inter;fill:#111;dominant-baseline:central}
+.zoom{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.zoom button{border:1px solid var(--line2);background:#fff;border-radius:99px;padding:5px 12px;font:600 12.5px Inter;color:var(--soft)}
+.zoom button.on{background:#111;color:#fff;border-color:#111}
+.alert{position:absolute;left:12px;top:12px;max-width:330px;background:#fff;border:1px solid #fecaca;border-left:4px solid var(--f-conflict);border-radius:12px;padding:10px 12px;box-shadow:0 10px 24px #0002;font-size:13px}
+.alert .h{display:flex;align-items:center;gap:6px;font:800 11px Inter;color:var(--f-conflict);letter-spacing:.6px}
+.alert .h i{width:8px;height:8px;border-radius:50%;background:var(--f-conflict);animation:bk 1s infinite}
+.alert b{display:block;font:700 14.5px/1.3 Inter;margin:3px 0 2px}.alert small{color:var(--muted)}
+/* sentence list (style B) */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.sl h5{font:800 11px Inter;letter-spacing:1px;margin:14px 0 4px;display:flex;align-items:center;gap:6px}
+.sl h5:first-child{margin-top:0}
+.sl h5 i{width:9px;height:9px;border-radius:3px}
+.it{display:grid;grid-template-columns:30px 1fr;gap:10px;padding:8px 6px;border-radius:10px;align-items:start;cursor:pointer}
+.it:hover,.it.sel{background:#f6f6f6}
+.ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;position:relative}
+.ic svg{width:17px;height:17px}
+.ic .n{position:absolute;right:-5px;top:-5px;width:16px;height:16px;border-radius:50%;background:#111;color:#fff;font:800 9px Inter;display:grid;place-items:center;border:2px solid #fff}
+.it b{display:block;font:700 14px/1.3 Inter}.it small{color:var(--muted);font-size:12px}
+/* gallery */
+.gal{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.famh{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:10px}
+.famh b{font:800 17px "Inter Tight"}.famh span{color:var(--soft)}
+.famh i{width:14px;height:14px;border-radius:4px}
+.g{background:#fff;border:1px solid var(--line2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.g .gh{padding:10px 12px;display:flex;gap:10px;align-items:center}
+.g .gh b{font:800 14px "Inter Tight";display:block}.g .gh small{color:var(--soft);font-size:11.5px;line-height:1.35;display:block}
+.g .say{padding:8px 12px;font:600 13px/1.35 Inter;border-top:1px solid var(--line)}
+.g .say small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:3px}
+@media (max-width:1100px){.gal{grid-template-columns:repeat(2,1fr)}.fams{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+</style></head><body><div class="doc">
+<h1>Round 23 · Map situations, clearer and more of them</h1>
+<p class="lead">Read first: <b>option B (always-visible strip)</b> is noted and will be built as shown in round 22. This round is only the map. Everything uses three simple signals: <b>colour = family</b>, <b>icon = what happened</b>, <b>a plain sentence = who did what to whom</b>. Tags: <span class="real">REAL</span> = from today's headlines, <span class="fake">MADE-UP</span> = invented, only to show how that kind looks.</p>
+<div class="fams" id="fams"></div>
+
+<section class="part"><h2><span>Part 1.</span> All of today on one map: 2 styles</h2>
+<div class="opt"><h3><em>A.</em> Sentences on the map</h3><p class="note">Each situation has its icon badge on the line and a plain sentence next to it. Very direct: you read the map like a picture. Gets crowded where a lot happens (Europe today).</p>
+<div class="frames"><div class="dw"><p class="lbl">Desktop</p><div class="desk"><div class="pad"><div class="mapbox" id="mapA"></div></div></div></div></div></div>
+<div class="opt"><h3><em>B.</em> Numbered icons on the map + sentence list, with zoom</h3><p class="note">The map only shows lines and numbered icon badges (nothing to read on top of the map), and the plain sentences sit in a list beside it, grouped by family. Hover or tap a sentence and its line lights up and the countries are outlined. Zoom buttons per region fix crowded areas. <b>Try the zoom buttons and hover the list.</b></p>
+<div class="frames"><div class="dw"><p class="lbl">Desktop</p><div class="desk"><div class="pad"><div class="zoom" id="zoomB"></div><div class="split"><div class="mapbox" id="mapB"></div><div class="sl" id="listB"></div></div></div></div></div>
+<div><p class="lbl">Phone</p><div class="phone"><div class="mhd"><b class="logo">investment center</b></div><div class="scroll mpad"><div class="zoom" id="zoomM"></div><div class="mapbox" id="mapM"></div><div class="sl" id="listM" style="margin-top:12px"></div></div></div></div></div></div>
+<div class="reco"><b>My recommendation: B.</b> Nothing to read on top of the map, so it never gets messy, even on a busy day or a phone; the list says it in plain words; zoom handles Europe. A is the most "at a glance" but breaks down on busy days.</div>
+</section>
+
+<section class="part"><h2><span>Part 2.</span> All 19 kinds, one by one</h2>
+<p class="lead">The AI picks one kind per story (most stories have none and stay a normal pin). Only conflict kinds and flows move; everything else stays still. With "Reduced motion" on, nothing moves.</p>
+<div class="gal" id="gal"></div>
+</section>
+</div>
+<script>
+(() => {
+const svgI=(d,w=24)=>`<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON={
+ missile:'<path d="M14.5 4.5c2.5-1 4.5-1 5 0s-1 2.5-2 5L11 16l-3-3z"/><path d="M8 13l-3 1-1 3 3-1M11 16l-1 3-3 1 1-3"/><path d="M5 19l-2 2"/>',
+ swords:'<path d="M4 4l9 9M20 4l-9 9M3 17l4 4M21 17l-4 4M6 15l3 3M18 15l-3 3"/>',
+ troops:'<path d="M4 7l8 5 8-5M4 13l8 5 8-5"/>',
+ warn:'<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+ rocket:'<path d="M12 2c3 3 4 7 4 11l-4 3-4-3c0-4 1-8 4-11z"/><path d="M8 13l-3 4h4M16 13l3 4h-4M12 16v5"/>',
+ cyber:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+ block:'<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
+ tariff:'<path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+ broken:'<path d="M9 15l-2 2a3 3 0 0 1-4-4l2-2M15 9l2-2a3 3 0 0 1 4 4l-2 2M8 6V3M3 8h3M16 18v3M21 16h-3"/>',
+ peace:'<path d="M12 3v18M12 12l-7 6M12 12l7 6"/><circle cx="12" cy="12" r="9"/>',
+ deal:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 14l2 2 4-4"/>',
+ summit:'<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5M14 15.2c1-.2 1.5-.2 2-.2 3 0 6 2 6 5"/>',
+ aid:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+ arms:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+ people:'<circle cx="12" cy="5" r="2"/><path d="M10 22l2-7 3 3v4M8 12l3-4h3l2 3 3 1M11 15l-3-2"/>',
+ protest:'<path d="M3 10v4h3l9 5V5L6 10z"/><path d="M18.5 9a3.5 3.5 0 0 1 0 6"/>',
+ vote:'<path d="M4 21h16M7 3h10v11H7z"/><path d="M9.5 8.5l2 2 3.5-3.5"/>',
+ fire:'<path d="M12 3c3 4 6 6.5 6 11a6 6 0 0 1-12 0c0-3 1.5-5 3-7 .8 2 2 3 3 3 0-3-1-5 0-7z"/>',
+ wave:'<path d="M2 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 20c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M12 3c-3 3-3 6 0 8"/>',
+ virus:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/>',
+};
+const FAM={conflict:["Conflict","var(--f-conflict)","Attacks, war, troops, threats"],pressure:["Pressure","var(--f-pressure)","Sanctions, tariffs, cutting ties"],deal:["Deals","var(--f-deal)","Peace talks, agreements, summits"],help:["Help sent","var(--f-help)","Aid, money, weapons, refugees"],event:["In one place","var(--f-event)","Protests, elections, disasters"]};
+// kind: family, icon, name, line style, motion, two-way?, one place?
+const K={
+ strike:["conflict","missile","Strike / missile attack","solid","missile",0,0,"A missile flies along the line and hits the target."],
+ war:["conflict","swords","War (fighting both ways)","solid","both",1,0,"Missiles fly both ways; both ends flash."],
+ troops:["conflict","troops","Troops move in","solid","chev",0,0,"Thick moving chevrons, like an army arrow on a battle map."],
+ threat:["conflict","warn","Threat / warning","dot","blink",0,0,"Dotted line that pulses: something might happen."],
+ test:["conflict","rocket","Weapons test","",'ring',0,1,"Rings at one place: a missile or nuclear test."],
+ cyber:["conflict","cyber","Cyberattack","zig","blink",0,0,"Short flickering dashes: an attack you can't see."],
+ sanction:["pressure","block","Sanctions","dash","",0,0,"Dashed line with a 'blocked' sign: punishment without fighting."],
+ tariff:["pressure","tariff","Tariffs / trade fight","dash","",1,0,"Dashed both ways with a % sign: taxes on each other's goods."],
+ cut:["pressure","broken","Ties cut / diplomats expelled","gap","",1,0,"A line broken in the middle: relations cut."],
+ peace:["deal","peace","Peace talks / ceasefire","solid","",1,0,"Calm green line between both sides."],
+ deal:["deal","deal","Agreement / trade deal","solid","",1,0,"Green line with a signed-document sign."],
+ summit:["deal","summit","Summit / big meeting","solid","",0,1,"Lines from many countries meet at one place."],
+ aid:["help","aid","Aid / money sent","solid","flow",0,0,"Dots flow from giver to receiver."],
+ arms:["help","arms","Weapons supplied","solid","flow",0,0,"Boxes flow from supplier to receiver."],
+ refugees:["help","people","Refugees / people fleeing","solid","flow",0,0,"Dots flow from where people leave to where they go."],
+ protest:["event","protest","Protest / strike / unrest","",'ring',0,1,"Pulsing rings at one place."],
+ vote:["event","vote","Election / vote","",'',0,1,"A ballot icon at one place, no motion."],
+ disaster:["event","fire","Disaster (fire, flood, quake)","",'ring',0,1,"Pulsing rings at one place."],
+ outbreak:["event","virus","Disease outbreak","",'ring',0,1,"Pulsing rings at one place."],
+};
+// Today's situations (real = from today's headlines). "say" is the plain sentence the AI would write.
+const S=[
+ {k:"strike",a:"Russia",b:"Poland",say:"Russia's missiles hit Poland",h:"Poland to get NATO early-warning planes after Russian missiles hit country",real:1,ago:"3 h"},
+ {k:"strike",a:"Ukraine",b:"Libya",say:"Ukraine hit Russian warships in Libya",h:"Ukraine sinks Russian warship off Libya with naval drones",real:1,ago:"1 h"},
+ {k:"war",a:"Russia",b:"Ukraine",say:"Russia and Ukraine: the war goes on",h:"Leaked data shows 1,000+ Russian military suicides during Ukraine war",real:1,ago:"1 h"},
+ {k:"troops",a:"Israel",b:"Syria",say:"Israel sent troops into southern Syria",h:"Israel's southern Syria incursion triggers fear and destruction",real:1,ago:"8 h"},
+ {k:"threat",a:"Russia",b:"Estonia",say:"Russia threatened Estonia with war",h:"Russia threatens 'hostile' Estonia with 'open war'",real:1,ago:"3 h"},
+ {k:"threat",a:"United States of America",b:"Iran",say:"US warned Iran strikes could resume",h:"Trump says strikes on Iran could resume after New Year",real:1,ago:"9 h"},
+ {k:"sanction",a:"United Kingdom",b:"Myanmar",say:"UK put sanctions on Myanmar's leader",h:"UK sanctions Myanmar's Min Aung Hlaing over genocide ruling",real:1,ago:"6 h"},
+ {k:"tariff",a:"United States of America",b:"Canada",say:"US and Canada fight over trade",h:"Comedian mocks Trump's trade talks at Canada",real:1,ago:"5 h"},
+ {k:"peace",a:"Armenia",b:"Azerbaijan",say:"Armenia moves toward peace with Azerbaijan",h:"Armenian PM unveils draft constitution, key to Azerbaijan peace deal",real:1,ago:"8 h"},
+ {k:"deal",a:"United Kingdom",b:"France",bLabel:"EU",say:"UK and EU agree closer ties",h:"UK hails EU reset; Burnham rules out rejoining without a vote",real:1,ago:"2 h"},
+ {k:"summit",many:["Brazil","United States of America","China","India","Germany","South Africa","Australia"],at:"Turkey",say:"COP31 climate summit in Turkey ends with no deal",h:"COP31 climate talks end with no deal on fossil fuels",real:1,ago:"3 h"},
+ {k:"aid",a:"United Kingdom",b:"Bangladesh",bLabel:"Rohingya camps",say:"UK sends aid to Rohingya refugees",h:"UK gives new aid and money for Rohingya refugees",real:1,ago:"6 h"},
+ {k:"protest",at:"Belgium",say:"Belgium: national strike shuts airports",h:"Airports, public transport shut down amid national strike in Belgium",real:1,ago:"6 h"},
+ {k:"vote",at:"United States of America",say:"US: Democrats win biggest House majority since 1992",h:"Democrats win largest House majority since 1992",real:1,ago:"9 h"},
+ {k:"disaster",at:"Indonesia",say:"Indonesia: factory fire kills 24",h:"Deadly fire at confectionery factory in Indonesia",real:1,ago:"4 h"},
+];
+// one example per kind for the gallery (made-up where today had none)
+const EX={
+ strike:S[0],war:S[2],troops:S[3],threat:S[4],
+ test:{k:"test",at:"North Korea",say:"North Korea tested a long-range missile",h:"(made-up example)"},
+ cyber:{k:"cyber",a:"China",b:"Taiwan",say:"Hackers hit Taiwan's banks; Taiwan blames China",h:"(made-up example)"},
+ sanction:S[6],tariff:S[7],
+ cut:{k:"cut",a:"India",b:"Pakistan",say:"India and Pakistan expel each other's diplomats",h:"(made-up example)"},
+ peace:S[8],deal:S[9],summit:S[10],aid:S[11],
+ arms:{k:"arms",a:"Germany",b:"Ukraine",say:"Germany sends air-defence systems to Ukraine",h:"(made-up example)"},
+ refugees:{k:"refugees",a:"Sudan",b:"Chad",say:"Thousands flee Sudan's fighting into Chad",h:"(made-up example)"},
+ protest:S[12],vote:S[13],disaster:S[14],
+ outbreak:{k:"outbreak",at:"Democratic Republic of the Congo",atMap:"Dem. Rep. Congo",say:"DR Congo: new Ebola outbreak declared",h:"(made-up example)"},
+};
+const SHORT={"United States of America":"US","United Kingdom":"UK","Democratic Republic of the Congo":"DR Congo"};
+const famOf=k=>K[k][0], col=k=>FAM[famOf(k)][1];
+document.getElementById("fams").innerHTML=Object.values(FAM).map(([n,c,d])=>`<div class="fam" style="background:${c}"><b>${n}</b><small>${d}</small></div>`).join("");
+
+const ME=new Set(["Iran","Iraq","Syria","Israel","Palestine","Jordan","Lebanon","Saudi Arabia","Yemen","Oman","United Arab Emirates","Qatar","Kuwait","Turkey","Cyprus"]);
+const AF=new Set(["Algeria","Angola","Benin","Botswana","Burkina Faso","Burundi","Cameroon","Central African Rep.","Chad","Congo","Dem. Rep. Congo","Côte d'Ivoire","Djibouti","Egypt","Eq. Guinea","Eritrea","eSwatini","Ethiopia","Gabon","Gambia","Ghana","Guinea","Guinea-Bissau","Kenya","Lesotho","Liberia","Libya","Madagascar","Malawi","Mali","Mauritania","Morocco","Mozambique","Namibia","Niger","Nigeria","Rwanda","Senegal","Sierra Leone","Somalia","Somaliland","South Africa","S. Sudan","Sudan","Tanzania","Togo","Tunisia","Uganda","W. Sahara","Zambia","Zimbabwe"]);
+const cont=(n,c)=>ME.has(n)?"me":AF.has(n)?"af":n==="Russia"?"eu":c[0]<-25?"am":(c[0]<50&&c[1]>34)?"eu":"as";
+const CAP={Russia:[37.6,55.75],"United States of America":[-77,38.9],"United Kingdom":[-0.1,51.5],Libya:[19.5,32.3],Bangladesh:[92.1,21.2],Canada:[-75.7,45.4],China:[116.4,39.9],India:[77.2,28.6],France:[4.35,50.85],Brazil:[-47.9,-15.8],Australia:[149.1,-35.3]};
+const BOX={World:null,Europe:[[-12,34],[42,62]],"Middle East":[[24,12],[62,43]],"Asia-Pacific":[[65,-42],[150,45]],Americas:[[-128,-38],[-40,60]],Africa:[[-20,-36],[52,37]]};
+const ZOOMS={World:null,Europe:["France","Poland","Ukraine","Estonia","United Kingdom","Spain","Belgium","Libya","Turkey"],"Middle East":["Israel","Syria","Iran","Turkey","Saudi Arabia","Egypt","Armenia","Azerbaijan"],"Asia-Pacific":["India","China","Indonesia","Myanmar","Bangladesh","Japan","Australia"],Americas:["Canada","United States of America","Mexico","Brazil"],Africa:["Libya","Chad","Sudan","Dem. Rep. Congo","South Africa","Nigeria"]};
+
+d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then(w=>{
+ const land=topojson.feature(w,w.objects.countries).features.filter(f=>f.properties.name!=="Antarctica");
+ const byName={};land.forEach(f=>byName[f.properties.name]=f);
+ const cen=n=>CAP[n]||(byName[n]?d3.geoCentroid(byName[n]):null);
+
+ function draw(el,W,H,sits,o={}){
+  // Zoom: a fixed lon/lat box per region, or the capitals/centres of the countries involved (never whole shapes:
+  // France's shape includes French Guiana in South America, which wrecked the Europe zoom)
+  let fitObj={type:"FeatureCollection",features:land}, pad=10;
+  if(o.box) fitObj={type:"MultiPoint",coordinates:o.box};
+  else if(o.fit){fitObj={type:"MultiPoint",coordinates:o.fit.map(cen).filter(Boolean)};pad=Math.min(W,H)*.2;}
+  const proj=(o.fit||o.box?d3.geoMercator():d3.geoNaturalEarth1()).fitExtent([[pad,pad],[W-pad,H-pad]],fitObj);
+  const path=d3.geoPath(proj), P=n=>proj(cen(n)), uid=el.id;
+  const hitSet=new Set(); if(o.sel){const x=o.sel;[x.a,x.b,x.at,x.atMap,...(x.many||[])].forEach(n=>n&&hitSet.add(n));}
+  let s=`<svg viewBox="0 0 ${W} ${H}"><defs>${Object.entries(FAM).map(([f,[,c]])=>`<marker id="ah-${f}-${uid}" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="${c}"/></marker>`).join("")}</defs>`;
+  s+=land.map(f=>`<path class="land ${cont(f.properties.name,d3.geoCentroid(f))}${hitSet.has(f.properties.name)?" hit":""}" d="${path(f)}"><title>${f.properties.name}</title></path>`).join("");
+  const badges=[];
+  sits.forEach((x,idx)=>{
+   const [fam,ic,,ls,mv,two,one]=K[x.k], c=col(x.k), dim=o.sel&&o.sel!==x?' opacity=".18"':'';
+   const g=[];
+   if(one){
+    const [px,py]=P(x.atMap||x.at);
+    if(x.many){x.many.forEach(m=>{const [mx,my]=P(m);g.push(`<path class="ln" d="M${mx},${my} L${px},${py}" stroke="${c}" stroke-width="2" opacity=".75"/><circle cx="${mx}" cy="${my}" r="3.5" fill="${c}" stroke="#fff" stroke-width="1.5"/>`)})}
+    if(mv==="ring") g.push(`<circle class="ring" cx="${px}" cy="${py}" r="11" stroke="${c}"/><circle class="ring b" cx="${px}" cy="${py}" r="11" stroke="${c}"/>`);
+    if(o.names) g.push(`<text class="cn" x="${px}" y="${py+28}">${SHORT[x.at]||x.at}</text>`);
+    badges.push({x:px,y:py,k:x.k,x0:x,n:idx+1,anchor:[px,py]});
+   } else {
+    const [x1,y1]=P(x.a),[x2,y2]=P(x.b),dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1,bend=Math.min(70,len*.3);
+    const cx=(x1+x2)/2-dy/len*bend, cy=(y1+y2)/2+dx/len*bend, d=`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`, dRev=`M${x2},${y2} Q${cx},${cy} ${x1},${y1}`;
+    const mx=.25*x1+.5*cx+.25*x2, my=.25*y1+.5*cy+.25*y2;
+    const cls=ls==="dot"?"ln dot":ls==="dash"?"ln dash":ls==="zig"?"ln zig":"ln";
+    const mk=`marker-end="url(#ah-${fam}-${uid})"`+(two?` marker-start="url(#ah-${fam}-${uid})"`:"");
+    if(ls==="gap"){g.push(`<path class="ln" d="${d}" stroke="${c}" pathLength="100" stroke-dasharray="40 20 40"/>`);}
+    else g.push(`<path class="${cls}${mv==="blink"?" mv-blink":""}" d="${d}" stroke="${c}" ${["peace","deal","tariff","cut"].includes(x.k)?"":mk}/>`);
+    if(mv==="missile"||mv==="both"){g.push(`<path class="mv-missile" d="${d}" pathLength="400" stroke="${c}"/><circle class="boom" cx="${x2}" cy="${y2}" r="10" fill="${c}"/>`);
+      if(mv==="both") g.push(`<path class="mv-missile" d="${dRev}" pathLength="400" stroke="${c}" style="animation-delay:1.1s"/><circle class="boom" cx="${x1}" cy="${y1}" r="10" fill="${c}" style="animation-delay:1.1s"/>`);}
+    if(mv==="flow") g.push(`<path class="mv-flow" d="${d}" stroke="${c}"${x.k==="arms"?' stroke-width="6" stroke-dasharray="6 12"':''}/>`);
+    if(mv==="chev") g.push(`<path class="mv-chev" d="${d}" stroke="${c}"/>`);
+    g.push(`<circle cx="${x1}" cy="${y1}" r="4.5" fill="${c}" stroke="#fff" stroke-width="1.5"/><circle cx="${x2}" cy="${y2}" r="4.5" fill="${c}" stroke="#fff" stroke-width="1.5"/>`);
+    if(o.names){const nm=(n,l)=>l||SHORT[n]||n;g.push(`<text class="cn" x="${x1}" y="${y1+(y1>y2?17:-9)}">${nm(x.a,x.aLabel)}</text><text class="cn" x="${x2}" y="${y2+(y2>=y1?17:-9)}">${nm(x.b,x.bLabel)}</text>`);}
+    badges.push({x:mx,y:my,k:x.k,x0:x,n:idx+1,anchor:[mx,my]});
+   }
+   s+=`<g${dim}>${g.join("")}</g>`;
+  });
+  // badges (icon circles) + optional sentence pills, spread so nothing overlaps
+  const placed=[];
+  badges.forEach(b=>{
+   const c=col(b.k), dim=o.sel&&o.sel!==b.x0?' opacity=".25"':'';
+   const r=o.small?10:13;
+   s+=`<g class="badge"${dim} transform="translate(${b.x},${b.y})"><circle r="${r}" fill="${c}"/><g transform="translate(${-r*.62},${-r*.62})" style="color:#fff">${svgI(ICON[K[b.k][1]],r*1.24)}</g>${o.numbers?`<g transform="translate(${r*.8},${-r*.8})"><circle r="7.5" fill="#111"/><text class="nb">${b.n}</text></g>`:""}</g>`;
+   if(o.pills){const t=b.x0.say, tw=t.length*6.3+16;let bx=Math.max(4,Math.min(W-tw-4,b.x+16)),by=b.y-11;
+    const hit=(x,y)=>placed.some(p=>x<p.x+p.w+4&&x+tw+4>p.x&&y<p.y+26&&y+26>p.y);
+    found:for(let k=0;k<=12;k++){for(const sgn of k?[-1,1]:[1]){for(const side of [1,-1]){const yy=Math.max(4,Math.min(H-26,b.y-11+sgn*k*26)),xx=Math.max(4,Math.min(W-tw-4,side>0?b.x+16:b.x-16-tw));if(!hit(xx,yy)){bx=xx;by=yy;break found;}}}}
+    placed.push({x:bx,y:by,w:tw});
+    if(Math.abs(by-(b.y-11))>3||bx<b.x) s+=`<line x1="${b.x}" y1="${b.y}" x2="${bx<b.x?bx+tw:bx}" y2="${by+11}" stroke="${c}" stroke-width="1" opacity=".7"/>`;
+    s+=`<g class="pill" transform="translate(${bx},${by})"><rect width="${tw}" height="22" rx="11" stroke="${c}"/><text x="8" y="11">${t}</text></g>`;}
+  });
+  s+="</svg>";
+  el.innerHTML=s+(o.alert?`<div class="alert"><div class="h"><i></i>ALERT · 1 HR AGO</div><b>Ukraine hit Russian warships in Libya</b><small>23 outlets · +1 more strike today: Russia's missiles hit Poland</small></div>`:"");
+ }
+ // Style A
+ draw(document.getElementById("mapA"),1000,520,S,{pills:true,alert:true});
+ // Style B (interactive)
+ const famOrder=["conflict","pressure","deal","help","event"];
+ const sorted=[...S].sort((a,b)=>famOrder.indexOf(famOf(a.k))-famOrder.indexOf(famOf(b.k)));
+ function list(el,zoomName,sel,id){
+  const inZoom=x=>!ZOOMS[zoomName]||[x.a,x.b,x.at,x.atMap].some(n=>n&&ZOOMS[zoomName].includes(n));
+  const shown=sorted.filter(inZoom); let html="";
+  famOrder.forEach(f=>{const xs=shown.filter(x=>famOf(x.k)===f);if(!xs.length)return;
+   html+=`<h5 style="color:${FAM[f][1]}"><i style="background:${FAM[f][1]}"></i>${FAM[f][0].toUpperCase()} · ${xs.length}</h5>`+xs.map(x=>`<div class="it${sel===x?" sel":""}" data-i="${sorted.indexOf(x)}" data-m="${id}"><span class="ic" style="background:${col(x.k)}">${svgI(ICON[K[x.k][1]],17)}<span class="n">${sorted.indexOf(x)+1}</span></span><div><b>${x.say}</b><small>${x.ago} ago · ${K[x.k][2]} <span class="real">REAL</span></small></div></div>`).join("")});
+  el.innerHTML=html||'<p class="note">Nothing in this region today.</p>';
+  return shown;
+ }
+ const ST={B:{z:"World",sel:null},M:{z:"World",sel:null}};
+ function renderB(id){
+  const st=ST[id], mapEl=document.getElementById(id==="B"?"mapB":"mapM"), listEl=document.getElementById(id==="B"?"listB":"listM"), zEl=document.getElementById(id==="B"?"zoomB":"zoomM");
+  zEl.innerHTML=Object.keys(ZOOMS).map(z=>`<button class="${st.z===z?"on":""}" data-z="${z}" data-m="${id}">${z}</button>`).join("");
+  const shown=list(listEl,st.z,st.sel,id);
+  draw(mapEl,id==="B"?620:358,id==="B"?470:230,sorted.filter(x=>shown.includes(x)),{numbers:true,box:BOX[st.z],sel:st.sel,small:id==="M"});
+ }
+ renderB("B");renderB("M");
+ document.addEventListener("click",e=>{const z=e.target.closest("[data-z]");if(z){ST[z.dataset.m]={z:z.dataset.z,sel:null};renderB(z.dataset.m);return;}
+  const it=e.target.closest(".it[data-i]");if(it){const x=sorted[+it.dataset.i],st=ST[it.dataset.m];st.sel=st.sel===x?null:x;renderB(it.dataset.m);}});
+ document.addEventListener("mouseover",e=>{const it=e.target.closest("#listB .it[data-i]");const x=it?sorted[+it.dataset.i]:null;if(ST.B.hover!==x){ST.B.hover=x;const s0=ST.B.sel;ST.B.sel=x||s0;const shown=sorted.filter(xx=>!ZOOMS[ST.B.z]||[xx.a,xx.b,xx.at,xx.atMap].some(n=>n&&ZOOMS[ST.B.z].includes(n)));draw(document.getElementById("mapB"),620,470,shown,{numbers:true,box:BOX[ST.B.z],sel:ST.B.sel});ST.B.sel=s0;}});
+ // Gallery
+ const gal=document.getElementById("gal");
+ famOrder.forEach(f=>{gal.insertAdjacentHTML("beforeend",`<div class="famh"><i style="background:${FAM[f][1]}"></i><b>${FAM[f][0]}</b><span>${FAM[f][2]}</span></div>`);
+  Object.entries(K).filter(([,v])=>v[0]===f).forEach(([k,v],i)=>{const x=EX[k],id="g-"+k;
+   const names=[x.a,x.b,x.at,x.atMap,...(x.many||[])].filter(Boolean);
+   let fit=names.filter(n=>byName[n]||n==="Libya");
+   if(fit.length<3){const near={Poland:["Germany","Belarus"],Estonia:["Latvia","Finland","Belarus"],"North Korea":["South Korea","Japan","China"],Belgium:["France","Germany","Netherlands"],Indonesia:["Malaysia","Philippines"],"United States of America":["Mexico"],"Dem. Rep. Congo":["Angola","Tanzania"],Chad:["Libya","Niger"]};names.forEach(n=>(near[n]||[]).forEach(m=>fit.push(m)));}
+   if(x.many) fit=null;
+   gal.insertAdjacentHTML("beforeend",`<div class="g"><div class="gh"><span class="ic" style="background:${FAM[f][1]};flex:none">${svgI(ICON[v[1]],17)}</span><div><b>${v[2]}</b><small>${v[7]}</small></div></div><div class="mapbox" id="${id}"></div><div class="say">${x.say}<small>${x.real?`<span class="real">REAL</span> ${x.h}`:'<span class="fake">MADE-UP</span> only to show this kind'}</small></div></div>`);
+   draw(document.getElementById(id),340,200,[x],{fit,small:true,names:true});
+  });
+ });
+}).catch(()=>document.body.insertAdjacentHTML("afterbegin",'<p class="fake">Map data could not load (needs internet).</p>'));
+})();
+</script></body></html>

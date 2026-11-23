@@ -22,7 +22,8 @@ const state = {
 const FEED_STEP = 30;
 // Local preview only (python -m http.server on this PC): lets Claude show sample data before the database is updated.
 // Does nothing on the real site.
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.IC_PREVIEW = { state, render: (...a) => render(...a), brief: (ids) => { state.briefing = { ids, i: 0, res: {} }; drawBriefing(); } };
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.IC_PREVIEW = { state, render: (...a) => render(...a), brief: (ids) => { state.briefing = { ids, i: 0, res: {} }; drawBriefing(); },
+  world: (rows) => { state.world = rows; state.worldAt = Date.now() + 864e5; state.worldErr = ""; render(); } };  // sample World Brief rows before the table exists
 // Motion setting (Settings page): "auto" follows the device, "full" always animates, "reduced" keeps things still.
 const motionPref = () => safe(() => localStorage.getItem("ic_motion"), null) || "auto";
 const deviceCalm = () => safe(() => matchMedia("(prefers-reduced-motion: reduce)").matches, false);
@@ -59,6 +60,13 @@ function ago(iso) {
   if (h < 1) return `${Math.max(1, Math.round(h * 60))} min ago`;
   if (h < 24) return `${Math.round(h)} hr ago`;
   return `${Math.round(h / 24)} day${h >= 48 ? "s" : ""} ago`;
+}
+// "19 hr ago · Mon 13:20" (today: "2 hr ago · 14:05"): how old, plus when it was published (your local time)
+function agoAt(iso) {
+  if (!iso) return "";
+  const d = new Date(iso), today = new Date().toDateString() === d.toDateString();
+  const hm = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return `${ago(iso)} · ${today ? hm : `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${hm}`}`;
 }
 const impClass = (n) => (n >= 8 ? "imp-hi" : n >= 6 ? "imp-md" : n >= 4 ? "imp-lo" : "imp-min");
 const label = (s) => s.tickers?.[0] || s.topics?.[0] || "News";
@@ -316,7 +324,30 @@ async function setStatus(id, status) {
 const acts = (s) => `<button class="chk ${stOf(s) === "done" ? "on" : ""}" data-done="${s.id}" title="${stOf(s) === "done" ? "Mark as not done" : "Done"}" aria-label="Done">${CHK}</button>
   <button class="lat ${stOf(s) === "later" ? "on" : ""}" data-later="${s.id}" title="${stOf(s) === "later" ? "Remove from later" : "Read later"}" aria-label="Read later">${ICO.clock}</button>`;
 const stateCls = (s) => ({ seen: " seen", done: " done", later: " later" }[stOf(s)] || "");
-const metaTags = (s) => `${isNew(s) ? '<span class="newdot"></span><span class="newtag">NEW</span> · ' : ""}${isUpdated(s) ? '<span class="updtag">UPDATED</span> · ' : ""}${stOf(s) === "later" ? '<span class="latertag">LATER</span> · ' : ""}${state.notes.has(s.id) ? '<span class="notetag">NOTE</span> · ' : ""}`;
+// ---------- Developing (My News + World Brief, design round 21) ----------
+// The robot saves growth = [{t, n outlets}] and timeline = [{t, text}] each time a story gains outlets.
+// "Developing" = it gained outlets in the last 24 hours: 2+ for My News (fewer outlets per story), 3+ for World Brief.
+function devInfo(s, min = 2) {
+  const g = Array.isArray(s.growth) ? s.growth.filter((p) => p && p.t) : [];
+  if (g.length < 2) return null;
+  const last = g[g.length - 1], dayAgo = g.filter((p) => hoursAgo(p.t) > 24).pop() || g[0];
+  if (hoursAgo(last.t) > 24 || last.n - dayAgo.n < min) return null;
+  return { day: Math.floor(hoursAgo(s.created_at || g[0].t) / 24) + 1, from: g[0].n, to: last.n, g, tl: Array.isArray(s.timeline) ? s.timeline : [] };
+}
+const devTag = (d) => (d ? `<span class="devtag" title="More outlets keep covering this story"><i></i>Developing · day ${d.day}</span>` : "");
+function devSpark(g, w = 150, h = 40) {
+  const t0 = new Date(g[0].t), t1 = new Date(g[g.length - 1].t), span = Math.max(1, t1 - t0), mx = Math.max(...g.map((p) => p.n)), mn = Math.min(...g.map((p) => p.n));
+  const pts = g.map((p) => [((new Date(p.t) - t0) / span) * (w - 4) + 2, h - 3 - ((p.n - mn) / Math.max(1, mx - mn)) * (h - 6)]);
+  return `<svg class="devspark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts.map((p) => p.join(",")).join(" ")}"/><circle cx="${pts[pts.length - 1][0]}" cy="${pts[pts.length - 1][1]}" r="3"/></svg>`;
+}
+function devBox(s, min) {
+  const d = devInfo(s, min);
+  if (!d) return "";
+  const tm = (t) => new Date(t).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" });
+  return fold(`Developing · day ${d.day}`, `<div class="devgrow">${devSpark(d.g)}<div class="devnum">${d.from} → ${d.to}<small>outlets since ${tm(d.g[0].t)}</small></div></div>
+    ${d.tl.length > 1 ? `<ul class="devtl">${d.tl.slice(-4).map((x) => `<li><b>${tm(x.t)}</b><span>${esc(x.text)}</span></li>`).join("")}</ul>` : ""}`, true, "devbox");
+}
+const metaTags = (s) => `${devInfo(s) ? `${devTag(devInfo(s))} · ` : ""}${isNew(s) ? '<span class="newdot"></span><span class="newtag">NEW</span> · ' : ""}${isUpdated(s) ? '<span class="updtag">UPDATED</span> · ' : ""}${stOf(s) === "later" ? '<span class="latertag">LATER</span> · ' : ""}${state.notes.has(s.id) ? '<span class="notetag">NOTE</span> · ' : ""}`;
 
 // Price reaction: how the stock moved since the robot saved this story
 function sinceMove(s, t) {
@@ -355,7 +386,7 @@ function queuePanel() {
 function trendPanel(list) {
   if (!list.length) return "";
   return `<div class="trend a"><h2>Trending now</h2><ol>${list.map((s, i) => `
-    <li class="${stateCls(s).trim()}" data-go="${s.id}"><span class="num">${i + 2}</span><div><div class="meta">${metaTags(s)}${esc(label(s))} · ${ago(when(s))}</div>
+    <li class="${stateCls(s).trim()}" data-go="${s.id}"><span class="num">${i + 2}</span><div><div class="meta">${metaTags(s)}${esc(label(s))} · ${agoAt(when(s))}</div>
     <h3>${esc(s.headline)}</h3><div class="vote">▲ ${srcs(s.n_sources)} · impact ${s.impact_score}</div></div></li>`).join("")}</ol></div>`;
 }
 
@@ -512,14 +543,30 @@ function drawBriefing() {
     ov.addEventListener("click", onBriefClick);
     document.body.appendChild(ov);
   }
-  const b = state.briefing, s = findStory(b.ids[b.i]);
+  const b = state.briefing, s = b.world ? (state.world || []).find((x) => x.id === b.ids[b.i]) : findStory(b.ids[b.i]);
   const dots = b.ids.map((id, i) => `<i class="${b.res[id] === "done" ? "ok" : b.res[id] === "later" ? "lt" : i === b.i ? "on" : ""}"></i>`).join("");
+  if (b.world) {   // World Brief: same deck, World stories ("Skip" instead of "Later": World only has seen / read)
+    ov.innerHTML = !s
+      ? `<div class="sheet"><div class="end"><div class="big">✓</div><h2>You're caught up</h2>
+          <p class="why">Today's top world stories are read. ${Math.max(0, (state.world || []).filter((x) => !x._old && !wSt(x.id)).length)} more are on World Brief when you have time.</p>
+          <div class="act" style="justify-content:center"><button class="btn" data-bclose>Back to World Brief</button></div></div></div>`
+      : `<div class="sheet slide" role="dialog" aria-label="World briefing"><div class="pic wbpic">${wPic(s)}</div><div class="body">
+          <div class="meta wbmeta"><span class="wtags">${wTags(s)}</span> ${agoAt(when(s))} · ${esc(s.n_sources)} outlets</div>
+          <h2>${esc(s.headline)}</h2><ul>${(s.summary || []).slice(0, 3).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+          ${s.why_matters ? `<p class="why">${esc(s.why_matters)}</p>` : ""}${s.thailand ? `<p class="why"><b>Thailand:</b> ${esc(s.thailand)}</p>` : ""}
+          <div class="act"><div class="dots">${dots}</div><button class="linkbtn" data-bopen="${s.id}">Open full story</button>
+            <button class="btn ghost" data-blater="${s.id}">Skip</button><button class="btn ok" data-bdone="${s.id}">✓ Read · next</button></div></div>
+          <button class="x" data-bclose aria-label="Close">×</button>
+          <div class="swhint mob-only"><span>← Skip</span><span>swipe</span><span>Read →</span></div></div>`;
+    if (s && isPhone()) swipeCard(ov.querySelector(".sheet"), s.id);
+    return;
+  }
   ov.innerHTML = !s
     ? `<div class="sheet"><div class="end"><div class="big">✓</div><h2>You're caught up</h2>
         <p class="why">${storiesFor("To read").length} other stories left for when you have time.</p>
         <div class="act" style="justify-content:center"><button class="btn" data-bclose>Back to My News</button></div></div></div>`
     : `<div class="sheet slide" role="dialog" aria-label="Briefing">${media(s, true)}<div class="body">
-        <div class="meta">${metaTags(s)}${esc((s.topics || []).join(" · "))} · ${ago(when(s))} · ▲ ${srcs(s.n_sources)}</div>
+        <div class="meta">${metaTags(s)}${esc((s.topics || []).join(" · "))} · ${agoAt(when(s))} · ▲ ${srcs(s.n_sources)}</div>
         <h2>${esc(s.headline)}</h2><ul>${(s.summary || []).slice(0, 4).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
         <p class="why">${esc(s.what_it_means)}</p>
         <div class="act"><div class="dots">${dots}</div><button class="linkbtn" data-bopen="${s.id}">Open full story</button>
@@ -548,22 +595,24 @@ function swipeCard(card, id) {
     if (horiz && Math.abs(dx) > 90) {
       card.style.transform = `translateX(${dx > 0 ? 120 : -120}vw) rotate(${dx > 0 ? 12 : -12}deg)`;
       const st = dx > 0 ? "done" : "later", b = state.briefing;
-      setTimeout(() => { setStatus(id, st); b.res[id] = st; b.i++; drawBriefing(); }, 200);
+      setTimeout(() => { briefMark(id, st); b.res[id] = st; b.i++; drawBriefing(); }, 200);
     } else { card.style.transform = ""; card.dataset.dir = ""; }
   };
   card.addEventListener("pointerup", end);
   card.addEventListener("pointercancel", end);
 }
+// Done / Later from the deck: My News keeps "later"; World Brief has only seen / read, so Skip = seen
+const briefMark = (id, st) => (state.briefing?.world ? setWorldStatus(id, st === "done" ? "done" : "seen") : setStatus(id, st));
 function onBriefClick(e) {
   const el = e.target.closest("[data-bdone],[data-blater],[data-bopen],[data-bclose]");
   if (!el && e.target.id !== "brief-ov") return;
   const b = state.briefing;
   if (el?.dataset.bdone || el?.dataset.blater) {
     const id = el.dataset.bdone || el.dataset.blater, st = el.dataset.bdone ? "done" : "later";
-    setStatus(id, st); b.res[id] = st; b.i++;
+    briefMark(id, st); b.res[id] = st; b.i++;
     return drawBriefing();
   }
-  if (el?.dataset.bopen) { const id = el.dataset.bopen; state.briefing = null; drawBriefing(); location.hash = `#/story/${id}`; return; }
+  if (el?.dataset.bopen) { const id = el.dataset.bopen, w = b.world; state.briefing = null; drawBriefing(); location.hash = w ? `#/world/${id}` : `#/story/${id}`; return; }
   state.briefing = null; drawBriefing(); render(false); // close (× / button / click outside)
 }
 
@@ -629,6 +678,15 @@ async function searchStories(q) {
     (r.data || []).forEach((s) => found.set(s.id, s));
   }
   found.forEach((s, id) => state.more.set(id, s));
+  // World Brief stories too (shown as their own group). Missing table before 008_world.sql = just no world results.
+  const w = await sb.from("world_stories").select("*").or(`headline.ilike.${like},why_matters.ilike.${like},country.ilike.${like}`)
+    .order("created_at", { ascending: false }).limit(20);
+  state.searchWorld = w.error ? [] : w.data || [];
+  if (state.searchWorld.length) {   // so a result opens even if it's older than the 2 days World Brief loads
+    state.world = state.world || [];
+    const have = new Set(state.world.map((x) => x.id));
+    state.searchWorld.forEach((x) => { if (!have.has(x.id)) state.world.push({ ...x, _old: true }); });
+  }
   return [...found.values()];
 }
 
@@ -638,7 +696,7 @@ function header(active) {
     <a class="logo" href="#/">investment center</a>
     <nav>
       <a class="${active === "news" ? "on" : ""}" href="#/">My News</a>
-      <a class="soon">World Brief<small>SOON</small></a>
+      <a class="${active === "world" ? "on" : ""}" href="#/world">World Brief</a>
       <a class="soon">Charts<small>SOON</small></a>
     </nav>
     <div class="r">
@@ -663,6 +721,7 @@ const ICO = {
   starOn: `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/></svg>`,
   note: svgI('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
   search: svgI('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
+  globe: svgI('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5a13 13 0 0 1 0 17M12 3.5a13 13 0 0 0 0 17"/>'),
 };
 // Phone only (design round 18, option A): bottom tab bar instead of the desktop header links
 function tabBar() {
@@ -671,6 +730,7 @@ function tabBar() {
     || (k === "topics" && h === "#/settings" && !state.toAlerts) || (k === "alerts" && h === "#/settings" && state.toAlerts) || (k === "prefs" && h === "#/prefs")) ? "on" : "";
   return `<nav class="tabbar" aria-label="Pages">
     <a class="${on("news")}" href="#/">${ICO.news}News</a>
+    <a class="${h.startsWith("#/world") ? "on" : ""}" href="#/world">${ICO.globe}World</a>
     <a class="${on("cal")}" href="#/calendar">${ICO.cal}Calendar</a>
     <a class="${on("alerts")}" href="#/settings" data-tab-alerts="1">${ICO.bell}Alerts</a>
     <a class="${on("topics")}" href="#/settings" data-tab-topics="1">${ICO.topics}Topics</a></nav>`;
@@ -718,13 +778,13 @@ function viewFeed() {
     const rest = all.slice(0, state.feedLimit), hidden = all.length - rest.length;
     left = `<div class="lead-wrap a${fr(h)}${stateCls(h)}" data-id="${h.id}"><div class="mwrap">${`<a class="lead" href="#/story/${h.id}">${media(h, true)}</a>`}${acts(h)}</div>
         <a class="lead" href="#/story/${h.id}"><h1>${esc(h.headline)}</h1></a>
-        <div class="rowline"><div class="meta">${metaTags(h)}${esc(h.outlets?.[0])} · ${ago(when(h))} · ▲ ${srcs(h.n_sources)}</div>${star(h)}</div>
+        <div class="rowline"><div class="meta">${metaTags(h)}${esc(h.outlets?.[0])} · ${agoAt(when(h))} · ▲ ${srcs(h.n_sources)}</div>${star(h)}</div>
         ${heroChart(h)}
         ${forYou(h)}
         <p class="why" style="margin-top:10px">${esc(h.what_it_means)}</p></div>
       ${rest.length ? `<div class="sec">More stories</div><div class="grid2">${rest.map((s) => `
         <div class="card a${fr(s)}${stateCls(s)}" data-go="${s.id}"><div class="mwrap">${media(s)}${acts(s)}</div><h3>${esc(s.headline)}</h3>
-        <div class="rowline"><div class="meta"><span class="mimp ${impClass(s.impact_score)}">${esc(s.impact_score)} impact</span>${metaTags(s)}${esc(s.outlets?.[0])} · ${ago(when(s))} · ▲ ${s.n_sources}</div>${star(s)}</div>${forYou(s, "sm")}${pchips(s) ? `<div class="vote">${pchips(s)}</div>` : ""}</div>`).join("")}</div>` : ""}
+        <div class="rowline"><div class="meta"><span class="mimp ${impClass(s.impact_score)}">${esc(s.impact_score)} impact</span>${metaTags(s)}${esc(s.outlets?.[0])} · ${agoAt(when(s))} · ▲ ${s.n_sources}</div>${star(s)}</div>${forYou(s, "sm")}${pchips(s) ? `<div class="vote">${pchips(s)}</div>` : ""}</div>`).join("")}</div>` : ""}
       ${hidden > 0 ? `<div style="text-align:center;margin-top:24px"><button class="btn ghost" data-act="more-stories">Show ${Math.min(hidden, FEED_STEP)} more stories (${hidden} left)</button></div>` : ""}`;
   }
   return `${header("news")}<div class="wrap">
@@ -785,7 +845,7 @@ function viewStory(id) {
     <a class="back a" href="#/">← Back to My News</a>
     <div class="rprog"><i></i></div>
     <div class="detail"><div>
-      <div class="meta a">${metaTags(s)}${esc((s.topics || []).join(" · "))} · ${ago(when(s))} · ▲ ${srcs(s.n_sources)}</div>
+      <div class="meta a">${metaTags(s)}${esc((s.topics || []).join(" · "))} · ${agoAt(when(s))} · ▲ ${srcs(s.n_sources)}</div>
       <h1 class="a">${esc(s.headline)}</h1>
       <div class="a" style="margin-bottom:14px"><span class="tag ${sentiment}">${esc(s.sentiment)}</span>${(s.tickers || []).map((t) => `<button class="tag clk" data-stock="${esc(t)}" title="Show all ${esc(t)} news">${esc(t)}</button>`).join("")}</div>
       <div class="sacts a">
@@ -816,6 +876,7 @@ function viewStory(id) {
         <div class="bars">${bar("Reach", p.reach)}${bar("Surprise", p.surprise)}${bar("Size", p.size)}${bar("Timing", p.timing)}</div>
         <p class="note">AI impact estimate (1–10).</p>
       </div>
+      ${devBox(s, 2)}
       ${reaction ? fold("Price reaction", `${reaction}<p class="note">Price when this story was added → now (Yahoo Finance, may be delayed).</p>`) : ""}
       ${fold(`Sources (${(s.links || []).length})`, `<ul class="srcs">${(s.links || []).map((l) =>
         `<li><b>${esc(l.outlet)}</b><a href="${safeUrl(l.link)}" target="_blank" rel="noopener noreferrer">${esc(l.title)} ↗</a></li>`).join("")}</ul>`)}
@@ -835,17 +896,412 @@ function fold(title, inner, openOnPhone = false, extra = "") {
   return `<details class="box fold a ${extra}" data-k="${esc(k)}" ${open ? "open" : ""}><summary><h4>${title}</h4><span class="pm" aria-hidden="true"></span></summary>${inner}</details>`;
 }
 
+// ---------- World Brief (page 2; design round 20, V3: top 3 big, then a compact numbered list) ----------
+// Stories come from the world_stories table (supabase/008_world.sql), written by robot/world.py once an hour.
+// Ranking = outlets covering it + freshness + your taste (Want / No want). Plain maths, shown in "Why here".
+const WREG = { Europe: "eu", Americas: "am", "Middle East": "me", "Asia-Pacific": "as", Africa: "af", Global: "gl" };
+const WCAT_ICO = {
+  Conflict: '<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/>', Climate: '<path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/>',
+  Economy: '<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>', Society: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15 15c3 0 6 1.5 6 4"/>',
+  Politics: '<path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-6 10 6z"/>', Health: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  "Science & tech": '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+};
+const W_UP = svgI('<path d="M7 10v11H3V10zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/>');
+const W_DN = svgI('<path d="M17 14V3h4v11zM17 14l-4 8a3 3 0 0 1-3-3v-4H4a2 2 0 0 1-2-2.3l1.4-8A2 2 0 0 1 5.4 3H17"/>');
+state.world = null; state.wvotes = new Map(); state.wreg = "All"; state.wlimit = 10; state.worldAt = 0; state.worldErr = "";
+
+async function loadWorld() {
+  state.worldErr = "";
+  const since = new Date(Date.now() - 2 * 864e5).toISOString();
+  const { data, error } = await sb.from("world_stories").select("*").gte("created_at", since).order("created_at", { ascending: false }).limit(200);
+  if (error) { state.world = []; state.worldErr = /world_stories/.test(error.message || "") ? "setup" : error.message; return; }
+  const fresh = new Set((data || []).map((s) => s.id));
+  state.world = [...(data || []), ...(state.world || []).filter((s) => s._old && !fresh.has(s.id))];  // keep older search results openable
+  const v = await sb.from("world_votes").select("story_id,vote,region,category,created_at").order("created_at", { ascending: false }).limit(500);
+  state.wvotes = new Map((v.data || []).map((r) => [r.story_id, r]));
+  const st = await sb.from("world_status").select("story_id,status").limit(2000);
+  state.wready = !st.error;   // false until the read-status part of 008_world.sql has been run
+  if (!st.error) state.wstatus = new Map(st.data.map((r) => [r.story_id, r.status]));
+  state.worldAt = Date.now();
+}
+// Read status, same idea as My News: opening a story = seen, ✓ = done (read). Done stories fade but keep their place.
+state.wstatus = new Map(); state.wready = false;
+const wSt = (id) => state.wstatus.get(id) || "";
+async function setWorldStatus(id, status) {
+  const prev = wSt(id);
+  if (status === prev) return;
+  state.wstatus.set(id, status);
+  if (status === "done" && !calm()) app.querySelectorAll(`[data-wdone="${CSS.escape(id)}"]`).forEach((b) => burst(b));
+  if (status === "done" || prev === "done") render(false);
+  if (!state.wready) return;
+  const { error } = await sb.from("world_status").upsert({ user_id: state.user.id, story_id: id, status, updated_at: new Date().toISOString() }, { onConflict: "user_id,story_id" });
+  if (error) console.warn("world status not saved", error.message);
+}
+// "Top stories to read": today's top 5 by your ranking (minus No-want ones) that you haven't marked done
+const wWaiting = () => wRanked().filter(({ s, own }) => own !== -1 && hoursAgo(when(s)) <= 24).slice(0, 5).map(({ s }) => s).filter((s) => wSt(s.id) !== "done");
+// Read first strip (design round 22, B): today's top 5 as numbered picture cards + progress. Read = green ✓, next = orange outline.
+function wReadFirst() {
+  const top = wRanked().filter(({ s, own }) => own !== -1 && hoursAgo(when(s)) <= 24).slice(0, 5).map(({ s }) => s);
+  if (!top.length) return "";
+  const done = top.filter((s) => wSt(s.id) === "done").length, left = top.filter((s) => wSt(s.id) !== "done");
+  return `<div class="wrf a" data-sig="${esc(top.map((s) => s.id + wSt(s.id)).join(","))}"><div class="wrfh"><b>${left.length ? `Read first · ${done} of ${top.length} read` : `Read first · all ${top.length} read ✓`}</b><span class="wrfbar"><i style="width:${(done / top.length) * 100}%"></i></span></div>
+    ${left.length ? `<div class="wrfs">${left.map((s, i) => `<article class="wrfc${i === 0 ? " next" : ""}" data-wgo="${s.id}" title="${esc(s.headline)}">
+      <span class="k">${top.indexOf(s) + 1}</span><button class="wrfchk" data-wdone="${s.id}" title="Mark as read" aria-label="Mark as read">${CHK}</button>${wPic(s)}
+      <div class="t">${esc(s.headline)}</div><div class="wrft">${agoAt(when(s))}</div></article>`).join("")}</div>` : ""}</div>`;
+}
+function worldBriefBar() {
+  const waiting = wWaiting();
+  const fresh = (state.world || []).filter((s) => new Date(s.created_at) > state.since && !wSt(s.id));
+  const wide = fresh.filter((s) => s.n_sources >= 10).length;
+  const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : `<span class="wthumb r-${WREG[s.region] || "gl"}">${svgI(WCAT_ICO[s.category] || WCAT_ICO.Society)}</span>`);
+  return `<div class="brief a" data-sig="${esc([waiting.map((s) => s.id).join(","), fresh.length, wide].join("|"))}">${calm() ? "" : BRIEF_BG}<div>
+      <h2>${waiting.length ? `${waiting.length} top ${waiting.length > 1 ? "stories" : "story"} to read` : "You're caught up ✓"}</h2>
+      <p>Since you were away: ${fresh.length} new · ${wide} widely covered (10+ outlets)</p></div>
+    <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
+    ${waiting.length ? `<button class="go" data-wbrief="1">▶ Start<span class="hide-sm"> reading</span> · ~${waiting.length} min</button>` : ""}</div>`;
+}
+// Your taste: each Want = +1 for that story's region and category, each No want = -1. Old votes count less
+// (half after 30 days). Capped at ±5 so one topic can't take over the page.
+function wTaste() {
+  const t = {};
+  for (const r of state.wvotes.values()) {
+    const w = r.vote * Math.pow(0.5, hoursAgo(r.created_at) / 720);
+    for (const k of [r.region, r.category]) if (k) t[k] = (t[k] || 0) + w;
+  }
+  for (const k in t) t[k] = Math.max(-5, Math.min(5, t[k]));
+  return t;
+}
+function wRanked() {
+  const t = wTaste();
+  return (state.world || []).filter((s) => !s._old).map((s) => {   // _old = only loaded for a search result
+    const own = state.wvotes.get(s.id)?.vote;
+    const sc = Math.min(s.n_sources, 15) * 2 + Math.max(0, 12 - hoursAgo(when(s))) * 0.5 + ((t[s.region] || 0) + (t[s.category] || 0)) * 3 + (own === -1 ? -100 : 0);
+    return { s, sc, own };
+  }).sort((a, b) => b.sc - a.sc);
+}
+const wCov = (s) => { const c = s.coverage || {}; return Object.keys(WREG).filter((r) => c[r]).map((r) => [r, c[r]]).sort((a, b) => b[1] - a[1]); };
+const wLean = (s) => { const c = wCov(s), tot = c.reduce((a, x) => a + x[1], 0); return c.length && tot >= 3 && c[0][1] / tot >= 0.75 ? `<span class="wflag">Mostly ${esc(c[0][0])} outlets</span>` : ""; };
+function wBar(s, big = false) {
+  const c = wCov(s), tot = c.reduce((a, x) => a + x[1], 0) || 1;
+  return `<div class="wcv${big ? " wcv-big" : ""}"><div class="t"><span>Who covers it</span><b>${esc(s.n_sources)} outlets</b></div>
+    <div class="wbar" role="img" aria-label="${esc(c.map(([r, n]) => `${r} ${n}`).join(", "))}">${c.map(([r, n]) => `<i class="r-${WREG[r]}" style="width:${(n / tot) * 100}%" title="${esc(r)}: ${n}"></i>`).join("")}</div></div>`;
+}
+const wTags = (s) => `${devTag(devInfo(s, 3))}<span class="wrg r-${WREG[s.region] || "gl"}">${esc(s.region || "Global")}</span><span class="wrg">${esc(s.category || "")}</span>${wLean(s)}`;
+// "Thailand & your stocks" box: one AI line + your related stocks with today's move (tap = that stock's My News)
+const wThai = (s) => (s.thailand ? `<div class="wthai a"><h4>Thailand &amp; your stocks</h4><p>${esc(s.thailand)}</p>${(s.stocks || []).length
+  ? `<div class="wstk">${s.stocks.map((t) => `<button class="tag clk" data-stock="${esc(t)}" title="Show ${esc(t)} news in My News">${esc(t)} ${chSpan(yahoo(t))}</button>`).join("")}</div>` : ""}</div>` : "");
+// BBC feeds give 240 px thumbnails; the same picture exists at 976 px (sharp on the big top-3 cards)
+const bigImg = (u) => String(u || "").replace("ichef.bbci.co.uk/ace/standard/240/", "ichef.bbci.co.uk/ace/standard/976/");
+function wPic(s) {
+  const tileHtml = `<span class="wfb r-${WREG[s.region] || "gl"}">${svgI(WCAT_ICO[s.category] || WCAT_ICO.Society)}</span>`;
+  if (!/^https:\/\//.test(s.image_url || "")) return `<span class="wpic">${tileHtml}</span>`;
+  return `<span class="wpic">${tileHtml}<img src="${esc(bigImg(s.image_url))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span>`;
+}
+const wVote = (s, own, withDone = true) => `<span class="wvote">${withDone ? `<button class="d ${wSt(s.id) === "done" ? "on" : ""}" data-wdone="${s.id}" title="${wSt(s.id) === "done" ? "Mark as not read" : "Mark as read"}" aria-label="Mark as read" aria-pressed="${wSt(s.id) === "done"}">${CHK}</button><i class="sep"></i>` : ""}<button class="w ${own === 1 ? "on" : ""}" data-wvote="${s.id}" data-v="1" title="Want: more like this" aria-label="Want" aria-pressed="${own === 1}">${W_UP}</button><button class="x ${own === -1 ? "on" : ""}" data-wvote="${s.id}" data-v="-1" title="No want: less like this" aria-label="No want" aria-pressed="${own === -1}">${W_DN}</button></span>`;
+function wWhy(s) {
+  const t = wTaste(), bits = [`<b>${esc(s.n_sources)} outlets</b>`];
+  for (const k of [s.region, s.category]) { const v = Math.round(t[k] || 0); if (v) bits.push(`<span class="${v > 0 ? "pl" : "mi"}">${esc(k)} ${v > 0 ? "+" : ""}${v}</span>`); }
+  return `<div class="wwhy">Why here: ${bits.join(" · ")}</div>`;
+}
+const wLegend = () => `<div class="wlegend">${Object.entries(WREG).filter(([r]) => r !== "Global").map(([r, k]) => `<span class="r-${k}">${esc(r)}</span>`).join("")}<span class="note" style="margin:0">Bar = where the outlets are based</span></div>`;
+
+const THAI_RX = /\b(Thai|Thailand|Bangkok|Phuket|Chiang Mai|Pattaya|baht)\b/i;
+const isThaiStory = (s) => s.country === "Thailand" || THAI_RX.test([s.headline, ...(s.summary || []), s.why_matters || ""].join(" "));
+function viewWorld() {
+  const head = header("world");
+  if (state.world === null) return `${head}<div class="wrap"><div class="empty"><h2>Loading the world…</h2></div></div>`;
+  if (state.worldErr) return `${head}<div class="wrap"><div class="empty"><h2>${state.worldErr === "setup" ? "World Brief is almost ready" : "Could not load World Brief"}</h2><p>${state.worldErr === "setup" ? "Run supabase/008_world.sql in Supabase, then the robot fills this page within an hour." : esc(state.worldErr)}</p></div></div>`;
+  const all = wRanked(), counts = {};
+  all.forEach(({ s }) => { counts[s.region] = (counts[s.region] || 0) + 1; });
+  const thaiN = all.filter(({ s }) => isThaiStory(s)).length;
+  const list = state.wreg === "All" ? all : state.wreg === "Thailand" ? all.filter(({ s }) => isThaiStory(s)) : all.filter(({ s }) => s.region === state.wreg);
+  const shown = list.slice(0, state.wlimit), newest = all.length ? Math.max(...all.map(({ s }) => new Date(s.created_at))) : null;
+  const chips = ["All", "Thailand", ...Object.keys(WREG).filter((r) => counts[r])].map((r) =>
+    `<button class="c ${state.wreg === r ? "on" : ""}${r === "Thailand" ? " thai" : ""}" data-wreg="${esc(r)}">${esc(r)}<span class="count">${r === "All" ? all.length : r === "Thailand" ? thaiN : counts[r]}</span></button>`).join("");
+  const dim = (own, s) => (own === -1 ? " wdim" : wSt(s.id) === "done" ? " wread" : "");
+  const big = ({ s, own }, i) => `<article class="wtop${i ? "" : " lead"}${dim(own, s)} a" data-wgo="${s.id}">${wPic(s)}
+      <div class="kick"><span class="wnum">${i + 1}</span><span class="wtags">${wTags(s)}<span class="wtime">${agoAt(when(s))}</span></span></div>
+      <h3>${esc(s.headline)}</h3>${i === 0 || !isPhone() ? `<p class="wsum">${esc((s.summary || [])[0] || "")}</p>` : ""}
+      <div class="bot">${wBar(s)}${wVote(s, own)}</div>${wWhy(s)}</article>`;
+  const row = ({ s, own }, i) => `<article class="wrow${dim(own, s)} a" data-wgo="${s.id}"><span class="wnum">${i + 4}</span>
+      <div class="wmain"><div class="wtags">${wTags(s)}<span class="wtime">${agoAt(when(s))}</span></div><h3>${esc(s.headline)}</h3>${wWhy(s)}</div>
+      ${wBar(s)}${wVote(s, own)}${wPic(s)}</article>`;
+  const body = !shown.length ? (state.wreg === "Thailand"
+      ? `<div class="empty"><h2>No Thailand stories yet</h2><p>The robot reads Bangkok Post, Khaosod English and Google News Thailand every hour and adds the best Thailand story each time.</p></div>`
+      : `<div class="empty"><h2>No world stories yet</h2><p>The robot checks world news once an hour.</p></div>`)
+    : state.wview === "map" ? worldMap(list)
+    : `<div class="wtop3">${shown.slice(0, 3).map(big).join("")}</div>${shown.slice(3).map(row).join("")}
+      ${list.length > shown.length ? `<button class="btn ghost wmore a" data-wmore="1">Show ${Math.min(10, list.length - shown.length)} more</button>` : ""}${wLegend()}`;
+  return `${head}<div class="wrap world">
+    <div class="whead a"><h2>Today's brief</h2><small>${new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}${newest ? ` · updated ${ago(new Date(newest).toISOString())}` : ""} · ${all.length} stories</small></div>
+    ${all.length ? worldBriefBar() + wReadFirst() : ""}
+    <div class="filters a"><div class="quick wchips">${state.wview === "map" ? "" : chips}</div>
+      <div class="wviews" role="group" aria-label="View"><button class="${state.wview === "list" ? "on" : ""}" data-wview="list" aria-pressed="${state.wview === "list"}">List</button><button class="${state.wview === "map" ? "on" : ""}" data-wview="map" aria-pressed="${state.wview === "map"}">Map</button></div></div>
+    ${body}</div>`;
+}
+// ---------- World map (design rounds 22-24): continent colours, 19 situation kinds, region bubbles, ONE line at a time ----------
+// Colour = family, icon = what happened, plain sentence = who did what to whom (all from the AI's "situation" field).
+// World view: one bubble per region (tap = zoom in). Zoomed: one icon per story, only the selected/hovered story gets its line.
+// Map data (Natural Earth via jsDelivr) loads only when you first press "Map".
+state.wview = safe(() => localStorage.getItem("ic_wview"), null) === "map" ? "map" : "list"; state.wsel = null; state.wzoom = "World"; state.whover = null;
+let GEO = null, geoLoading = null;
+const GEO_ALIAS = { "United States": "United States of America", USA: "United States of America", US: "United States of America", UK: "United Kingdom",
+  Britain: "United Kingdom", "Czech Republic": "Czechia", "DR Congo": "Dem. Rep. Congo", "Democratic Republic of the Congo": "Dem. Rep. Congo",
+  "Central African Republic": "Central African Rep.", "South Sudan": "S. Sudan", "Ivory Coast": "Côte d'Ivoire", "Bosnia and Herzegovina": "Bosnia and Herz.",
+  "Dominican Republic": "Dominican Rep.", Gaza: "Palestine", "West Bank": "Palestine", "Palestinian territories": "Palestine", Burma: "Myanmar", Eswatini: "eSwatini" };
+// Places shown at the capital (whole-country centres mislead: France's shape includes French Guiana, Russia's centre is in Siberia)
+const GEO_CAP = { Russia: [37.6, 55.75], "United States of America": [-77, 38.9], "United Kingdom": [-0.1, 51.5], France: [2.35, 48.86], Canada: [-75.7, 45.4],
+  China: [116.4, 39.9], India: [77.2, 28.6], Brazil: [-47.9, -15.8], Australia: [149.1, -35.3], Norway: [10.75, 59.9], Chile: [-70.6, -33.4],
+  Indonesia: [106.8, -6.2], Japan: [139.7, 35.7], "New Zealand": [174.8, -41.3], Denmark: [12.57, 55.68], Netherlands: [4.9, 52.37], Malaysia: [101.7, 3.1],
+  Singapore: [103.82, 1.35], "Hong Kong": [114.17, 22.32], Bahrain: [50.56, 26.07], Malta: [14.45, 35.9], Maldives: [73.5, 4.2], Mauritius: [57.55, -20.3],
+  Vatican: [12.45, 41.9], Monaco: [7.42, 43.74], EU: [4.35, 50.85], "European Union": [4.35, 50.85], NATO: [4.35, 50.85], UN: [-73.97, 40.75], "United Nations": [-73.97, 40.75] };
+const W_ME = new Set(["Iran", "Iraq", "Syria", "Israel", "Palestine", "Jordan", "Lebanon", "Saudi Arabia", "Yemen", "Oman", "United Arab Emirates", "Qatar", "Kuwait", "Turkey", "Cyprus", "Bahrain"]);
+const W_AF = new Set(["Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cameroon", "Central African Rep.", "Chad", "Congo", "Dem. Rep. Congo", "Côte d'Ivoire",
+  "Djibouti", "Egypt", "Eq. Guinea", "Eritrea", "eSwatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libya",
+  "Madagascar", "Malawi", "Mali", "Mauritania", "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Senegal", "Sierra Leone", "Somalia", "Somaliland",
+  "South Africa", "S. Sudan", "Sudan", "Tanzania", "Togo", "Tunisia", "Uganda", "W. Sahara", "Zambia", "Zimbabwe", "Mauritius"]);
+const contOf = (n, ll) => (W_ME.has(n) ? "me" : W_AF.has(n) ? "af" : n === "Russia" ? "eu" : ll[0] < -25 ? "am" : ll[0] < 50 && ll[1] > 34 ? "eu" : "as");
+const CONT_REG = { eu: "Europe", am: "Americas", me: "Middle East", as: "Asia-Pacific", af: "Africa" };
+const WBOX = { Europe: [[-12, 25.5], [44, 62]], "Middle East": [[24, 11], [64, 44]], "Asia-Pacific": [[62, -42], [152, 46]], Americas: [[-128, -38], [-40, 60]], Africa: [[-20, -36], [52, 37]] };
+const WRC = { Europe: [14, 50], "Middle East": [44, 30], "Asia-Pacific": [105, 10], Americas: [-90, 22], Africa: [20, 2] };
+const WFAM = { conflict: ["Conflict", "--k-conflict"], pressure: ["Pressure", "--k-pressure"], deal: ["Deals", "--k-deal"], help: ["Help sent", "--k-help"],
+  event: ["In one place", "--k-event"], news: ["Other news", "--k-news"] };
+const WFAM_ORDER = ["conflict", "pressure", "deal", "help", "event", "news"];
+// kind: [family, icon, name, line style, motion, two-way, one place]
+const WK = {
+  strike: ["conflict", "missile", "Strike", "solid", "missile", 0, 0], war: ["conflict", "swords", "War", "solid", "both", 1, 0],
+  troops: ["conflict", "troops", "Troops move in", "solid", "", 0, 0], threat: ["conflict", "warn", "Threat", "dot", "", 0, 0],
+  test: ["conflict", "rocket", "Weapons test", "", "ring", 0, 1], cyber: ["conflict", "cyber", "Cyberattack", "dash", "", 0, 0],
+  sanction: ["pressure", "block", "Sanctions", "dash", "", 0, 0], tariff: ["pressure", "tariff", "Trade fight", "dash", "", 1, 0],
+  cut: ["pressure", "broken", "Ties cut", "gap", "", 1, 0], peace: ["deal", "peace", "Peace talks", "solid", "", 1, 0],
+  deal: ["deal", "deal", "Agreement", "solid", "", 1, 0], summit: ["deal", "summit", "Summit", "solid", "", 0, 1],
+  aid: ["help", "aid", "Aid sent", "solid", "flow", 0, 0], arms: ["help", "arms", "Weapons supplied", "solid", "flow", 0, 0],
+  refugees: ["help", "people", "People fleeing", "solid", "flow", 0, 0], protest: ["event", "protest", "Protest / strike", "", "ring", 0, 1],
+  vote: ["event", "vote", "Election", "", "", 0, 1], disaster: ["event", "fire", "Disaster", "", "ring", 0, 1],
+  outbreak: ["event", "virus", "Outbreak", "", "ring", 0, 1], news: ["news", "news", "News", "", "", 0, 1],
+};
+const WICO = {
+  missile: '<path d="M14.5 4.5c2.5-1 4.5-1 5 0s-1 2.5-2 5L11 16l-3-3z"/><path d="M8 13l-3 1-1 3 3-1M11 16l-1 3-3 1 1-3"/><path d="M5 19l-2 2"/>',
+  swords: '<path d="M4 4l9 9M20 4l-9 9M3 17l4 4M21 17l-4 4M6 15l3 3M18 15l-3 3"/>', troops: '<path d="M4 7l8 5 8-5M4 13l8 5 8-5"/>',
+  warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>', rocket: '<path d="M12 2c3 3 4 7 4 11l-4 3-4-3c0-4 1-8 4-11z"/><path d="M8 13l-3 4h4M16 13l3 4h-4M12 16v5"/>',
+  cyber: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', block: '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
+  tariff: '<path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
+  broken: '<path d="M9 15l-2 2a3 3 0 0 1-4-4l2-2M15 9l2-2a3 3 0 0 1 4 4l-2 2M8 6V3M3 8h3M16 18v3M21 16h-3"/>',
+  peace: '<path d="M12 3v18M12 12l-7 6M12 12l7 6"/><circle cx="12" cy="12" r="9"/>', deal: '<path d="M6 3h9l4 4v14H6z"/><path d="M9 14l2 2 4-4"/>',
+  summit: '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5M14 15.2c1-.2 1.5-.2 2-.2 3 0 6 2 6 5"/>',
+  aid: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>', arms: '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+  people: '<circle cx="12" cy="5" r="2"/><path d="M10 22l2-7 3 3v4M8 12l3-4h3l2 3 3 1M11 15l-3-2"/>', protest: '<path d="M3 10v4h3l9 5V5L6 10z"/><path d="M18.5 9a3.5 3.5 0 0 1 0 6"/>',
+  vote: '<path d="M4 21h16M7 3h10v11H7z"/><path d="M9.5 8.5l2 2 3.5-3.5"/>', fire: '<path d="M12 3c3 4 6 6.5 6 11a6 6 0 0 1-12 0c0-3 1.5-5 3-7 .8 2 2 3 3 3 0-3-1-5 0-7z"/>',
+  virus: '<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/>',
+  news: '<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+};
+const wIcon = (k, px) => `<svg viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WICO[WK[k][1]]}</svg>`;
+const wFamCol = (k) => `var(${WFAM[WK[k][0]][1]})`;
+const wShort = (n) => ({ "United States of America": "US", "United Kingdom": "UK", "United Arab Emirates": "UAE" }[n] || n);
+
+function loadGeo() {
+  if (GEO || geoLoading) return geoLoading;
+  geoLoading = Promise.all([import("https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm"), import("https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm"),
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json").then((r) => r.json())])
+    .then(([d3, topo, world]) => {
+      const land = topo.feature(world, world.objects.countries).features.filter((f) => f.properties.name !== "Antarctica");
+      const at = {}, cont = {};
+      land.forEach((f) => { const c = d3.geoCentroid(f); at[f.properties.name] = c; cont[f.properties.name] = contOf(f.properties.name, c); });
+      GEO = { d3, land, at, cont, cache: {} };
+      if ((location.hash || "").startsWith("#/world") && state.wview === "map") render(false);
+    }).catch(() => { geoLoading = null; GEO = { err: true }; render(false); });
+  return geoLoading;
+}
+const geoName = (n) => GEO_ALIAS[n] || n;
+const geoLL = (n) => { if (!n || !GEO || !GEO.at) return null; const k = geoName(n); return GEO_CAP[k] || GEO.at[k] || null; };
+const geoReg = (n) => { const k = geoName(n), ll = geoLL(n); return ll ? CONT_REG[GEO.cont[k] || contOf(k, ll)] : null; };
+
+// One map item per story: its situation, or (no situation) a plain "news" icon at its country. Global stories have no place.
+function wItems(list) {
+  return list.map(({ s, own }) => {
+    const sit = s.situation && WK[s.situation.kind] ? s.situation : null;
+    let it = null;
+    if (sit && WK[sit.kind][6]) { if (geoLL(sit.at)) it = { k: sit.kind, at: sit.at, many: (sit.many || []).filter(geoLL) }; }
+    else if (sit) { if (geoLL(sit.from) && geoLL(sit.to)) it = { k: sit.kind, a: sit.from, b: sit.to }; }
+    if (!it && s.country && s.country !== "Global" && geoLL(s.country)) it = { k: "news", at: s.country, many: [] };
+    if (!it) return null;
+    const where = it.at || it.b;
+    return { ...it, s, own, say: (sit && sit.say) || s.headline, reg: geoReg(where) || s.region };
+  }).filter(Boolean);
+}
+function wProj(z, W, H, extra = []) {   // extra: places that must also fit (both ends of the selected story's line)
+  const key = `${z}|${W}|${H}|${extra.map((p) => p.join(",")).join(";")}`, c = GEO.cache[key];
+  if (c) return c;
+  const d3 = GEO.d3;
+  const proj = z === "World" ? d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: "FeatureCollection", features: GEO.land })
+    : d3.geoMercator().fitExtent([[24, 30], [W - 24, H - 24]], { type: "MultiPoint", coordinates: [...WBOX[z], ...extra] });
+  const path = d3.geoPath(proj);
+  const out = { proj, land: GEO.land.map((f) => ({ n: f.properties.name, d: path(f) })).filter((x) => x.d) };
+  GEO.cache[key] = out;
+  return out;
+}
+// Ring segment for the region bubbles (share of each family)
+function wArc(cx, cy, r0, r1, a0, a1) {
+  if (a1 - a0 >= Math.PI * 2 - 1e-6) return `<circle cx="${cx}" cy="${cy}" r="${(r0 + r1) / 2}" fill="none" stroke-width="${r1 - r0}" STROKE/>`;
+  const p = (r, a) => `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`, L = a1 - a0 > Math.PI ? 1 : 0;
+  return `<path d="M${p(r1, a0)} A${r1},${r1} 0 ${L} 1 ${p(r1, a1)} L${p(r0, a1)} A${r0},${r0} 0 ${L} 0 ${p(r0, a0)}Z" FILL/>`;
+}
+function wMapSvg(items, sel) {
+  const phone = isPhone(), W = phone ? 360 : 640, H = phone ? 240 : 430, z = state.wzoom, zoomed = z !== "World";
+  const act = items.find((x) => x.s.id === state.whover) || sel;
+  // a line that starts in another region (e.g. Ukraine -> Libya while zoomed on Africa): widen the zoom so both ends show
+  const ends = zoomed && act && act.reg === z && act.a ? [geoLL(act.a), geoLL(act.b)].filter(Boolean) : [];
+  const { proj, land } = wProj(z, W, H, ends), P = (n) => proj(geoLL(n));
+  const lineOn = act && zoomed && act.reg === z;
+  const hit = new Set(lineOn ? [act.a, act.b, act.at, ...(act.many || [])].filter(Boolean).map(geoName) : []);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Map of today's world stories"><defs>${WFAM_ORDER.map((f) => `<marker id="wah-${f}" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(${WFAM[f][1]})"/></marker>`).join("")}</defs>`;
+  s += `<g class="wland">${land.map((l) => `<path class="c-${GEO.cont[l.n] || "as"}${hit.has(l.n) ? " hit" : ""}" d="${l.d}"><title>${esc(l.n)}</title></path>`).join("")}</g>`;
+  if (lineOn) {   // the ONE line: the selected (or hovered) story
+    const x = act, [fam, , , ls, mv, two, one] = WK[x.k], c = wFamCol(x.k);
+    const nm = (n, px, py, up) => `<text class="wcn" x="${px.toFixed(1)}" y="${(py + (up ? -11 : 20)).toFixed(1)}">${esc(wShort(n))}</text>`;
+    if (one) {
+      const [px, py] = P(x.at);
+      (x.many || []).forEach((m) => { const [mx, my] = P(m); s += `<path class="wln" d="M${mx},${my} L${px},${py}" style="stroke:${c}" stroke-width="2"/><circle cx="${mx}" cy="${my}" r="4" style="fill:${c}" class="wdot"/>`; });
+      if (mv === "ring") s += `<circle class="wring" cx="${px}" cy="${py}" r="14" style="stroke:${c}"/>`;
+    } else {
+      const [x1, y1] = P(x.a), [x2, y2] = P(x.b), dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, bend = Math.min(70, len * 0.3);
+      const cx = (x1 + x2) / 2 - (dy / len) * bend, cy = (y1 + y2) / 2 + (dx / len) * bend, d = `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+      const mk = ["peace", "deal", "tariff", "cut"].includes(x.k) ? "" : `marker-end="url(#wah-${fam})"${two ? ` marker-start="url(#wah-${fam})"` : ""}`;
+      s += `<path class="wln${ls === "dot" ? " dot" : ls === "dash" ? " dash" : ls === "gap" ? " gap" : ""}" d="${d}" style="stroke:${c}" ${ls === "gap" ? 'pathLength="100"' : ""} ${mk}/>`;
+      if (mv === "missile" || mv === "both") s += `<path class="wmv-missile" d="${d}" pathLength="400" style="stroke:${c}"/><circle class="wboom" cx="${x2}" cy="${y2}" r="11" style="fill:${c}"/>`;
+      if (mv === "flow") s += `<path class="wmv-flow" d="${d}" style="stroke:${c}"/>`;
+      s += `<circle class="wdot" cx="${x1}" cy="${y1}" r="5" style="fill:${c}"/><circle class="wdot" cx="${x2}" cy="${y2}" r="5" style="fill:${c}"/>${nm(x.a, x1, y1, y1 <= y2)}${nm(x.b, x2, y2, y2 < y1)}`;
+    }
+  }
+  if (!zoomed) {   // world view: one bubble per region with news; the ring shows the mix of families
+    const sm = phone;
+    const bs = Object.keys(WBOX).map((r) => { const xs = items.filter((x) => x.reg === r); if (!xs.length) return null; const [bx, by] = proj(WRC[r]); return { r, xs, bx, by, R: Math.min(sm ? 30 : 46, (sm ? 13 : 18) + xs.length * (sm ? 1.6 : 3.2)) }; }).filter(Boolean);
+    for (let it = 0; it < 200; it++) bs.forEach((a, i) => bs.forEach((b, j) => { if (i >= j) return; const dx = b.bx - a.bx, dy = b.by - a.by, dd = Math.hypot(dx, dy) || 0.01, min = a.R + b.R + (sm ? 6 : 34); if (dd < min) { const m = (min - dd) / 2, ux = dx / dd, uy = dy / dd; a.bx -= ux * m; a.by -= uy * m; b.bx += ux * m; b.by += uy * m; } }));
+    bs.forEach(({ r, xs, bx, by, R }) => {
+      let a0 = -Math.PI / 2, ring = "";
+      WFAM_ORDER.forEach((f) => { const n = xs.filter((x) => WK[x.k][0] === f).length; if (!n) return; const a1 = a0 + (n / xs.length) * Math.PI * 2, col = `var(${WFAM[f][1]})`;
+        ring += wArc(bx, by, R - (sm ? 4 : 6), R, a0, a1).replace("FILL", `style="fill:${col}"`).replace("STROKE", `style="stroke:${col}"`); a0 = a1; });
+      s += `<g class="wbub" data-wzoom="${esc(r)}" role="button" aria-label="${esc(r)}: ${xs.length} stories"><circle class="face" cx="${bx}" cy="${by}" r="${R}"/>${ring}<text class="n" x="${bx}" y="${by}"${sm ? ' style="font-size:14px"' : ""}>${xs.length}</text>${sm ? "" : `<text class="t" x="${bx}" y="${by + R + 14}">${esc(r)}</text>`}</g>`;
+    });
+  } else {        // zoomed: one icon per story where it happened (two-way: middle; selected: middle of its line), pushed apart so they never stack
+    const R = phone ? 11 : 14, xs = items.filter((x) => x.reg === z);
+    const pts = xs.map((x) => {
+      const two = WK[x.k][5], one = WK[x.k][6];
+      let p;
+      if (one) p = P(x.at);
+      else if (x === act || two) {
+        const a = P(x.a), b = P(x.b), dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1, bend = Math.min(70, len * 0.3);
+        const cx = (a[0] + b[0]) / 2 - (dy / len) * bend, cy = (a[1] + b[1]) / 2 + (dx / len) * bend;
+        p = [0.25 * a[0] + 0.5 * cx + 0.25 * b[0], 0.25 * a[1] + 0.5 * cy + 0.25 * b[1]];
+      } else p = P(x.b);
+      return { x, px: p[0], py: p[1], ox: p[0], oy: p[1] };
+    });
+    for (let it = 0; it < 250; it++) pts.forEach((a, i) => pts.forEach((b, j) => { if (i >= j) return; const dx = b.px - a.px, dy = b.py - a.py, dd = Math.hypot(dx, dy) || 0.01, min = R * 2 + 4; if (dd < min) { const m = (min - dd) / 2, ux = dx / dd, uy = dy / dd; a.px -= ux * m; a.py -= uy * m; b.px += ux * m; b.py += uy * m; } }));
+    pts.forEach((p) => { p.px = Math.max(R + 2, Math.min(W - R - 2, p.px)); p.py = Math.max(R + 2, Math.min(H - R - 2, p.py)); });
+    pts.forEach((p) => {
+      const c = wFamCol(p.x.k), isA = act === p.x, moved = Math.hypot(p.px - p.ox, p.py - p.oy) > 3, r = isA ? R + 3 : R;
+      s += `${moved ? `<line x1="${p.ox}" y1="${p.oy}" x2="${p.px}" y2="${p.py}" style="stroke:${c}" class="wlead"/><circle cx="${p.ox}" cy="${p.oy}" r="2.5" style="fill:${c}"/>` : ""}<g class="wico${act && !isA ? " dim" : ""}${isA ? " sel" : ""}" data-wsit="${p.x.s.id}" transform="translate(${p.px.toFixed(1)},${p.py.toFixed(1)})"><title>${esc(p.x.say)}</title><circle class="bg" r="${r}" style="fill:${c}"/><g transform="translate(${(-r * 0.62).toFixed(1)},${(-r * 0.62).toFixed(1)})" class="wicog">${wIcon(p.x.k, (r * 1.24).toFixed(1))}</g></g>`;
+    });
+  }
+  return s + "</svg>";
+}
+function worldMap(list) {
+  if (!GEO) { loadGeo(); return `<div class="wmapload">Loading the map…</div>`; }
+  if (GEO.err) return `<div class="wmapload">The map could not load (no internet?). <button class="btn ghost" data-wview="list">Back to the list</button></div>`;
+  const items = wItems(list.slice(0, Math.max(state.wlimit, 30))), z = state.wzoom;
+  const regs = Object.keys(WBOX).filter((r) => items.some((x) => x.reg === r));
+  if (z !== "World" && !regs.includes(z)) state.wzoom = "World";
+  const inView = state.wzoom === "World" ? items : items.filter((x) => x.reg === state.wzoom);
+  // selected story: the one you picked, else the top story that has a situation (strikes first), else the top story
+  let sel = inView.find((x) => x.s.id === state.wsel);
+  if (!sel) sel = inView.find((x) => x.k === "strike") || inView.find((x) => x.k !== "news") || inView[0] || null;
+  const noPlace = Math.min(list.length, Math.max(state.wlimit, 30)) - items.length;
+  const chips = ["World", ...regs].map((r) => `<button class="${state.wzoom === r ? "on" : ""}" data-wzoom="${esc(r)}">${esc(r)}<small>${r === "World" ? items.length : items.filter((x) => x.reg === r).length}</small></button>`).join("");
+  const rows = WFAM_ORDER.map((f) => { const xs = inView.filter((x) => WK[x.k][0] === f); if (!xs.length) return "";
+    return `<h5 style="color:var(${WFAM[f][1]})"><i style="background:var(${WFAM[f][1]})"></i>${WFAM[f][0]} · ${xs.length}</h5>${xs.map((x) => `<div class="wsit${sel === x ? " sel" : ""}${x.own === -1 ? " wdim" : wSt(x.s.id) === "done" ? " wread" : ""}" data-wsit="${x.s.id}">
+      <span class="ic" style="background:${wFamCol(x.k)}">${wIcon(x.k, 17)}</span><div><b>${esc(x.say)}</b><small>${agoAt(when(x.s))} · ${esc(x.s.n_sources)} outlets · ${esc(x.reg || "")}${sel === x ? ` · <span class="wopen">tap again to open</span>` : ""}</small></div></div>`).join("")}`; }).join("");
+  const tag = sel ? (() => { const s = sel.s, alert = sel.k === "strike" && hoursAgo(when(s)) <= 12;
+    return `<div class="wtag" data-wgo="${s.id}">${alert ? `<div class="k alert"><i></i>ALERT · STRIKE · ${esc(ago(when(s)).toUpperCase())}</div>` : `<div class="k" style="color:${wFamCol(sel.k)}">${esc(WK[sel.k][2].toUpperCase())} · ${esc(ago(when(s)).toUpperCase())}</div>`}
+      <b>${esc(sel.say)}</b><small>${esc(s.n_sources)} outlets · Open story →</small></div>`; })() : "";
+  return `<div class="wzoom a">${chips}</div>
+    <div class="wmap2 a"><div><div class="wmapbox">${state.wzoom !== "World" ? `<button class="wback" data-wzoom="World">‹ World</button>` : ""}<div class="wmapsvg">${wMapSvg(items, sel)}</div></div>${tag}
+      ${state.wzoom === "World" ? `<p class="note">Tap a bubble to zoom in. The ring shows the mix: mostly red = mostly conflict.</p>` : ""}
+      ${noPlace ? `<p class="note">${noPlace} worldwide ${noPlace > 1 ? "stories have" : "story has"} no single place on the map (see the list view).</p>` : ""}</div>
+    <div class="wsits">${rows || `<p class="note">Nothing here today.</p>`}</div></div>
+    <div class="wfams">${WFAM_ORDER.map((f) => `<span><i style="background:var(${WFAM[f][1]})"></i>${WFAM[f][0]}</span>`).join("")}</div>`;
+}
+// Hovering a sentence (or an icon) draws its line, without redrawing the rest of the page
+app.addEventListener("mouseover", (e) => {
+  if (state.wview !== "map" || !(location.hash || "").startsWith("#/world") || !GEO || GEO.err) return;
+  const t = e.target.closest?.("[data-wsit]"), id = t ? t.dataset.wsit : null;
+  if (id === state.whover) return;
+  state.whover = id;
+  const box = app.querySelector(".wmapsvg");
+  if (!box) return;
+  const list = state.wreg === "All" ? wRanked() : wRanked().filter(({ s }) => s.region === state.wreg);
+  const items = wItems(list.slice(0, Math.max(state.wlimit, 30)));
+  const inView = state.wzoom === "World" ? items : items.filter((x) => x.reg === state.wzoom);
+  const sel = inView.find((x) => x.s.id === state.wsel) || inView.find((x) => x.k === "strike") || inView.find((x) => x.k !== "news") || inView[0] || null;
+  box.innerHTML = wMapSvg(items, sel);
+});
+
+function viewWorldStory(id) {
+  const head = header("world"), found = (state.world || []).find((s) => s.id === id);
+  const hit = found && { s: found, own: state.wvotes.get(id)?.vote };
+  if (!hit) return `${head}<div class="wrap"><a class="back" href="#/world">← Back to World Brief</a><div class="empty"><h2>${state.world === null ? "Loading…" : "Story not found"}</h2></div></div>`;
+  const { s, own } = hit, c = wCov(s);
+  return `${head}<div class="wrap">
+    <a class="back a" href="#/world">← Back to World Brief</a>
+    <div class="detail"><div>
+      <div class="wtags a">${wTags(s)}<span class="wtime">${agoAt(when(s))}</span></div>
+      <h1 class="a">${esc(s.headline)}</h1>
+      <div class="a wsacts">${(() => { const next = wWaiting().filter((x) => x.id !== s.id).length;
+        return wSt(s.id) === "done" ? `<button class="sbtn on-done" data-wdone="${s.id}">✓ Read</button>${next ? `<button class="sbtn" data-wnext="${s.id}">Next top story →</button>` : ""}`
+          : `<button class="sbtn" data-wnext="${s.id}">${next ? "✓ Read · next story →" : "✓ Mark as read"}</button>`; })()}
+        ${wVote(s, own, false)}<span class="note hide-sm" style="margin:0">Want / No want tunes what World Brief puts first.</span></div>
+      ${/^https:\/\//.test(s.image_url || "") ? `<figure class="hero-fig"><img class="hero-img" src="${esc(bigImg(s.image_url))}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()">${s.image_credit ? `<figcaption>${esc(s.image_credit)}</figcaption>` : ""}</figure>` : ""}
+      ${wThai(s)}
+      ${(() => { const mark = termMarker(s); return `${fold("What happened", `<ul>${(s.summary || []).map((b) => `<li>${mark(b)}</li>`).join("")}</ul>`, true)}
+      ${s.why_matters ? fold("Why it matters", `<p>${mark(s.why_matters)}</p>`, true) : ""}`; })()}
+      <p class="note">Written by AI (Gemini) from the headlines of ${esc(s.n_sources)} outlets. Check the original articles for details.</p>
+    </div>
+    <aside class="side">
+      ${devBox(s, 3)}
+      <div class="box a">${wBar(s, true)}<ul class="wcovl">${c.map(([r, n]) => `<li><span class="dot r-${WREG[r]}"></span>${esc(r)}<b>${n}</b></li>`).join("")}</ul>${wLean(s) ? `<p class="note">${wLean(s)} Other regions may see this story differently.</p>` : ""}</div>
+      ${fold(`Sources (${(s.links || []).length})`, `<ul class="srcs">${(s.links || []).map((l) =>
+        `<li><b>${esc(l.outlet)}</b><a href="${safeUrl(l.link)}" target="_blank" rel="noopener noreferrer">${esc(l.title)} ↗</a></li>`).join("")}</ul>`)}
+    </aside></div></div>`;
+}
+async function setWorldVote(id, v) {
+  const s = (state.world || []).find((x) => x.id === id);
+  if (!s) return;
+  const prev = state.wvotes.get(id);
+  if (prev?.vote === v) state.wvotes.delete(id);  // pressing the same button again = take the vote back
+  else state.wvotes.set(id, { story_id: id, vote: v, region: s.region, category: s.category, created_at: new Date().toISOString() });
+  render(false);
+  const now = state.wvotes.get(id);
+  const r = now ? await sb.from("world_votes").upsert({ user_id: state.user.id, story_id: id, vote: v, region: s.region, category: s.category }, { onConflict: "user_id,story_id" })
+    : await sb.from("world_votes").delete().eq("story_id", id);
+  if (r.error) { if (prev) state.wvotes.set(id, prev); else state.wvotes.delete(id); render(false); toast(`Vote not saved: ${esc(r.error.message)}`); }
+  else if (v === -1 && now) toast("Moved down. Similar stories will rank lower.");
+}
+
 function viewSearch() {
   const q = state.searchQ || "", r = state.searchResults;
   const row = (s) => `<div class="sr${stateCls(s)}" data-go="${s.id}">${/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="qi ${impClass(s.impact_score)}">${s.impact_score}</span>`}
     <div><div class="meta">${metaTags(s)}${esc((s.topics || [])[0] || "")} · ${new Date(when(s)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · impact ${s.impact_score}</div>
     <h3>${esc(s.headline)}</h3>${state.notes.has(s.id) ? `<p class="note"><b>Note:</b> ${esc(state.notes.get(s.id))}</p>` : ""}</div></div>`;
+  const wRows = () => { const w = state.searchWorld || []; return w.length ? `<h2 class="sec srhead">World Brief · ${w.length}</h2>${w.map((s) => `<div class="sr" data-go-world="${s.id}">${wPic(s)}
+    <div><div class="meta"><span class="kindw">WORLD</span> ${esc(s.region || "")} · ${esc(s.category || "")} · ${new Date(when(s)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · ${esc(s.n_sources)} outlets</div>
+    <h3>${esc(s.headline)}</h3></div></div>`).join("")}` : ""; };
   return `${header("news")}<div class="wrap"><div class="panel" style="max-width:900px">
     <a class="back a" href="#/">← Back to My News</a>
     <h1 class="a" style="margin-top:16px">Search: “${esc(q)}”</h1>
     <p class="why a">All saved stories (not just the last 3 days) and your notes.</p>
     <div class="results-list a">${r === null ? `<p class="why">Searching…</p>` : r.error ? `<p class="msg err">${esc(r.error)}</p>`
-      : r.length ? r.map(row).join("") : `<p class="why">No stories found. Try a company name, ticker or topic.</p>`}</div></div></div>`;
+      : r.length || (state.searchWorld || []).length ? `${r.length ? `<h2 class="sec srhead">My News · ${r.length}</h2>${r.map(row).join("")}` : ""}${wRows()}`
+      : `<p class="why">No stories found. Try a company name, ticker, topic or country.</p>`}</div></div></div>`;
 }
 
 // Unsaved edits on the Topics & watchlist page live here until you press Save.
@@ -881,6 +1337,10 @@ function viewPrefs() {
     <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">Dark style</h3>
     <div class="dpick a">${[["graphite", "Graphite", "Soft charcoal greys", ["#0f0f10", "#18181b", "#222226"]], ["black", "True black", "Pure black, high contrast", ["#000", "#0b0b0c", "#151517"]], ["navy", "Midnight", "Deep blue, trading-terminal feel", ["#0a0f1c", "#101829", "#16203a"]]]
       .map(([k, n, sub, c]) => `<button class="dsw ${darkStyle() === k ? "on" : ""}" data-dark-pick="${k}"><span class="sw" style="background:${c[0]}"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i><i style="background:#ff4500"></i></span><b>${n}</b><small>${sub}</small></button>`).join("")}</div>
+    <h2 class="sec a" style="margin-top:32px">Market hours</h2>
+    <p class="why a">Pick up to ${MAX_MKTS} markets to show as open / closed next to Markets on My News. ${"markets" in (state.settings || {}) ? "Saved to your account, so phone and computer match." : "Saved on this device."}</p>
+    <div class="mktpick a">${MARKETS_ALL.map(([n, city, tz, s]) => { const on = myMarkets().some((m) => m[0] === n), o = mktOpen(tz, s);
+      return `<button class="mkp ${on ? "on" : ""}" data-mkt-pick="${n}" aria-pressed="${on}"><span class="ck">${on ? CHK : ""}</span><span><b>${n}</b><small>${city}</small></span><span class="mkt ${o ? "open" : ""}"><i></i>${o ? "open" : "closed"}</span></button>`; }).join("")}</div>
     <h2 class="sec a" style="margin-top:32px">Motion</h2>
     <div class="mopts a">
       ${opt("auto", "Automatic", `Follow this device's setting. Right now your device asks for <b>${dev ? "less motion" : "normal motion"}</b>, so motion is <b>${dev ? "reduced" : "on"}</b>.`)}
@@ -1163,8 +1623,34 @@ function mktOpen(tz, sessions) {
   const m = (Number(p.hour) % 24) * 60 + Number(p.minute);
   return sessions.some(([a, b]) => m >= a && m < b);
 }
-const marketBadges = () => [["SET", "Asia/Bangkok", [[600, 750], [870, 990]]], ["NYSE", "America/New_York", [[570, 960]]]]
-  .map(([n, tz, s]) => { const o = mktOpen(tz, s); return `<span class="mkt ${o ? "open" : ""}" title="${n} regular hours (holidays not included)"><i></i>${n} ${o ? "open" : "closed"}</span>`; }).join("");
+// Market-hours badges: you pick which ones show (Settings → Market hours). Regular sessions in local time, minutes from midnight.
+const MARKETS_ALL = [
+  ["SET", "Thailand", "Asia/Bangkok", [[600, 750], [870, 990]]], ["NYSE", "US stocks", "America/New_York", [[570, 960]]],
+  ["LSE", "London", "Europe/London", [[480, 990]]], ["Xetra", "Germany", "Europe/Berlin", [[540, 1050]]],
+  ["TSE", "Tokyo", "Asia/Tokyo", [[540, 690], [750, 930]]], ["HKEX", "Hong Kong", "Asia/Hong_Kong", [[570, 720], [780, 960]]],
+  ["SSE", "Shanghai", "Asia/Shanghai", [[570, 690], [780, 900]]], ["SGX", "Singapore", "Asia/Singapore", [[540, 720], [780, 1020]]],
+  ["KRX", "Korea", "Asia/Seoul", [[540, 930]]], ["NSE", "India", "Asia/Kolkata", [[555, 930]]], ["ASX", "Australia", "Australia/Sydney", [[600, 960]]],
+];
+const MAX_MKTS = 4;
+function myMarkets() {
+  const s = state.settings || {};
+  const list = Array.isArray(s.markets) ? s.markets : safe(() => JSON.parse(localStorage.getItem("ic_markets")), null) || ["SET", "NYSE"];
+  return MARKETS_ALL.filter((m) => list.includes(m[0]));
+}
+const marketBadges = () => myMarkets()
+  .map(([n, , tz, s]) => { const o = mktOpen(tz, s); return `<span class="mkt ${o ? "open" : ""}" title="${n} regular hours (holidays not included)"><i></i>${n} ${o ? "open" : "closed"}</span>`; }).join("");
+async function toggleMarket(code) {
+  const cur = myMarkets().map((m) => m[0]);
+  let next = cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code];
+  if (next.length > MAX_MKTS) { toast(`Up to ${MAX_MKTS} markets. Turn one off first.`); return; }
+  next = MARKETS_ALL.map((m) => m[0]).filter((c) => next.includes(c));  // keep a fixed order
+  if ("markets" in (state.settings || {})) {
+    const old = state.settings.markets;
+    state.settings.markets = next; render(false);
+    const { error } = await sb.from("user_settings").update({ markets: next }).eq("user_id", state.user.id);
+    if (error) { state.settings.markets = old; render(false); toast(`Not saved: ${esc(error.message)}`); }
+  } else { safe(() => localStorage.setItem("ic_markets", JSON.stringify(next))); render(false); }  // before 008_world.sql: this device only
+}
 
 // 4. Heartbeat next to LIVE
 const HB_PATH = "M0 9 H13 L16 9 L19 2 L23 15 L26 5 L28 9 H44";
@@ -1176,8 +1662,10 @@ const BRIEF_BG = `<svg class="bgline" viewBox="0 0 1200 80" preserveAspectRatio=
 
 // 6. Chart-line page wipe when you move to another page (feed → story, → calendar, …)
 let lastView = null, lastRendered = null;
+// Page name for motion: a My News story and a World Brief story both count as "story" (quick open, no wipe)
+const viewKey = () => { const h = location.hash || "#/"; return /^#\/world\/./.test(h) ? "story" : h.split("/")[1] || "feed"; };
 function pageWipe() {
-  const key = (location.hash || "#/").split("/")[1] || "feed";
+  const key = viewKey();
   const changed = lastView !== null && key !== lastView;
   const reading = key === "story" || lastView === "story"; // opening / leaving a story: no wipe, it made reading feel slow
   lastView = key;
@@ -1236,7 +1724,7 @@ function render(animate = true) {
   applyMotion();
   app.classList.remove("enter", "soft"); void app.offsetWidth;
   // Opening a story or coming back from one: a short, quick rise instead of the slow page entrance (felt like lag)
-  const viewNow = (location.hash || "#/").split("/")[1] || "feed";
+  const viewNow = viewKey();
   app.classList.toggle("quick", viewNow === "story" || lastRendered === "story");
   if (animate === true) lastRendered = viewNow;
   if (animate === true && !calm()) app.classList.add("enter");
@@ -1255,6 +1743,13 @@ function render(animate = true) {
     app.innerHTML = viewStory(id);
     if (s && !stOf(s)) setStatus(id, "seen");            // opening a story marks it as seen
     if (!s && state.loadingStory !== id) loadOneStory(id); // older than 3 days (e.g. from search or Telegram)
+  } else if (h.startsWith("#/world")) {
+    const id = decodeURIComponent(h.slice(8));
+    if (state.world === null || Date.now() - state.worldAt > 10 * 60e3) {   // load on first visit, refresh after 10 min
+      if (!state.worldLoading) { state.worldLoading = true; loadWorld().finally(() => { state.worldLoading = false; if ((location.hash || "").startsWith("#/world")) render(false); }); }
+    }
+    if (id) { app.innerHTML = viewWorldStory(id); if (state.world && !wSt(id) && state.world.some((x) => x.id === id)) setWorldStatus(id, "seen"); }  // opening = seen
+    else setApp(viewWorld(), animate);
   } else if (h.startsWith("#/search/")) app.innerHTML = viewSearch();
   else if (h.startsWith("#/calendar")) {
     const d = h.slice(11), c = state.cal;
@@ -1327,8 +1822,27 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { ch
 app.addEventListener("click", async (e) => {
   // Clicking outside the search box closes its results
   if (!e.target.closest(".search")) { const r = document.getElementById("res"); if (r) r.innerHTML = ""; }
-  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics]");
+  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief]");
   if (!el) return;
+  if (el.dataset.wbrief) { const ids = wWaiting().map((s) => s.id); if (ids.length) { state.briefing = { ids, i: 0, res: {}, world: true }; drawBriefing(); } return; }
+  if (el.dataset.goWorld) { location.hash = `#/world/${el.dataset.goWorld}`; return; }
+  if (el.dataset.wview) { state.wview = el.dataset.wview; if (state.wview === "map") state.wreg = "All"; safe(() => localStorage.setItem("ic_wview", state.wview)); render("soft"); return; }
+  if (el.dataset.wzoom) { state.wzoom = el.dataset.wzoom; state.wsel = null; state.whover = null; render(false); return; }
+  if (el.dataset.wsit) {   // map: first tap selects (draws its line), second tap opens the story
+    const id = el.dataset.wsit;
+    if (state.wsel === id) { location.hash = `#/world/${id}`; return; }
+    state.wsel = id; state.whover = null;
+    if (state.wzoom === "World" && GEO && GEO.at) { const it = wItems(wRanked()).find((x) => x.s.id === id); if (it && it.reg) state.wzoom = it.reg; }
+    render(false); return;
+  }
+  if (el.dataset.mktPick) { toggleMarket(el.dataset.mktPick); return; }
+  if (el.dataset.wdone) { e.preventDefault(); e.stopPropagation(); const id = el.dataset.wdone; setWorldStatus(id, wSt(id) === "done" ? "seen" : "done"); return; }
+  if (el.dataset.wnext !== undefined) { const cur = el.dataset.wnext; if (cur && wSt(cur) !== "done") setWorldStatus(cur, "done"); const n = wWaiting().find((s) => s.id !== cur); location.hash = n ? `#/world/${n.id}` : "#/world"; return; }
+  // World Brief
+  if (el.dataset.wvote) { e.preventDefault(); e.stopPropagation(); setWorldVote(el.dataset.wvote, Number(el.dataset.v)); return; }
+  if (el.dataset.wreg) { state.wreg = el.dataset.wreg; state.wlimit = 10; render("soft"); return; }
+  if (el.dataset.wmore) { state.wlimit += 10; render(false); return; }
+  if (el.dataset.wgo) { if (!e.target.closest("a")) location.hash = `#/world/${el.dataset.wgo}`; return; }
   if (el.dataset.save) {
     e.preventDefault(); e.stopPropagation();
     const id = el.dataset.save;
@@ -1533,7 +2047,7 @@ async function start(session) {
   }
 }
 
-lastView = (location.hash || "#/").split("/")[1] || "feed";
+lastView = viewKey();
 playIntro();
 
 sb.auth.onAuthStateChange((event, session) => {

@@ -101,6 +101,7 @@ def fetch_feed(src):
                 "outlet": outlet,
                 "feed": src["name"],
                 "trust": src.get("trust", 1),
+                **({"desc_html": it.findtext("description") or ""} if src.get("keep_html") else {}),  # World Brief: Google News clusters
             })
     items.sort(key=lambda i: i["published"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     return src, items[:src.get("max", MAX_PER_FEED)], None

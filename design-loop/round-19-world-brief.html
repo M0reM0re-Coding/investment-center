@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 19 · World Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--line2:#e2e2e2;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;
+  --eu:#3b82f6;--am:#8b5cf6;--me:#f59e0b;--as:#10b981;--af:#ef4444;--gl:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#f6f6f6;color:var(--ink);font-size:14px;line-height:1.45}
+.doc{max-width:1460px;margin:0 auto;padding:28px 16px 80px}
+.doc>h1{font:800 28px "Inter Tight";letter-spacing:-.02em}
+.doc>p.lead{color:var(--soft);max-width:860px;margin:6px 0 4px}
+.taste{position:sticky;top:0;z-index:5;background:#111;color:#fff;border-radius:10px;padding:10px 14px;margin:16px 0 26px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:13px}
+.taste b{color:#ffb199}.taste .tw{display:flex;gap:6px;flex-wrap:wrap}
+.taste .tw span{background:#2a2a2a;border-radius:99px;padding:2px 9px}
+.taste .tw span.p{background:#14361f;color:#7ee2a0}.taste .tw span.n{background:#3a1616;color:#ff9b9b}
+.taste button{margin-left:auto;background:#333;color:#fff;border:0;border-radius:6px;padding:5px 10px;font:600 12px Inter;cursor:pointer}
+section.opt{margin:0 0 56px}
+.opt h2{font:800 22px "Inter Tight";letter-spacing:-.01em}.opt h2 em{font-style:normal;color:var(--accent)}
+.opt .note{color:var(--soft);margin:4px 0 14px;max-width:900px}
+.frames{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.desk{flex:1 1 860px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.phone{flex:0 0 390px;width:390px;max-width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:28px;overflow:hidden;height:760px;display:flex;flex-direction:column}
+.phone .scroll{flex:1;overflow:auto}
+.lbl{font:600 11px Inter;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+/* shared header (same as live site) */
+.hd{display:flex;align-items:center;gap:22px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.logo{font:900 17px "Inter Tight";letter-spacing:-.02em}.logo i{color:var(--accent);font-style:normal}
+.nav{display:flex;gap:18px;font-weight:600;color:var(--soft)}.nav .on{color:var(--ink);box-shadow:0 2px 0 var(--accent)}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.tabbar{display:flex;border-top:1px solid var(--line);background:#fff}
+.tabbar a{flex:1;text-align:center;padding:8px 0 10px;font:600 11px Inter;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar a.on{color:var(--accent)}.tabbar svg{width:20px;height:20px}
+.pad{padding:18px 20px}.mpad{padding:14px 16px}
+.edhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+.edhead h3{font:800 26px "Inter Tight";letter-spacing:-.02em}.edhead small{color:var(--muted);font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.chip{background:var(--chip);border-radius:99px;padding:4px 11px;font-weight:600;font-size:12px;color:var(--soft);white-space:nowrap}.chip.on{background:var(--ink);color:#fff}
+.mchips{display:flex;gap:6px;overflow:auto;scrollbar-width:none;margin:10px -16px 0;padding:0 16px 4px}
+/* pieces */
+.cov{display:inline-flex;align-items:center;gap:5px;font:700 12px Inter;color:var(--ink)}
+.cov .n{background:var(--accent);color:#fff;border-radius:5px;padding:1px 6px}
+.meta{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rg{font-weight:600;font-size:11px;border-radius:4px;padding:1px 6px;background:var(--chip);color:var(--soft)}
+.why{font-size:12px;color:var(--soft);margin-top:4px}.why b{font-weight:600;color:var(--ink)}
+.why .pl{color:var(--up);font-weight:600}.why .mi{color:var(--down);font-weight:600}
+.vote{display:inline-flex;gap:4px}
+.vote button{border:1px solid var(--line2);background:#fff;border-radius:7px;width:32px;height:30px;display:grid;place-items:center;cursor:pointer;color:var(--soft)}
+.vote button:hover{border-color:#bbb;color:var(--ink)}
+.vote button.w.on{background:#e8f7ee;border-color:#9ad8b1;color:var(--up)}
+.vote button.x.on{background:#fdecec;border-color:#f3a9a9;color:var(--down)}
+.vote svg{width:16px;height:16px}
+.bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--chip)}
+.bar i{display:block}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:var(--c)}
+.photo{background:linear-gradient(135deg,#d9dde3,#bfc6cf);display:flex;align-items:flex-end;color:#fff;font-size:11px;padding:6px 8px;text-shadow:0 1px 2px #0006}
+h4{font:700 16px/1.3 Inter;letter-spacing:-.01em}
+.sum{color:var(--soft);font-size:13px;margin-top:3px}
+/* A numbered edition */
+.A li{list-style:none;display:grid;grid-template-columns:44px 1fr auto;gap:14px;padding:14px 0;border-top:1px solid var(--line);align-items:start}
+.A .num{font:900 30px/1 "Inter Tight";color:#d4d4d4}.A li:first-child .num{color:var(--accent)}
+.A .bar{margin-top:8px;max-width:320px}
+.Am li{grid-template-columns:30px 1fr;gap:10px}.Am .num{font-size:22px}.Am .vote{margin-top:8px}
+/* B front page */
+.B .top{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.B .top .photo{height:250px;border-radius:10px}
+.B .top h4{font-size:24px;line-height:1.2;font-family:"Inter Tight";font-weight:800;margin:8px 0 6px}
+.B .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding-top:16px}
+.B .card .photo{height:110px;border-radius:8px;margin-bottom:8px}
+.B .card{display:flex;flex-direction:column;gap:4px}
+.B .foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.Bm .lead .photo{height:190px;border-radius:10px}.Bm .lead h4{font:800 20px/1.2 "Inter Tight";margin:8px 0 4px}
+.Bm .row{display:grid;grid-template-columns:1fr 84px;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.Bm .row .photo{height:64px;border-radius:7px}
+/* C region board */
+.C .strip{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0 16px}
+.C .strip div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;border-top:3px solid var(--c)}
+.C .strip b{font:800 20px "Inter Tight";display:block}.C .strip small{color:var(--muted);font-weight:600}
+.C .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.C .col h5{font:700 12px Inter;text-transform:uppercase;letter-spacing:.06em;color:var(--c);border-bottom:2px solid var(--c);padding-bottom:5px;margin-bottom:4px}
+.C .it{padding:9px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.C .it h4{font-size:14px}
+.Cm .seg{display:flex;gap:0;border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-top:10px}
+.Cm .seg span{flex:1;text-align:center;padding:7px 0;font:600 11px Inter;color:var(--soft);border-right:1px solid var(--line2)}
+.Cm .seg span:last-child{border:0}.Cm .seg span.on{background:var(--ink);color:#fff}
+/* D coverage first */
+.D .r{display:grid;grid-template-columns:1fr 260px auto;gap:18px;padding:14px 0;border-top:1px solid var(--line);align-items:center}
+.D .cvbox .t{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.D .cvbox .t b{font-weight:700}.D .bar{height:9px}
+.D .flag{font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 6px}
+.Dm .r{grid-template-columns:1fr;gap:8px}.Dm .bot{display:flex;justify-content:space-between;align-items:center}
+.Dm .cvbox{flex:1;margin-right:12px}
+.reco{background:#fff4ef;border:1px solid #ffd2c0;border-radius:10px;padding:14px 16px;margin-top:10px}
+@media (max-width:760px){.B .top,.C .cols{grid-template-columns:1fr}.B .grid{grid-template-columns:1fr 1fr}.C .strip{grid-template-columns:repeat(3,1fr)}.D .r{grid-template-columns:1fr}.A li{grid-template-columns:34px 1fr}.A li .vote{grid-column:2}}
+</style></head><body><div class="doc">
+<h1>Round 19 · World Brief: 4 layouts</h1>
+<p class="lead">Same look as My News (Inter, orange accent, same header and phone tab bar). Real headlines from this morning's feeds (BBC, Guardian, Al Jazeera, France 24, DW, NPR, CNA, SCMP, Google News). <b>Outlet counts and region splits are sample numbers</b>; the robot will count them for real.</p>
+<p class="lead"><b>Try it:</b> press <b>Want</b> (thumb up) or <b>No want</b> (thumb down) on any story. Every layout re-ranks using the simple scorecard below. The bar at the top shows what the page has "learned".</p>
+<div class="taste" id="taste"></div>
+<div id="opts"></div>
+<div class="reco"><b>My recommendation: A (Numbered edition) with D's coverage bar inside each row.</b> A numbered top 10 is the fastest way to answer "what happened in the world today" and is clearly different from My News's card grid, so the two pages don't feel the same. D's bar adds the "who is covering this" insight in 6 px without taking space. B looks great but feels like a second My News; C splits a short list into thin columns.</div>
+</div>
+<script>
+const R={Europe:"--eu",Americas:"--am","Middle East":"--me",Asia:"--as",Africa:"--af",Global:"--gl"};
+const S=[
+{h:"Ukraine sinks Russian warship off Libya with naval drones",s:"Kyiv confirms drones hit two Russian ships at a Benghazi base, the war's first strike in Africa.",reg:"Europe",cat:"Conflict",n:14,ago:"2h",split:{Europe:8,Americas:3,"Middle East":2,Asia:1}},
+{h:"COP31 climate talks end with no deal on fossil fuels",s:"Talks collapsed in the final hours; calls grow to reform how UN climate summits work.",reg:"Global",cat:"Climate",n:11,ago:"5h",split:{Europe:5,Americas:3,Asia:2,Africa:1}},
+{h:"Nvidia brings back Jensen Huang as CEO after Trump steps in",s:"The board reverses course; a top Democrat promises an inquiry into the White House role.",reg:"Americas",cat:"Economy",n:9,ago:"3h",split:{Americas:6,Europe:2,Asia:1}},
+{h:"Iran flogs singer who performed without a headscarf",s:"Lawyers say Parastoo Ahmadi was punished for an online concert, drawing wide condemnation.",reg:"Middle East",cat:"Society",n:7,ago:"6h",split:{Europe:3,"Middle East":3,Americas:1}},
+{h:"Poland to get NATO early-warning planes after missile strikes",s:"The alliance moves surveillance aircraft east after Russian missiles hit Polish territory.",reg:"Europe",cat:"Conflict",n:6,ago:"4h",split:{Europe:4,Americas:2}},
+{h:"Democrats win the US House by the largest margin in 50 years",s:"The result reshapes Congress for the second half of the presidential term.",reg:"Americas",cat:"Politics",n:6,ago:"9h",split:{Americas:5,Europe:1}},
+{h:"UN chief asks for a global AI safety framework within a year",s:"Guterres wants countries to agree shared rules so that humans 'maintain control'.",reg:"Global",cat:"Science & tech",n:5,ago:"7h",split:{Europe:3,Asia:1,Americas:1}},
+{h:"Israel's push into southern Syria brings fear and destruction",s:"Residents describe demolished homes as troops widen their presence near the border.",reg:"Middle East",cat:"Conflict",n:5,ago:"8h",split:{"Middle East":3,Europe:2}},
+{h:"China and ASEAN still split over South China Sea rules",s:"Negotiators miss another deadline on a code of conduct for the disputed waters.",reg:"Asia",cat:"Politics",n:3,ago:"10h",split:{Asia:2,Europe:1}},
+{h:"Prabowo names two candidates to replace Gibran as Indonesia's VP",s:"Parliament will pick one; markets watch for signals on the economic agenda.",reg:"Asia",cat:"Politics",n:3,ago:"5h",split:{Asia:3}},
+{h:"Thai appeal court halves jail term of opposition MP",s:"The lawmaker was convicted of royal insult; the case is seen as a test for the courts.",reg:"Asia",cat:"Politics",n:2,ago:"11h",split:{Asia:2}},
+{h:"South Africa races to replant five baobabs after export blocked",s:"The ancient trees were bound for an overseas collector before officials stepped in.",reg:"Africa",cat:"Climate",n:2,ago:"12h",split:{Europe:1,Africa:1}},
+];
+S.forEach((s,i)=>s.id=i);
+const votes={}; // id -> 1 | -1
+function taste(){const t={};for(const id in votes){const s=S[id],v=votes[id];t[s.reg]=(t[s.reg]||0)+v;t[s.cat]=(t[s.cat]||0)+v}for(const k in t)t[k]=Math.max(-5,Math.min(5,t[k]));return t}
+function score(s,t){const cov=Math.min(s.n,15)*2, fresh=Math.max(0,12-parseInt(s.ago))*.5, tp=((t[s.reg]||0)+(t[s.cat]||0))*3, own=votes[s.id]===-1?-100:0;return {total:cov+fresh+tp+own,tp}}
+function ranked(){const t=taste();return S.map(s=>({...s,...score(s,t)})).filter(s=>votes[s.id]!==-1||true).sort((a,b)=>b.total-a.total)}
+const up='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v11H3V10zM7 10l4-8a3 3 0 0 1 3 3v4h6a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.6 21H7"/></svg>';
+const dn='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V3h4v11zM17 14l-4 8a3 3 0 0 1-3-3v-4H4a2 2 0 0 1-2-2.3l1.4-8A2 2 0 0 1 5.4 3H17"/></svg>';
+const vote=s=>`<span class="vote"><button class="w ${votes[s.id]===1?"on":""}" data-v="1" data-id="${s.id}" title="Want: more like this">${up}</button><button class="x ${votes[s.id]===-1?"on":""}" data-v="-1" data-id="${s.id}" title="No want: less like this">${dn}</button></span>`;
+const bar=s=>`<div class="bar">${Object.entries(s.split).map(([r,c])=>`<i style="width:${c/s.n*100}%;background:var(${R[r]})"></i>`).join("")}</div>`;
+const rg=s=>`<span class="rg" style="color:var(${R[s.reg]})">${s.reg}</span><span class="rg">${s.cat}</span>`;
+function why(s){const t=taste(),bits=[`<b>${s.n} outlets</b>`];for(const k of [s.reg,s.cat]){const v=t[k];if(v)bits.push(`<span class="${v>0?"pl":"mi"}">${k} ${v>0?"+":""}${v}</span> (${v>0?"you like":"you skip"})`)}bits.push(s.ago+" ago");return `<div class="why">Why here: ${bits.join(" · ")}</div>`}
+const cov=s=>`<span class="cov"><span class="n">${s.n}</span>outlets</span>`;
+const legend=`<div class="legend">${Object.entries(R).map(([r,c])=>`<span style="--c:var(${c})">${r}</span>`).join("")}</div>`;
+const ico={news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>',world:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',topic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>'};
+const hd=`<div class="hd"><span class="logo">Investment<i>.</i>Center</span><span class="nav"><span>My News</span><span class="on">World Brief</span><span>Calendar</span><span>Charts</span></span></div>`;
+const mhd=`<div class="mhd"><span class="logo">Investment<i>.</i>Center</span><span class="meta">Mon 24 Nov</span></div>`;
+const tabbar=`<div class="tabbar"><a>${ico.news}My News</a><a class="on">${ico.world}World</a><a>${ico.cal}Calendar</a><a>${ico.topic}Topics</a></div>`;
+const edhead=(sz)=>`<div class="edhead"><h3 style="${sz?"font-size:22px":""}">Today's brief</h3><small>Mon 24 Nov · 08:00 · 12 stories</small></div>`;
+const regionChips=`<span class="chip on">All</span>${Object.keys(R).map(r=>`<span class="chip">${r}</span>`).join("")}`;
+
+function A(){const L=ranked().slice(0,10);
+ const desk=`${hd}<div class="pad A">${edhead()}<div class="chips">${regionChips}</div><ol>${L.map((s,i)=>`<li><span class="num">${i+1}</span><div><h4>${s.h}</h4><div class="sum">${s.s}</div><div class="meta" style="margin-top:6px">${rg(s)}</div>${bar(s)}${why(s)}</div>${vote(s)}</li>`).join("")}</ol>${legend}</div>`;
+ const ph=`${mhd}<div class="scroll mpad A Am">${edhead(1)}<div class="mchips">${regionChips}</div><ol>${L.map((s,i)=>`<li><span class="num">${i+1}</span><div><h4>${s.h}</h4><div class="meta" style="margin-top:4px">${rg(s)}</div>${bar(s)}${why(s)}${vote(s)}</div></li>`).join("")}</ol></div>${tabbar}`;
+ return [desk,ph]}
+function B(){const L=ranked(),l=L[0],rest=L.slice(1,10);
+ const desk=`${hd}<div class="pad B"><div class="top"><div class="photo">Photo: Guardian</div><div><div class="meta">${rg(l)}</div><h4>${l.h}</h4><div class="sum">${l.s}</div><div class="foot">${cov(l)}${vote(l)}</div>${why(l)}</div></div><div class="grid">${rest.map(s=>`<div class="card"><div class="photo">Photo</div><div class="meta">${rg(s)}</div><h4>${s.h}</h4><div class="foot">${cov(s)}${vote(s)}</div></div>`).join("")}</div></div>`;
+ const ph=`${mhd}<div class="scroll mpad Bm"><div class="lead"><div class="photo">Photo: Guardian</div><div class="meta" style="margin-top:8px">${rg(l)}</div><h4>${l.h}</h4><div class="foot" style="display:flex;justify-content:space-between;align-items:center">${cov(l)}${vote(l)}</div></div>${rest.map(s=>`<div class="row"><div><h4 style="font-size:14px">${s.h}</h4><div class="meta" style="margin-top:4px">${cov(s)} · ${s.ago}</div></div><div class="photo"></div></div>`).join("")}</div>${tabbar}`;
+ return [desk,ph]}
+function C(){const L=ranked(),by={};L.forEach(s=>(by[s.reg]=by[s.reg]||[]).push(s));
+ const strip=`<div class="strip">${Object.entries(R).map(([r,c])=>`<div style="--c:var(${c})"><b>${(by[r]||[]).length}</b><small>${r}</small></div>`).join("")}</div>`;
+ const cols=["Europe","Americas","Middle East","Asia","Global","Africa"];
+ const desk=`${hd}<div class="pad C">${edhead()}${strip}<div class="cols">${cols.map(r=>`<div class="col" style="--c:var(${R[r]})"><h5>${r}</h5>${(by[r]||[]).map(s=>`<div class="it"><div><h4>${s.h}</h4><div class="meta">${cov(s)} · ${s.cat}</div></div>${vote(s)}</div>`).join("")||'<div class="meta" style="padding:9px 0">Nothing big today</div>'}</div>`).join("")}</div></div>`;
+ const ph=`${mhd}<div class="scroll mpad C Cm">${edhead(1)}<div class="seg"><span class="on">All</span><span>Europe</span><span>Americas</span><span>M. East</span><span>Asia</span></div>${cols.map(r=>(by[r]||[]).length?`<div class="col" style="--c:var(${R[r]});margin-top:16px"><h5>${r} · ${(by[r]||[]).length}</h5>${by[r].map(s=>`<div class="it"><div><h4>${s.h}</h4><div class="meta">${cov(s)} · ${s.cat}</div></div>${vote(s)}</div>`).join("")}</div>`:"").join("")}</div>${tabbar}`;
+ return [desk,ph]}
+function D(){const L=ranked().slice(0,10);
+ const lean=s=>{const [r,c]=Object.entries(s.split).sort((a,b)=>b[1]-a[1])[0];return c/s.n>=.75&&s.n>=3?`<span class="flag">Mostly ${r} outlets</span>`:""};
+ const box=s=>`<div class="cvbox"><div class="t"><span>Who covers it</span><b>${s.n} outlets</b></div>${bar(s)}</div>`;
+ const desk=`${hd}<div class="pad D">${edhead()}<div class="chips">${regionChips}</div>${L.map(s=>`<div class="r"><div><div class="meta">${rg(s)} ${lean(s)}</div><h4 style="margin-top:4px">${s.h}</h4><div class="sum">${s.s}</div>${why(s)}</div>${box(s)}${vote(s)}</div>`).join("")}${legend}</div>`;
+ const ph=`${mhd}<div class="scroll mpad D Dm">${edhead(1)}<div class="mchips">${regionChips}</div>${L.map(s=>`<div class="r"><div class="meta">${rg(s)} ${lean(s)}</div><h4>${s.h}</h4><div class="bot">${box(s)}${vote(s)}</div></div>`).join("")}</div>${tabbar}`;
+ return [desk,ph]}
+
+const OPTS=[
+ ["A","Numbered edition","calm, editorial, fast","A dated top 10 like The Economist's daily brief: a big rank number, a one-line summary, and a thin bar showing which regions' outlets cover it. Best for '2 minutes, what happened?'. Less visual than B.",A],
+ ["B","Front page","visual, newspaper, rich","One lead story with a big photo, then a 3-column card grid. Looks the richest, but it is close to My News's card grid, so the two pages may feel the same. Needs photos for world stories.",B],
+ ["C","Region board","map-like, organised, broad","A count per region on top, then columns by region. Good for 'what is happening in Asia?'. Splits a short list into thin columns, and ranking across regions is less clear.",C],
+ ["D","Coverage first","analytical, data-forward","Ground-News style: every row has a big 'who covers it' bar and flags a story covered mostly by one region. Most insight per story, but a busier read.",D],
+];
+function draw(){
+ const t=taste(),ks=Object.keys(t).filter(k=>t[k]);
+ document.getElementById("taste").innerHTML=`<b>What the page has learned</b><span class="tw">${ks.length?ks.map(k=>`<span class="${t[k]>0?"p":"n"}">${k} ${t[k]>0?"+":""}${t[k]}</span>`).join(""):"<span>nothing yet: vote on a story</span>"}</span><span style="color:#aaa">Rank = outlets x2 + freshness + (region + category taste) x3</span><button id="reset">Reset votes</button>`;
+ document.getElementById("opts").innerHTML=OPTS.map(([k,n,m,d,f])=>{const [a,b]=f();return `<section class="opt"><h2><em>${k}.</em> ${n}: <span style="color:var(--muted);font-weight:600">${m}</span></h2><p class="note">${d}</p><div class="frames"><div style="flex:1 1 860px;min-width:0"><p class="lbl">Desktop</p><div class="desk">${a}</div></div><div><p class="lbl">Phone (390 px)</p><div class="phone">${b}</div></div></div></section>`}).join("");
+ document.querySelectorAll("#opts button.x.on").forEach(b=>{const r=b.closest("li,.card,.it,.r,.top,.lead");if(r)r.style.opacity=.4});
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b){const id=b.dataset.id,v=+b.dataset.v;votes[id]=votes[id]===v?undefined:v;if(votes[id]===undefined)delete votes[id];draw();return}if(e.target.id==="reset"){for(const k in votes)delete votes[k];draw()}});
+draw();
+</script></body></html>
