@@ -37,12 +37,19 @@ BATCH_SIZE = 5   # was 10; full article text makes each story bigger, and smalle
 # analysis, 3.1-Lite is close behind, 3.5-Lite gives fewer facts. gemini-2.5-flash is retired (404).
 DEFAULT_MODELS = ("gemini-4-hydrogen,gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,"
                   "gemini-3.1-flash-lite,gemini-3.5-flash-lite,gemma-4-31b-it")
-_exhausted = set()  # models that said "limit reached" during this run
+_exhausted = set()  # models skipped for the rest of this run (limit reached, gone, or too slow)
+# Memory across runs (Supabase table robot_flags, supabase/010_robot_upkeep.sql). run.py plugs in
+# (load_fn, mark_fn). A model whose DAILY free limit is used up is skipped until Google resets it
+# (midnight Pacific time = 15:00 Bangkok), so later runs don't waste calls and minutes re-trying it.
+MEMORY = None
+_memory_loaded = [False]
+RUN_START = time.time()
+RUN_BUDGET_S = 8 * 60   # stop waiting for busy models after ~8 minutes (GitHub stops a run after 15)
 API = "https://generativelanguage.googleapis.com/v1beta"
 
 
 class QuotaReached(Exception):
-    pass
+    daily = False   # True when Google says the model's DAILY limit is used up (not just the per-minute one)
 
 
 class Busy(Exception):
@@ -97,9 +104,15 @@ def http(url, body=None):
     except (TimeoutError, ConnectionError) as e:  # slow or dropped answer: try the next model instead of crashing
         raise Slow(f"no answer in time ({type(e).__name__})")
     except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")[:300]
+        body_text = e.read().decode(errors="replace")
+        detail = body_text[:300]
         if e.code == 429:
-            raise QuotaReached(f"Google says quota exceeded (429): {detail}")
+            # Google names the limit that was hit, e.g. "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+            # (daily: used up until the reset) or "...PerMinute..." (just slow down; fine again next run)
+            q = QuotaReached("Google says the daily limit is used up (429)" if "PerDay" in body_text
+                             else "Google says too many requests this minute (429)")
+            q.daily = "PerDay" in body_text
+            raise q
         if e.code in (500, 503):
             raise Busy(f"Google says the model is busy ({e.code})")
         if e.code == 404:
@@ -120,19 +133,66 @@ def _extract_json(text):
     return json.loads(text[start:end + 1])
 
 
+def next_reset():
+    """When Google's free daily limits reset: midnight Pacific time (15:00 or 16:00 Bangkok)."""
+    from datetime import datetime, timedelta
+    try:
+        from zoneinfo import ZoneInfo
+        now = datetime.now(ZoneInfo("America/Los_Angeles"))
+    except Exception:  # no time-zone data: assume Pacific standard time (UTC-8)
+        from datetime import timezone
+        now = datetime.now(timezone(timedelta(hours=-8)))
+    return (now + timedelta(days=1)).replace(hour=0, minute=1, second=0, microsecond=0)
+
+
+def _load_memory():
+    """Once per run: skip models already known to be used up today."""
+    if _memory_loaded[0] or not MEMORY:
+        return
+    _memory_loaded[0] = True
+    try:
+        used = MEMORY[0]()
+    except Exception as e:  # e.g. the robot_flags table isn't created yet: carry on without memory
+        print(f"  (model memory unavailable: {str(e)[:120]})")
+        return
+    if used:
+        _exhausted.update(used)
+        print(f"  Skipping models used up today (until the 15:00 reset): {', '.join(sorted(used))}")
+
+
+def _remember_used_up(model):
+    if not MEMORY:
+        return
+    try:
+        MEMORY[1](model, next_reset().isoformat(), "daily limit")
+    except Exception as e:
+        print(f"  (could not save model memory: {str(e)[:120]})")
+
+
 def gemini_json(prompt, schema, lite_first=False):
     """One AI call that must return JSON matching `schema`. Moves down the model chain when a model's limit is hit.
     lite_first: simple jobs (grouping headlines) use the high-volume Lite models first, saving the scarce Flash calls."""
+    _load_memory()
     chain = models()
     if lite_first:
         chain = [m for m in chain if "lite" in m] + [m for m in chain if "lite" not in m]
-    tries = [(0, m) for m in chain] + [(1, m) for m in chain]  # 2nd round: "busy" (503) usually clears in seconds
+    # Round 1 tries every model; when they are all busy (503), wait and try again: overloads usually pass
+    # within a minute. Round 3 only if the run still has time left.
+    tries = [(r, m) for r in range(3) for m in chain]
+    failed = False
     for rnd, model in tries:
         if model in _exhausted:
             continue
-        if rnd == 1 and model == next(m for m in chain if m not in _exhausted):
-            print("  All models busy: waiting 20 seconds, then one more round")
-            time.sleep(20)
+        if failed and time.time() - RUN_START > RUN_BUDGET_S:   # only gives up while models are failing
+            print("  Models keep failing and the run is running long: stopping the AI step for now (next run retries)")
+            break
+        if rnd and model == next(m for m in chain if m not in _exhausted):
+            wait = 20 if rnd == 1 else 45
+            if time.time() - RUN_START + wait > RUN_BUDGET_S:
+                print("  All models busy and the run is running long: stopping the AI step for now")
+                break
+            print(f"  All models busy: waiting {wait} seconds, then one more round")
+            time.sleep(wait)
         n = count_call()
         if model.startswith("gemma"):
             body = {"contents": [{"role": "user", "parts": [{"text": prompt + "\n\nReturn ONLY one JSON object, no other text. JSON schema:\n" + json.dumps(schema)}]}],
@@ -143,13 +203,17 @@ def gemini_json(prompt, schema, lite_first=False):
         try:
             data = http(f"{API}/models/{model}:generateContent", body)
         except QuotaReached as e:
-            print(f"  {model}: limit reached, switching to the next model")
+            print(f"  {model}: {e}, switching to the next model")
             _exhausted.add(model)
+            if e.daily:
+                _remember_used_up(model)
+            failed = True
             continue
         except Busy as e:
             print(f"  {model}: {e}, trying the next model")
             if isinstance(e, Slow):
                 _exhausted.add(model)
+            failed = True
             continue
         text = data["candidates"][0]["content"]["parts"][0]["text"]
         print(f"  (AI call {n} today, model {model})")

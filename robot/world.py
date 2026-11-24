@@ -56,6 +56,11 @@ DIRECT = [  # outlet's home region = where its coverage counts in the bar
     ("NPR World", "NPR", "https://feeds.npr.org/1004/rss.xml", "Americas"),
     ("CNA Asia", "CNA", "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511", "Asia-Pacific"),
     ("SCMP World", "South China Morning Post", "https://www.scmp.com/rss/91/feed", "Asia-Pacific"),
+    # more Asian outlets (2026-11-24): most feeds above are Western, so Asian stories rarely reached 2+ outlets
+    ("Nikkei Asia", "Nikkei Asia", "https://asia.nikkei.com/rss/feed/nar", "Asia-Pacific"),
+    ("Japan Times", "The Japan Times", "https://www.japantimes.co.jp/feed/", "Asia-Pacific"),
+    ("Straits Times Asia", "The Straits Times", "https://www.straitstimes.com/news/asia/rss.xml", "Asia-Pacific"),
+    ("Yonhap", "Yonhap", "https://en.yna.co.kr/RSS/news.xml", "Asia-Pacific"),
     # Thailand (for the "Thailand" chip): world feeds rarely cover it, so read Thai English outlets too
     ("Bangkok Post Thailand", "Bangkok Post", "https://www.bangkokpost.com/rss/data/thailand.xml", "Asia-Pacific"),
     ("Bangkok Post Top", "Bangkok Post", "https://www.bangkokpost.com/rss/data/topstories.xml", "Asia-Pacific"),
@@ -64,7 +69,7 @@ DIRECT = [  # outlet's home region = where its coverage counts in the bar
 THAI_RX = re.compile(r"\b(Thai|Thailand|Bangkok|Phuket|Chiang Mai|Pattaya|baht)\b", re.I)
 THAI_FEEDS = {"Bangkok Post Thailand", "Bangkok Post Top", "Khaosod English", "Google News Thailand"}
 GN_EDITIONS = {"US": "Americas", "CA": "Americas", "GB": "Europe", "IN": "Asia-Pacific", "SG": "Asia-Pacific",
-               "AU": "Asia-Pacific", "ZA": "Africa", "NG": "Africa"}  # (the UAE edition is a copy of the US one)
+               "AU": "Asia-Pacific", "PH": "Asia-Pacific", "ZA": "Africa", "NG": "Africa"}  # (the UAE edition is a copy of the US one)
 
 # Where well-known outlets are based. Unknown outlets count for the region of the Google News edition they came from.
 OUTLET_REGION = {
@@ -533,6 +538,7 @@ if __name__ == "__main__":
     else:
         import run as robot_run  # same shared daily AI counter as the GitHub robot (Supabase, cap 300), not the old local one
         ai.COUNTER = robot_run.db_counter
+        ai.MEMORY = (db.used_up_models, db.mark_used_up)   # skip models used up today
         if "--fix-situations" in sys.argv:
             fix_situations()
         else:

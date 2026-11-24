@@ -164,6 +164,7 @@ def main():
     ap.add_argument("--test-alert", action="store_true", help="send the best recent story to Telegram as a test, then stop")
     ap.add_argument("--test-brief", action="store_true", help="send the morning brief now as a test, then stop")
     ap.add_argument("--test-weekly", action="store_true", help="send the Sunday world recap now as a test, then stop")
+    ap.add_argument("--cleanup-dry", action="store_true", help="show how many old rows the 90-day cleanup would delete, then stop")
     args = ap.parse_args()
     if args.backfill_images:
         return backfill_images()
@@ -173,7 +174,10 @@ def main():
         return notify.maybe_brief(force=True)
     if args.test_weekly:
         return notify.maybe_weekly(force=True)
+    if args.cleanup_dry:
+        return print("Would delete (older than 90 days, keeping saved / noted / Later / voted):", db.cleanup_old(dry=True))
     ai.COUNTER = db_counter
+    ai.MEMORY = (db.used_up_models, db.mark_used_up)   # skip models used up today
 
     settings = db.user_settings() or {}
     _, stories = collect(watchlist=settings.get("watchlist"), verbose=False,
@@ -263,6 +267,11 @@ def main():
         world.run(reader={"watchlist": settings.get("watchlist") or []})  # World Brief (page 2): at most once an hour
     except Exception as e:  # a World Brief problem must never break My News
         print(f"World Brief skipped: {str(e)[:150]}")
+    try:  # once a day (the run between 03:00 and 04:00 Bangkok): delete rows older than 90 days
+        if datetime.now(timezone.utc).hour == 20:
+            print("90-day cleanup, deleted:", db.cleanup_old())
+    except Exception as e:
+        print(f"Cleanup skipped: {str(e)[:150]}")
 
 
 if __name__ == "__main__":

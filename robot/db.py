@@ -86,6 +86,48 @@ def bump_usage(field, limit):
     return row[field]
 
 
+def used_up_models():
+    """AI models whose daily free limit is used up (robot_flags, supabase/010_robot_upkeep.sql)."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    rows = _req("GET", "robot_flags", params={"select": "model", "until": f"gt.{now}"})
+    return {r["model"] for r in rows or []}
+
+
+def mark_used_up(model, until, why):
+    _req("POST", "robot_flags", {"model": model, "until": until, "why": why},
+         params={"on_conflict": "model"}, prefer="resolution=merge-duplicates")
+
+
+def cleanup_old(days=90, dry=False):
+    """Delete what's older than `days` so the free database stays small. KEEPS stories you saved, noted or put on
+    Later, and World stories you voted on (deleting a story would also delete those marks and votes).
+    Returns {table: rows deleted (or that would be, with dry=True)}."""
+    from datetime import datetime, timedelta, timezone
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    ids = lambda table, **f: {r["story_id"] for r in _req("GET", table, params={"select": "story_id", **f}) or []}
+    keep = ids("saved") | ids("story_notes") | ids("story_status", status="eq.later")
+    keep_w = ids("world_votes")
+    jobs = [("stories", {"created_at": f"lt.{cutoff}"}, keep),
+            ("world_stories", {"created_at": f"lt.{cutoff}"}, keep_w),
+            ("seen_links", {"first_seen": f"lt.{cutoff}"}, None),
+            ("events", {"day": f"lt.{cutoff[:10]}"}, None),
+            ("robot_usage", {"day": f"lt.{cutoff[:10]}"}, None),
+            ("robot_flags", {"until": f"lt.{datetime.now(timezone.utc).isoformat()}"}, None)]
+    out = {}
+    for table, f, keep_ids in jobs:
+        key = "link" if table == "seen_links" else "model" if table == "robot_flags" else "day" if table == "robot_usage" else "id"
+        params = dict(f)
+        if keep_ids:
+            params["id"] = "not.in.(" + ",".join(sorted(keep_ids)) + ")"
+        if dry:
+            rows = _req("GET", table, params={"select": key, **params})
+        else:
+            rows = _req("DELETE", table, params={"select": key, **params}, prefer="return=representation")
+        out[table] = len(rows or [])
+    return out
+
+
 def upsert_events(rows):
     """Upcoming events; the same day + title is stored once."""
     _req("POST", "events", rows, params={"on_conflict": "day,title"}, prefer="resolution=merge-duplicates")
