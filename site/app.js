@@ -1,6 +1,5 @@
 // Investment Center website: page 1 (My News). Plain JavaScript, no build step.
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import { MASCOTS, mascotSvg } from "./mascot.js";
 
 const CFG = window.IC_CONFIG;
 
@@ -24,7 +23,8 @@ const FEED_STEP = 30;
 // Local preview only (python -m http.server on this PC): lets Claude show sample data before the database is updated.
 // Does nothing on the real site.
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.IC_PREVIEW = { state, render: (...a) => render(...a), brief: (ids) => { state.briefing = { ids, i: 0, res: {} }; drawBriefing(); },
-  world: (rows) => { state.world = rows; state.worldAt = Date.now() + 864e5; state.worldErr = ""; render(); } };  // sample World Brief rows before the table exists
+  world: (rows) => { state.world = rows; state.worldAt = Date.now() + 864e5; state.worldErr = ""; render(); },
+  login: () => { app.innerHTML = viewLogin(); } };   // see the login page without signing out  // sample World Brief rows before the table exists
 // Motion setting (Settings page): "auto" follows the device, "full" always animates, "reduced" keeps things still.
 const motionPref = () => safe(() => localStorage.getItem("ic_motion"), null) || "auto";
 const deviceCalm = () => safe(() => matchMedia("(prefers-reduced-motion: reduce)").matches, false);
@@ -401,7 +401,7 @@ function devBox(s, min) {
   return fold(`Developing · day ${d.day}`, `<div class="devgrow">${devSpark(d.g)}<div class="devnum">${d.from} → ${d.to}<small>outlets since ${tm(d.g[0].t)}</small></div></div>
     ${d.tl.length > 1 ? `<ul class="devtl">${d.tl.slice(-4).map((x) => `<li><b>${tm(x.t)}</b><span>${esc(x.text)}</span></li>`).join("")}</ul>` : ""}`, true, "devbox");
 }
-const metaTags = (s) => `${devInfo(s) ? `${devTag(devInfo(s))} · ` : ""}${isNew(s) ? '<span class="newdot"></span><span class="newtag">NEW</span> · ' : ""}${isUpdated(s) ? '<span class="updtag">UPDATED</span> · ' : ""}${stOf(s) === "later" ? '<span class="latertag">LATER</span> · ' : ""}${state.notes.has(s.id) ? '<span class="notetag">NOTE</span> · ' : ""}`;
+const metaTags = (s) => `${Number(s.impact_score) >= 8 && charOf() && mascotPref() !== "none" ? `<span class="mhead" title="Big news" style="background-image:url(mascot/${charOf()}/alert-${bigMood(s)}.png)"></span>` : ""}${devInfo(s) ? `${devTag(devInfo(s))} · ` : ""}${isNew(s) ? '<span class="newdot"></span><span class="newtag">NEW</span> · ' : ""}${isUpdated(s) ? '<span class="updtag">UPDATED</span> · ' : ""}${stOf(s) === "later" ? '<span class="latertag">LATER</span> · ' : ""}${state.notes.has(s.id) ? '<span class="notetag">NOTE</span> · ' : ""}`;
 
 // Price reaction: how the stock moved since the robot saved this story
 function sinceMove(s, t) {
@@ -427,6 +427,11 @@ const SEASON_ART = {
       `<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -12 L3 -5 L10 -7 L6 0 L11 4 L3 4 L2 11 L0 6 L-2 11 L-3 4 L-11 4 L-6 0 L-10 -7 L-3 -5Z" fill="${c}" opacity=".7"/>`).join("")}`,
 };
 // Season intro scenes (winter / spring / autumn; summer is the sunrise over the sea). Layers rise in one after another.
+// summer intro: 3 fish leap out of the sea in an arc (they start and end behind the water), with a splash where they go in and out
+const FISH = [[12, 320, .45, "#ff7a1a", 1], [60, 260, .85, "#ffc53d", .85], [34, 200, 1.25, "#ff9a4d", .7]];   // x %, jump width px, delay s, colour, size
+const fishSvg = (c) => `<svg viewBox="0 0 64 34" aria-hidden="true"><path d="M58 17 Q42 2 20 10 L6 2 L8 17 L6 32 L20 24 Q42 32 58 17Z" fill="${c}"/><circle cx="48" cy="14" r="2.6" fill="#1b1b1b"/><path d="M36 9 Q32 17 36 25" stroke="#fff3" stroke-width="2" fill="none"/></svg>`;
+const summerFish = () => FISH.map(([x, dx, w, c, k]) => `<div class="sfish" style="left:${x}%;--dx:${dx}px;--w:${w}s;--k:${k}"><i>${fishSvg(c)}</i></div>`).join("");
+const summerSplash = () => FISH.map(([x, dx, w, , k]) => `<span class="ssplash" style="left:calc(${x}% + ${50 * k}px);--w:${w}s;--k:${k}"></span><span class="ssplash" style="left:calc(${x}% + ${dx + 50 * k}px);--w:${w + 1.15}s;--k:${k}"></span>`).join("");
 function seasonScene(s) {
   const lay = (d, body) => `<g class="slay" style="--dl:${d}s">${body}</g>`;
   const pop = (x, y, d, body) => `<g class="spop" style="--dl:${d}s" transform="translate(${x} ${y})"><g>${body}</g></g>`;
@@ -500,7 +505,7 @@ function briefBar() {
   const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="${impClass(s.impact_score)}">${s.impact_score}</span>`);
   return `<div class="brief a" data-sig="${esc([waiting.length, fresh.length, hi, mover].join("|"))}">${calm() ? "" : BRIEF_BG}${seasonArt()}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${hi} high-impact${mover}</p></div>
-    <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
+    <div class="thumbs">${waiting.length ? waiting.slice(0, 4).map(thumb).join("") : `<span class="bmas">${mascotArt("caught-up")}</span>`}</div>
     ${waiting.length ? `<button class="go" data-brief>▶ Start<span class="hide-sm"> briefing</span> · ~${waiting.length} min</button>` : ""}</div>`;
 }
 
@@ -681,7 +686,7 @@ function drawBriefing() {
   const dots = b.ids.map((id, i) => `<i class="${b.res[id] === "done" ? "ok" : b.res[id] === "later" ? "lt" : i === b.i ? "on" : ""}"></i>`).join("");
   if (b.world) {   // World Brief: same deck, World stories ("Skip" instead of "Later": World only has seen / read)
     ov.innerHTML = !s
-      ? `<div class="sheet"><div class="end"><div class="big">✓</div><h2>You're caught up</h2>
+      ? `<div class="sheet"><div class="end">${mascotArt("caught-up", "mend") || '<div class="big">✓</div>'}<h2>You're caught up</h2>
           <p class="why">Today's top world stories are read. ${Math.max(0, (state.world || []).filter((x) => !x._old && !wSt(x.id)).length)} more are on World Brief when you have time.</p>
           <div class="act" style="justify-content:center"><button class="btn" data-bclose>Back to World Brief</button></div></div></div>`
       : `<div class="sheet slide" role="dialog" aria-label="World briefing"><div class="pic wbpic">${wPic(s)}</div><div class="body">
@@ -696,7 +701,7 @@ function drawBriefing() {
     return;
   }
   ov.innerHTML = !s
-    ? `<div class="sheet"><div class="end"><div class="big">✓</div><h2>You're caught up</h2>
+    ? `<div class="sheet"><div class="end">${mascotArt("caught-up", "mend") || '<div class="big">✓</div>'}<h2>You're caught up</h2>
         <p class="why">${storiesFor("To read").length} other stories left for when you have time.</p>
         <div class="act" style="justify-content:center"><button class="btn" data-bclose>Back to My News</button></div></div></div>`
     : `<div class="sheet slide" role="dialog" aria-label="Briefing">${media(s, true)}<div class="body">
@@ -900,7 +905,7 @@ function viewFeed() {
   if (!list.length) {
     const why = { Saved: "Tap ☆ on a story to save it.", "To read": "✓ You've read everything here.", Later: "Press Later on a story to keep it for later.", Done: "Tick ✓ on a story when you've read it." }[state.filter]
       || "No stories match this filter in the last 3 days. Try another topic, or add topics in Topics &amp; watchlist.";
-    left = `<div class="empty"><h2>${state.filter === "To read" ? "All caught up" : "Nothing here yet"}</h2><p>${why}</p></div>`;
+    left = `<div class="empty">${mascotArt(state.filter === "To read" ? "caught-up" : "waiting", "mempty")}<h2>${state.filter === "To read" ? "All caught up" : "Nothing here yet"}</h2><p>${why}</p></div>`;
   } else {
     const [h, ...rest0] = list;
     // Right column: Trending now (stories 2-6) normally; the Read first queue only in the "To read" view
@@ -1074,14 +1079,25 @@ async function setWorldStatus(id, status) {
 // "Top stories to read": today's top 5 by your ranking (minus No-want ones) that you haven't marked done
 const wWaiting = () => wRanked().filter(({ s, own }) => own !== -1 && hoursAgo(when(s)) <= 24).slice(0, 5).map(({ s }) => s).filter((s) => wSt(s.id) !== "done");
 // Read first strip (design round 22, B): today's top 5 as numbered picture cards + progress. Read = green ✓, next = orange outline.
+// World robot writes new stories about once an hour (GitHub often starts it late), so this is an estimate, rounded to 5 minutes
+function nextWorldTxt() {
+  const newest = (state.world || []).reduce((m, s) => (s.created_at > m ? s.created_at : m), "");
+  if (!newest) return "";
+  const min = Math.ceil((new Date(newest).getTime() + 65 * 60e3 - Date.now()) / 60e3 / 5) * 5;
+  return min > 0 ? `Next update in ≈ <b>${min} min</b>` : "Next update any minute";
+}
 function wReadFirst() {
   const top = wRanked().filter(({ s, own }) => own !== -1 && hoursAgo(when(s)) <= 24).slice(0, 5).map(({ s }) => s);
   if (!top.length) return "";
   const done = top.filter((s) => wSt(s.id) === "done").length, left = top.filter((s) => wSt(s.id) !== "done");
+  if (!left.length) {   // design round 31, finish line 4: pill + full bar + about when the next stories arrive
+    return `<div class="wrf wrfall a" data-sig="all-${top.length}"><span class="wpill">${CHK}All ${top.length} read</span>
+      <span class="wtrack"><i></i>${top.slice(1).map((_, k) => `<b style="left:${((k + 1) / top.length) * 100}%"></b>`).join("")}</span><span class="wnext">${nextWorldTxt()}</span></div>`;
+  }
   return `<div class="wrf a" data-sig="${esc(top.map((s) => s.id + wSt(s.id)).join(","))}"><div class="wrfh"><b>${left.length ? `Read first · ${done} of ${top.length} read` : `Read first · all ${top.length} read ✓`}</b><span class="wrfbar"><i style="width:${(done / top.length) * 100}%"></i></span></div>
     ${left.length ? `<div class="wrfs">${left.map((s, i) => `<article class="wrfc${i === 0 ? " next" : ""}" data-wgo="${s.id}" title="${esc(s.headline)}">
       <span class="k">${top.indexOf(s) + 1}</span><button class="wrfchk" data-wdone="${s.id}" title="Mark as read" aria-label="Mark as read">${CHK}</button>${wPic(s)}
-      <div class="t">${esc(s.headline)}</div><div class="wrft">${agoAt(when(s))}</div></article>`).join("")}</div>` : ""}</div>`;
+      <div class="t">${esc(s.headline)}</div><div class="wrft">${agoAt(when(s))}</div></article>`).join("")}</div>` : `<div class="wrfdone">${mascotArt("caught-up")}<span>All ${top.length} read. Nice work.</span></div>`}</div>`;
 }
 function worldBriefBar() {
   const waiting = wWaiting();
@@ -1092,7 +1108,7 @@ function worldBriefBar() {
   return `<div class="brief a" data-sig="${esc([waiting.map((s) => s.id).join(","), fresh.length, wide].join("|"))}">${calm() ? "" : BRIEF_BG}${seasonArt()}<div>
       <h2>${waiting.length ? `${waiting.length} top ${waiting.length > 1 ? "stories" : "story"} to read` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${wide} widely covered (10+ outlets)</p></div>
-    <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
+    <div class="thumbs">${waiting.length ? waiting.slice(0, 4).map(thumb).join("") : `<span class="bmas">${mascotArt("caught-up")}</span>`}</div>
     ${waiting.length ? `<button class="go" data-wbrief="1">▶ Start<span class="hide-sm"> reading</span> · ~${waiting.length} min</button>` : ""}</div>`;
 }
 // Your taste: each Want = +1 for that story's region and category, each No want = -1. Old votes count less
@@ -1144,8 +1160,8 @@ const THAI_RX = /\b(Thai|Thailand|Bangkok|Phuket|Chiang Mai|Pattaya|baht)\b/i;
 const isThaiStory = (s) => s.country === "Thailand" || THAI_RX.test([s.headline, ...(s.summary || []), s.why_matters || ""].join(" "));
 function viewWorld() {
   const head = header("world");
-  if (state.world === null) return `${head}<div class="wrap"><div class="empty"><h2>Loading the world…</h2></div></div>`;
-  if (state.worldErr) return `${head}<div class="wrap"><div class="empty"><h2>${state.worldErr === "setup" ? "World Brief is almost ready" : "Could not load World Brief"}</h2><p>${state.worldErr === "setup" ? "Run supabase/008_world.sql in Supabase, then the robot fills this page within an hour." : esc(state.worldErr)}</p></div></div>`;
+  if (state.world === null) return `${head}<div class="wrap"><div class="empty">${mascotArt("waiting", "mempty")}<h2>Loading the world…</h2></div></div>`;
+  if (state.worldErr) return `${head}<div class="wrap"><div class="empty">${mascotArt("alert-bear", "mempty")}<h2>${state.worldErr === "setup" ? "World Brief is almost ready" : "Could not load World Brief"}</h2><p>${state.worldErr === "setup" ? "Run supabase/008_world.sql in Supabase, then the robot fills this page within an hour." : esc(state.worldErr)}</p></div></div>`;
   const all = wRanked(), counts = {};
   all.forEach(({ s }) => { counts[s.region] = (counts[s.region] || 0) + 1; });
   const thaiN = all.filter(({ s }) => isThaiStory(s)).length;
@@ -1163,7 +1179,7 @@ function viewWorld() {
       ${wBar(s)}${wVote(s, own)}${wPic(s)}</article>`;
   const body = !shown.length ? (state.wreg === "Thailand"
       ? `<div class="empty"><h2>No Thailand stories yet</h2><p>The robot reads Bangkok Post, Khaosod English and Google News Thailand every hour and adds the best Thailand story each time.</p></div>`
-      : `<div class="empty"><h2>No world stories yet</h2><p>The robot checks world news once an hour.</p></div>`)
+      : `<div class="empty">${mascotArt("waiting", "mempty")}<h2>No world stories yet</h2><p>The robot checks world news once an hour.</p></div>`)
     : state.wview === "map" ? worldMap(list)
     : `<div class="wtop3">${shown.slice(0, 3).map(big).join("")}</div>${shown.slice(3).map(row).join("")}
       ${list.length > shown.length ? `<button class="btn ghost wmore a" data-wmore="1">Show ${Math.min(10, list.length - shown.length)} more</button>` : ""}${wLegend()}`;
@@ -1485,15 +1501,16 @@ function viewPrefs() {
     <div class="mktpick a">${MARKETS_ALL.map(([n, city, tz, s]) => { const on = myMarkets().some((m) => m[0] === n), o = mktOpen(tz, s);
       return `<button class="mkp ${on ? "on" : ""}" data-mkt-pick="${n}" aria-pressed="${on}"><span class="ck">${on ? CHK : ""}</span><span><b>${n}</b><small>${city}</small></span><span class="mkt ${o ? "open" : ""}"><i></i>${o ? "open" : "closed"}</span></button>`; }).join("")}</div>
     <h2 class="sec a" style="margin-top:32px">Big news alert</h2>
-    <p class="why a">When a story with impact 9 or 10 about your topics or watchlist arrives, it covers the screen once, the next time you open the site. Pick who presents it.</p>
+    <p class="why a">When a story with impact 8 or higher about your topics or watchlist arrives, it covers the screen once, the next time you open the site. Pick who presents it.</p>
     <div class="mopts a">
       <button class="mopt ${bigOn() ? "on" : ""}" data-bigalert="on" aria-pressed="${bigOn()}"><span class="radio"></span><span><b>On</b><small>Show big news full screen once, then it stays in your feed as usual.</small></span></button>
       <button class="mopt ${bigOn() ? "" : "on"}" data-bigalert="off" aria-pressed="${!bigOn()}"><span class="radio"></span><span><b>Off</b><small>Big news only appears in the feed (Telegram alerts are not affected).</small></span></button>
     </div>
-    ${[["Official", MASCOTS.slice(0, 4)], ["Retro", [...MASCOTS.slice(4), ["none", "No mascot", "just the news band"]]]].map(([h, list]) => `
+    ${[["Theme characters", [["theme", "Follows my theme", `now: ${(CHARS.find((x) => x[0] === themeChar()) || CHARS[0])[1]}`], ...CHARS.map(([k, n, th]) => [`c:${k}`, n, `${th} theme`])]],
+      ["Or none", [["none", "No mascot", "just the news band"]]]].map(([h, list]) => `
     <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">${h}</h3>
-    <div class="mscpick a">${list.map(([id, n, sub]) => `<button class="msc ${mascotPref() === id ? "on" : ""}" data-mascot="${id}" aria-pressed="${mascotPref() === id}">
-      ${id === "none" ? `<span class="msc-none">BIG NEWS</span>` : mascotSvg(id, "bull")}<b>${n}</b><small>${sub}</small></button>`).join("")}</div>`).join("")}
+    <div class="mscpick a">${list.map(([id, n, sub]) => `<button class="msc ${(id === "theme" ? charOf() && !mascotPref().startsWith("c:") : mascotPref() === id) ? "on" : ""}" data-mascot="${id}">
+      ${id === "none" ? `<span class="msc-none">BIG NEWS</span>` : id === "theme" ? charImg(themeChar(), "hello", "pick") : charImg(id.slice(2), "hello", "pick")}<b>${n}</b><small>${sub}</small></button>`).join("")}</div>`).join("")}
     <div class="a" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn ghost" data-act="big-preview" ${state.stories?.length ? "" : "disabled"}>▶ Preview with today's top story</button>
       <span class="note" style="margin:0">The face follows the news: happy for bullish, worried for bearish, alert for breaking, never smiling for war or disasters.</span>
@@ -1635,9 +1652,19 @@ async function runSearch(q) {
     error ? "Stock search isn't switched on yet: run supabase/003_search.sql in Supabase." : "");
 }
 
-function viewLogin(msg = "", err = false, email = "") {
-  return `<div class="login enter"><div class="logo a">investment center</div>
-    <p class="why a" style="margin-top:10px">Sign in to your news.</p>
+function viewLogin(msg = "", err = false, email = "") {   // design round 31, split 3: market chart on the left, form on the right
+  const q = lastQuotes().slice(0, 3);
+  const quotes = (q.length ? q : MARKETS.slice(0, 3).map((m) => [m[1], "", ""])).map((x) =>
+    `<div class="lq">${esc(x[0])}<b>${esc(x[1] || "·")}</b>${x[2] ? `<span class="${String(x[2]).startsWith("-") ? "d" : "u"}">${esc(x[2])}</span>` : ""}</div>`).join("");
+  const line = "M0 240 L50 230 L100 236 L150 200 L200 210 L250 170 L300 182 L350 140 L400 150 L450 96 L500 110 L560 60 L600 50";
+  return `<div class="login2 enter">
+    <div class="lart"><div class="a"><h2>Markets, news and alerts in one place.</h2><p>Live prices, the stories behind them, and a calendar of what's next.</p></div>
+      <svg class="lch" viewBox="0 0 600 300" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="lga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff4500" stop-opacity=".3"/><stop offset="1" stop-color="#ff4500" stop-opacity="0"/></linearGradient></defs>
+        <line x1="0" y1="75" x2="600" y2="75"/><line x1="0" y1="150" x2="600" y2="150"/><line x1="0" y1="225" x2="600" y2="225"/>
+        <path class="ar" d="${line} L600 300 L0 300Z" fill="url(#lga)"/><path class="ln" d="${line}"/></svg>
+      <div class="lqs">${quotes}</div></div>
+    <div class="lform"><div class="logo a">investment <em>center</em></div>
+    <p class="why a" style="margin-top:6px">Sign in to your news.</p>
     <form id="login" class="login-form">
       <input class="a" type="email" id="email" placeholder="Email" autocomplete="username" required value="${esc(email)}">
       <div class="pw a"><input type="password" id="password" placeholder="Password" autocomplete="current-password">
@@ -1646,7 +1673,7 @@ function viewLogin(msg = "", err = false, email = "") {
       <button class="btn a" type="submit">Sign in</button>
     </form>
     <p class="msg ${err ? "err" : ""}">${esc(msg)}</p>
-    <button class="linkbtn a" data-act="magic">Email me a login link instead</button></div>`;
+    <button class="linkbtn a" data-act="magic">Email me a login link instead</button></div></div>`;
 }
 
 const friendly = (m) => /invalid login credentials/i.test(m) ? "Wrong email or password."
@@ -1705,7 +1732,7 @@ function playIntro(now = false) {
   const force = now || /[?&]intro\b/.test(location.search);
   if (calm() || (!force && ssGet("ic_intro_seen"))) return;
   ssSet("ic_intro_seen", "1");
-  const n = Number(lsGet("ic_intro_n") || 0) % 4;
+  const ch = charOf(), n = Number(lsGet("ic_intro_n") || 0) % (ch ? 5 : 4);
   lsSet("ic_intro_n", String(n + 1));
   const ticks = lastQuotes(), up = (t) => !String(t[2]).startsWith("-");
   const tk = (t) => `<span><b>${esc(t[0])}</b> ${esc(t[1])} <span class="${up(t) ? "u" : "d"}">${up(t) ? "▲" : "▼"} ${esc(t[2])}</span></span>`;
@@ -1721,7 +1748,12 @@ function playIntro(now = false) {
     // wind: spring petals blow left -> right, autumn leaves right -> left, snow falls gently
     const wind = { winter: () => (Math.random() * 2 - 1) * 160, spring: () => 300 + Math.random() * 400, autumn: () => -(250 + Math.random() * 400) }[season];
     const parts = kind ? Array.from({ length: season === "winter" ? 90 : 50 }, (_, k) => `<i class="${kind}" style="left:${season === "spring" ? Math.random() * 70 - 20 : season === "autumn" ? 20 + Math.random() * 90 : Math.random() * 100}%;--dx:${wind()}px;--r:${Math.random() * 720}deg;--lc:${leaf[k % 4]};--d:${1.4 + Math.random() * 1.2}s;--w:${Math.random() * .7}s;--s:${3 + Math.random() * 6}px"></i>`).join("") : "";
-    el.innerHTML = `${season === "summer" ? `<div class="ssun"></div><div class="swave"></div>` : seasonScene(season)}${parts}<div class="sbrand">investment center</div>`;
+    el.innerHTML = `${season === "summer" ? `<div class="ssun"></div>${summerFish()}<div class="swave"></div>${summerSplash()}` : seasonScene(season)}${parts}<div class="sbrand">investment center</div>`;
+  } else if (n === 4) {   // E. your mascot rises and holds up the sign with the logo on it
+    el.classList.add("i-m");
+    total = 2500;
+    const b = SIGN[ch] || [.36, .5, .3, .14];
+    el.innerHTML = `<div class="mstage"><img src="mascot/${ch}/present.png" alt=""><div class="msign" style="left:${b[0] * 100}%;top:${b[1] * 100}%;width:${b[2] * 100}%;height:${b[3] * 100}%;font-size:calc(min(560px,82vmin) * ${(b[2] / 7.2).toFixed(4)})"><span>investment<br><em>center</em></span></div></div>`;
   } else if (n === 0) {          // A. chart line
     el.classList.add("i-a");
     const p = "M0 160 L70 150 L130 156 L190 120 L250 130 L320 92 L380 104 L450 70 L510 80 L580 44 L640 52 L700 20";
@@ -2197,9 +2229,25 @@ async function sendMagicLink() {
 
 // ---------- start ----------
 // ---------- Big news alert (design round 25 style B + mascots from rounds 26-27) ----------
-// Impact 9-10, last 24 h, about your topics/watchlist, not read or saved for later: covers the screen once per story (per device).
+// Impact 8-10, last 24 h, about your topics/watchlist, not read or saved for later: covers the screen once per story (per device).
 const bigOn = () => lsGet("ic_bigalert") !== "off";
-const mascotPref = () => lsGet("ic_mascot") || "anchor";
+const mascotPref = () => lsGet("ic_mascot") || "theme";
+// Theme characters: the user's own mascots, one per theme, 8 poses each (site/mascot/<theme>/<pose>.png, 480 px)
+const CHARS = [["crisp", "Reporter", "Crisp"], ["newsprint", "Pigeon", "Newsprint"], ["cloud", "Cloud mage", "Cloud"], ["sage", "Sage", "Sage"],
+  ["graphite", "Hood", "Graphite"], ["black", "Noir", "True black"], ["navy", "Celestial", "Midnight"],
+  ["winter", "Ice queen", "Winter"], ["spring", "Blossom", "Spring"], ["summer", "Beach kid", "Summer"], ["autumn", "Autumn", "Autumn"]];
+// where the blank sign is in each "present" pose (measured from the images: left, top, width, height as a share of the picture)
+const SIGN = { crisp: [.390, .473, .252, .110], newsprint: [.344, .533, .335, .173], cloud: [.402, .535, .294, .131], sage: [.363, .500, .271, .150],
+  graphite: [.352, .538, .344, .171], black: [.350, .488, .308, .152], navy: [.354, .479, .315, .142], winter: [.392, .540, .304, .133],
+  spring: [.377, .504, .298, .140], summer: [.360, .560, .317, .158], autumn: [.363, .508, .310, .140] };
+const themeChar = () => season || (isDark() ? darkStyle() : lightStyle());   // the character that matches what you see right now
+function charOf() { const m = mascotPref(); return m === "none" ? null : m.startsWith("c:") ? m.slice(2) : themeChar(); }
+const charImg = (c, pose, cls = "") => `<img class="mimg ${cls}" src="mascot/${c}/${pose}.png" alt="" draggable="false" onerror="this.remove()">`;
+function mascotArt(pose, cls = "") {   // the chosen mascot in a pose; "" when the user picked "No mascot"
+  const m = mascotPref(), c = charOf();
+  if (m === "none") return "";
+  return charImg(c || themeChar(), pose, cls);   // old picks (Official/Retro, removed) fall back to the theme character
+}
 const bigSeen = () => safe(() => JSON.parse(lsGet("ic_big_seen") || "[]"), []);
 const SERIOUS_RX = /\b(war|missiles?|airstrikes?|attacks?|killed|kills|dead|deaths?|bomb\w*|invasion|invades?|earthquake|floods?|disaster|shooting|terror\w*|explosion|hostages?)\b/i;
 function bigMood(s) {   // no AI needed: the story already has sentiment and impact
@@ -2209,7 +2257,7 @@ function bigMood(s) {   // no AI needed: the story already has sentiment and imp
 }
 function bigQueue() {
   const seen = new Set(bigSeen()), day = Date.now() - 864e5;
-  return (state.stories || []).filter((s) => Number(s.impact_score) >= 9 && new Date(s.created_at) > day && matches(s)
+  return (state.stories || []).filter((s) => Number(s.impact_score) >= 8 && new Date(s.created_at) > day && matches(s)
       && !seen.has(s.id) && !["done", "later"].includes(stOf(s)))
     .sort((a, b) => b.impact_score - a.impact_score || (b.created_at > a.created_at ? 1 : -1)).slice(0, 3);
 }
@@ -2226,7 +2274,7 @@ function showBig(list, preview = false) {
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Big news");
   const ticks = lastQuotes();
   const draw = () => {
-    const s = list[i], m = mascotPref(), mood = bigMood(s), pic = m !== "none" ? mascotSvg(m, mood) : "";
+    const s = list[i], mood = bigMood(s), pic = mascotArt(`alert-${mood}`);
     const tk = ticks.map((q) => `<span><b>${esc(q[0])}</b> ${esc(q[1])} <em class="${String(q[2]).startsWith("-") ? "d" : "u"}">${esc(q[2])}</em></span>`).join("");
     el.innerHTML = `<div class="bg-dim" data-bgx="1"></div>
       ${pic ? `<div class="bg-mas">${pic}</div>` : ""}
@@ -2270,7 +2318,7 @@ async function start(session) {
   state.user = session?.user || null;
   if (location.search.includes("code=")) history.replaceState(null, "", location.pathname + location.hash); // tidy URL after login
   if (!state.user) { render(); pageReady = true; return; }
-  app.innerHTML = `<p class="loading">Loading your news…</p>`;
+  app.innerHTML = `<div class="mwait">${mascotArt("waiting", "mload")}<p class="loading">Loading your news…</p></div>`;
   try {
     await loadSettings();
     await loadStories();
@@ -2284,7 +2332,7 @@ async function start(session) {
   } catch (err) {
     loading = null; // allow a retry on reload
     pageReady = true;
-    app.innerHTML = `${header("news")}<div class="wrap"><div class="empty"><h2>Couldn't load</h2><p>${esc(err.message)}</p></div></div>`;
+    app.innerHTML = `${header("news")}<div class="wrap"><div class="empty">${mascotArt("alert-bear", "mempty")}<h2>Couldn't load</h2><p>${esc(err.message)}</p></div></div>`;
   }
 }
 

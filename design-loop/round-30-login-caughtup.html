@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 30 · Login + All read</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#ff4500}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#1b1b1f;color:#eee}
+button,select{font:inherit;cursor:pointer}
+.bar{position:sticky;top:0;z-index:50;background:#000;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid #222}
+.bar b{margin-right:6px}
+.bar button{padding:7px 12px;border-radius:8px;background:#232327;color:#ddd;border:0;font-size:13px;font-weight:600}
+.bar button.on{background:var(--accent);color:#fff}
+.bar select{background:#232327;color:#ddd;border:0;border-radius:8px;padding:7px 10px;font-size:13px}
+.bar .sp{flex:1}
+.desc{padding:12px 16px;font-size:14px;line-height:1.55;color:#bbb;background:#111;border-bottom:1px solid #222}
+.desc b{color:#fff}
+.wrapx{display:flex;justify-content:center;padding:20px 16px 50px}
+
+/* the "site" frame, themed */
+.site{--bg:#0f0f10;--surface:#18181b;--ink:#f4f4f5;--soft:#b4b4bb;--muted:#8a8a93;--line:#2a2a2f;--chip:#232327;
+  position:relative;width:1180px;max-width:100%;height:700px;border-radius:14px;overflow:hidden;background:var(--bg);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.site.light{--bg:#fff;--surface:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--chip:#f3f3f3}
+.site.phone{width:390px;height:760px}
+.logo{font:900 30px 'Inter Tight';letter-spacing:-1.2px}
+.logo em{font-style:normal;color:var(--accent)}
+.in{width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 14px;font-size:15px;margin-bottom:10px}
+.pw{position:relative}
+.rem{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin:4px 0 14px}
+.rem i{width:16px;height:16px;border-radius:4px;background:var(--accent);display:inline-block}
+.go{width:100%;height:46px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;font-size:15px}
+.link{display:block;text-align:center;margin-top:16px;font-size:14px;color:var(--soft);text-decoration:underline}
+.mas{display:block;user-select:none}
+.v{position:absolute;inset:0}.v:not(.show){display:none!important}
+
+
+/* A. Split */
+.A{display:grid;grid-template-columns:1.05fr 1fr}
+.A .art{position:relative;background:linear-gradient(160deg,#ff5a1f,#c2340a);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:40px}
+.A .art h2{font:900 40px/1.05 'Inter Tight';letter-spacing:-1px;color:#fff;max-width:420px}
+.A .art p{color:#ffe3d6;font-size:15px;margin-top:10px;max-width:380px;line-height:1.5}
+.A .art .mas{position:absolute;right:-30px;bottom:-40px;width:430px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.25))}
+.A .art .tick{display:flex;gap:16px;font-size:13px;font-weight:700;color:#fff;opacity:.9}
+.A .form{display:flex;flex-direction:column;justify-content:center;padding:0 80px}
+.A .form .logo{margin-bottom:6px}
+.A .form .sub{color:var(--soft);margin-bottom:26px}
+.site.phone .A{grid-template-columns:1fr;grid-template-rows:300px 1fr}.site.phone .A .art{padding:24px}.site.phone .A .art h2{font-size:28px}.site.phone .A .art .mas{width:250px;right:-20px;bottom:-30px}.site.phone .A .form{padding:24px}.site.phone .A .art p{display:none}
+
+/* B. Peek over the card */
+.B{display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,rgba(255,69,0,.12),transparent 55%),var(--bg)}
+.B .card{position:relative;width:420px;max-width:calc(100% - 32px);background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:70px 32px 30px;box-shadow:0 30px 60px rgba(0,0,0,.25)}
+.B .peek{position:absolute;left:50%;top:-150px;width:220px;margin-left:-110px;height:170px;overflow:hidden}
+.B .peek .mas{width:220px;position:absolute;top:0}
+.B .card::before{content:"";position:absolute;left:50%;top:-1px;width:120px;margin-left:-60px;height:2px;background:var(--surface)}
+.B .logo{text-align:center}
+.B .sub{text-align:center;color:var(--soft);margin:6px 0 22px}
+.B .bubble{position:absolute;left:calc(50% + 70px);top:-140px;background:#fff;color:#111;font-weight:700;font-size:13px;padding:9px 13px;border-radius:14px 14px 14px 4px;box-shadow:0 6px 16px rgba(0,0,0,.2);white-space:nowrap}
+.site.phone .B .bubble{left:auto;right:8px;top:-170px}
+
+/* C. Scene with speech bubble */
+.C{background:linear-gradient(180deg,var(--bg),var(--bg) 70%,var(--chip));display:flex;align-items:center}
+.C .stage{position:absolute;left:4%;bottom:0;width:46%;height:100%;display:flex;align-items:flex-end}
+.C .stage .mas{width:min(560px,100%);margin-bottom:-30px}
+.C .floor{position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(180deg,transparent,rgba(255,69,0,.08));border-top:1px solid var(--line)}
+.C .say{position:absolute;left:30%;top:16%;background:var(--surface);border:1px solid var(--line);border-radius:18px 18px 18px 4px;padding:14px 18px;max-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.C .say b{display:block;font:800 18px 'Inter Tight';margin-bottom:4px}
+.C .say span{color:var(--soft);font-size:14px;line-height:1.45}
+.C .form{position:relative;margin-left:auto;margin-right:8%;width:380px;background:color-mix(in srgb,var(--surface) 85%,transparent);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:22px;padding:30px}
+.C .form .sub{color:var(--soft);margin:6px 0 20px}
+.site.phone .C{display:block}.site.phone .C .stage{left:0;width:100%;height:45%;top:0;justify-content:center}.site.phone .C .stage .mas{width:250px;margin:0}.site.phone .C .say{left:auto;right:12px;top:16px;max-width:170px;padding:10px 12px}.site.phone .C .say b{font-size:14px}.site.phone .C .say span{display:none}
+.site.phone .C .form{position:absolute;left:16px;right:16px;bottom:24px;width:auto;margin:0;padding:22px}.site.phone .C .floor{display:none}
+
+/* D. The cast */
+.D{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.D .form{width:380px;max-width:calc(100% - 32px);text-align:center}
+.D .form .sub{color:var(--soft);margin:6px 0 20px}
+.D .cast{position:absolute;left:0;right:0;bottom:0;height:190px;display:flex;justify-content:center;align-items:flex-end;gap:0;border-top:1px solid var(--line);background:linear-gradient(180deg,transparent,var(--chip))}
+.D .cast .mas{width:118px;margin:0 -14px -8px;opacity:.55;filter:saturate(.7);transition:.2s}
+.D .cast .mas.me{width:170px;opacity:1;filter:none;z-index:2}
+.D .cast .mas:hover{opacity:1;filter:none;transform:translateY(-6px)}
+.D .form{margin-bottom:170px}
+.site.phone .D .cast{height:120px}.site.phone .D .cast .mas{width:58px;margin:0 -8px -4px}.site.phone .D .cast .mas.me{width:100px}.site.phone .D .form{margin-bottom:120px}
+
+/* ---------- All-read redesigns (shown inside a slice of World Brief) ---------- */
+.wb{padding:34px 60px}
+.wb h1{font:800 34px 'Inter Tight';letter-spacing:-.6px;margin-bottom:16px}
+.wb .brief{border-radius:18px;padding:18px 22px;background:#111;color:#fff;margin-bottom:22px;font:800 20px 'Inter Tight'}
+.site.light .wb .brief{background:#111}
+.wb .more{margin-top:26px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
+.wb .more div{height:170px;border-radius:14px;background:var(--chip)}
+.site.phone .wb{padding:22px 16px}.site.phone .wb .more{grid-template-columns:1fr}
+/* 1. Celebration banner */
+.r1{position:relative;display:flex;align-items:center;gap:20px;padding:22px 26px;border-radius:18px;background:linear-gradient(120deg,rgba(34,197,94,.16),rgba(34,197,94,.04));border:1px solid rgba(34,197,94,.35);overflow:visible;min-height:120px}
+.r1 .t b{display:block;font:800 22px 'Inter Tight';letter-spacing:-.3px}
+.r1 .t span{color:var(--soft);font-size:14px}
+.r1 .t .bt{display:inline-block;margin-top:12px;background:#22c55e;color:#04210f;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13px}
+.r1 .mas{position:absolute;right:26px;bottom:0;width:170px}
+.r1 .chk{flex:none;width:54px;height:54px;border-radius:50%;background:#22c55e;color:#fff;display:grid;place-items:center;font-size:28px;font-weight:900}
+.site.phone .r1 .mas{width:110px;right:4px}.site.phone .r1{padding-right:110px}.site.phone .r1 .chk{display:none}
+/* 2. Finish line */
+.r2 .row{display:flex;align-items:center;gap:14px}
+.r2 .track{position:relative;flex:1;height:12px;border-radius:99px;background:var(--chip)}
+.r2 .track i{position:absolute;inset:0;border-radius:99px;background:linear-gradient(90deg,#16a34a,#22c55e)}
+.r2 .track .dot{position:absolute;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:#fff;border:3px solid #16a34a}
+.r2 .head{position:relative;width:64px;height:64px;border-radius:50%;background:var(--surface);border:3px solid #22c55e;overflow:hidden;flex:none}
+.r2 .head img{position:absolute;width:170%;left:-35%;top:-8%}
+.r2 .flag{font-size:13px;font-weight:800;color:#22c55e;letter-spacing:.08em;text-transform:uppercase}
+.r2 p{margin-top:10px;color:var(--soft);font-size:14px}
+.r2 p b{color:var(--ink)}
+/* 3. Postcard */
+.r3{display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:center;padding:20px 24px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.r3 .badge{position:relative;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,69,0,.18),transparent 70%);display:grid;place-items:center}
+.r3 .badge .mas{width:170px}
+.r3 .conf{position:absolute;inset:0}
+.r3 .conf i{position:absolute;width:8px;height:12px;border-radius:2px}
+.r3 h3{font:800 24px 'Inter Tight';letter-spacing:-.3px}
+.r3 .stats{display:flex;gap:22px;margin:12px 0}
+.r3 .stats div b{display:block;font:800 22px 'Inter Tight';color:var(--accent)}
+.r3 .stats div span{font-size:12px;color:var(--muted)}
+.r3 .note{font-size:13px;color:var(--soft)}
+.site.phone .r3{grid-template-columns:1fr;justify-items:center;text-align:center}.site.phone .r3 .stats{justify-content:center}
+
+.notes{max-width:1180px;margin:0 auto 40px;padding:0 16px;color:#bbb;font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Round 30</b>
+  <button data-g="login" class="on">Login page</button><button data-g="read">All read</button>
+  <span style="width:10px"></span>
+  <span id="opts"></span>
+  <span class="sp"></span>
+  <select id="ch"></select>
+  <button id="th">Light</button>
+  <button id="ph">Phone width</button>
+</div>
+<div class="desc" id="desc"></div>
+<div class="wrapx"><div class="site" id="site">
+  <!-- LOGIN -->
+  <div class="v A" data-v="A"><div class="art"><div><h2>Your news, before the market opens.</h2><p>Stories that move your stocks, the world in five minutes, and alerts when something big happens.</p></div>
+    <div class="tick"><span>SET 1,451.7</span><span>S&amp;P 500 7,237.2</span><span>NVDA +31%</span></div><img class="mas" data-p="hello" alt=""></div>
+    <div class="form"><div class="logo">investment <em>center</em></div><div class="sub">Sign in to your news.</div>FORM</div></div>
+  <div class="v B" data-v="B"><div class="card"><div class="peek"><img class="mas" data-p="hello" alt=""></div><div class="bubble">Welcome back!</div>
+    <div class="logo">investment <em>center</em></div><div class="sub">Sign in to your news.</div>FORM</div></div>
+  <div class="v C" data-v="C"><div class="floor"></div><div class="stage"><img class="mas" data-p="hello" alt=""></div>
+    <div class="say"><b>Good evening!</b><span>Sign in and I'll show you what moved the markets today.</span></div>
+    <div class="form"><div class="logo">investment <em>center</em></div><div class="sub">Sign in to your news.</div>FORM</div></div>
+  <div class="v D" data-v="D"><div class="form"><div class="logo">investment <em>center</em></div><div class="sub">Sign in to your news.</div>FORM</div><div class="cast" id="cast"></div></div>
+  <!-- ALL READ -->
+  <div class="v wb" data-v="1"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="r1"><div class="chk">✓</div><div class="t"><b>All 5 top stories read.</b><span>You're up to date on the world. New stories arrive about every hour.</span><br><span class="bt">Browse 53 more stories</span></div><img class="mas" data-p="caught-up" alt=""></div>
+    <div class="more"><div></div><div></div><div></div></div></div>
+  <div class="v wb" data-v="2"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="r2"><div class="row"><span class="flag">Read first</span><div class="track"><i></i><span class="dot" style="left:18%"></span><span class="dot" style="left:38%"></span><span class="dot" style="left:58%"></span><span class="dot" style="left:78%"></span></div><div class="head"><img data-p="caught-up" alt=""></div></div>
+      <p><b>All 5 read.</b> Finish line reached. Next update in about 40 minutes.</p></div>
+    <div class="more"><div></div><div></div><div></div></div></div>
+  <div class="v wb" data-v="3"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="r3"><div class="badge"><div class="conf" id="conf"></div><img class="mas" data-p="caught-up" alt=""></div>
+      <div><h3>All caught up for today</h3><div class="stats"><div><b>5/5</b><span>top stories</span></div><div><b>~6 min</b><span>reading</span></div><div><b>3</b><span>regions</span></div></div>
+      <div class="note">Nice work. Come back after the next update, or browse the rest below.</div></div></div>
+    <div class="more"><div></div><div></div><div></div></div></div>
+</div></div>
+<div class="notes">Characters are your real images from site/mascot (pick one in the dropdown). The login uses "Follows my theme" on the live site, so it shows the character of the theme you last used on that device.</div>
+<script>
+const CH = [["crisp","Reporter"],["newsprint","Pigeon"],["cloud","Cloud mage"],["sage","Sage"],["graphite","Hood"],["black","Noir"],["navy","Celestial"],["winter","Ice queen"],["spring","Blossom"],["summer","Beach kid"],["autumn","Autumn"]];
+const G = {
+  login: { A: ["A · Split", "<b>A · Split screen:</b> left half is a big orange panel with your character waving, a one-line promise and live prices; right half is a clean form. Feels like a real product landing page. Phone: panel on top."],
+           B: ["B · Peek", "<b>B · Peek over the card:</b> a small centred login card; the character peeks over its top edge with a 'Welcome back!' bubble. Playful but tidy, closest to today's layout."],
+           C: ["C · Talking", "<b>C · Character talks to you:</b> the character stands big on the left with a speech bubble that greets you by time of day; the form floats on the right in a glass card. Most personal."],
+           D: ["D · The cast", "<b>D · The whole cast:</b> minimal form in the middle; all 11 characters stand in a row along the bottom, your theme's character in front and bigger, the rest faded until you hover. Shows off the full set."] },
+  read: { 1: ["1 · Banner", "<b>1 · Celebration banner:</b> a soft green card with a tick, a clear message and a 'Browse more' button; the character stands at the right edge, standing on the card's bottom line instead of sitting in empty space."],
+          2: ["2 · Finish line", "<b>2 · Finish line:</b> the Read-first progress bar runs full, ending in a round badge with the character's face, like reaching the finish. Most compact, one line."],
+          3: ["3 · Postcard", "<b>3 · Postcard:</b> the character in a glowing round badge with confetti, next to a heading and three small stats (5/5 read, minutes, regions). Most rewarding, takes more space."] },
+};
+let g = "login", v = "A", ch = "black";
+const $ = (q) => document.querySelector(q);
+const FORM = `<input class="in" placeholder="Email"><div class="pw"><input class="in" placeholder="Password" type="password"></div><div class="rem"><i></i>Remember me</div><button class="go">Sign in</button><a class="link">Email me a login link instead</a>`;
+document.querySelectorAll(".v").forEach((x) => (x.innerHTML = x.innerHTML.replaceAll("FORM", FORM)));
+$("#ch").innerHTML = CH.map(([k, n]) => `<option value="${k}" ${k === ch ? "selected" : ""}>${n} (${k})</option>`).join("");
+const conf = ["#ff4500","#22c55e","#facc15","#3b82f6","#ec4899"];
+$("#conf").innerHTML = Array.from({ length: 14 }, (_, i) => `<i style="background:${conf[i % 5]};left:${8 + Math.random() * 84}%;top:${4 + Math.random() * 80}%;transform:rotate(${Math.random() * 180}deg)"></i>`).join("");
+function draw() {
+  document.querySelectorAll("img[data-p]").forEach((im) => (im.src = `../site/mascot/${ch}/${im.dataset.p}.png`));
+  $("#cast").innerHTML = CH.map(([k]) => `<img class="mas ${k === ch ? "me" : ""}" src="../site/mascot/${k}/hello.png" alt="">`).join("");
+  const opts = G[g];
+  $("#opts").innerHTML = Object.keys(opts).map((k) => `<button data-o="${k}" class="${k === v ? "on" : ""}" style="margin-right:6px">${opts[k][0]}</button>`).join("");
+  document.querySelectorAll(".v").forEach((x) => x.classList.toggle("show", x.dataset.v === v));
+  $("#desc").innerHTML = opts[v][1];
+  const hr = new Date().getHours(); document.querySelector(".C .say b").textContent = hr < 12 ? "Good morning!" : hr < 18 ? "Good afternoon!" : "Good evening!";
+}
+document.addEventListener("click", (e) => {
+  const gb = e.target.closest("[data-g]"), ob = e.target.closest("[data-o]");
+  if (gb) { g = gb.dataset.g; v = Object.keys(G[g])[0]; document.querySelectorAll("[data-g]").forEach((b) => b.classList.toggle("on", b === gb)); draw(); }
+  if (ob) { v = ob.dataset.o; draw(); }
+});
+$("#ch").onchange = (e) => { ch = e.target.value; draw(); };
+$("#th").onclick = (e) => { const l = $("#site").classList.toggle("light"); e.target.textContent = l ? "Dark" : "Light"; };
+$("#ph").onclick = (e) => { const p = $("#site").classList.toggle("phone"); e.target.textContent = p ? "Desktop width" : "Phone width"; };
+draw();
+</script>
+</body>
+</html>

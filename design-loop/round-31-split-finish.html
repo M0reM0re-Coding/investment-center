@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 31 · Split login + Finish line</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#ff4500}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#1b1b1f;color:#eee}
+button,select{font:inherit;cursor:pointer}
+.bar{position:sticky;top:0;z-index:50;background:#000;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid #222}
+.bar b{margin-right:6px}
+.bar button{padding:7px 12px;border-radius:8px;background:#232327;color:#ddd;border:0;font-size:13px;font-weight:600}
+.bar button.on{background:var(--accent);color:#fff}
+.bar select{background:#232327;color:#ddd;border:0;border-radius:8px;padding:7px 10px;font-size:13px}
+.bar .sp{flex:1}
+.desc{padding:12px 16px;font-size:14px;line-height:1.55;color:#bbb;background:#111;border-bottom:1px solid #222}
+.desc b{color:#fff}
+.wrapx{display:flex;justify-content:center;padding:20px 16px 50px}
+.site{--bg:#0f0f10;--surface:#18181b;--ink:#f4f4f5;--soft:#b4b4bb;--muted:#8a8a93;--line:#2a2a2f;--chip:#232327;--up:#22c55e;--down:#f87171;
+  position:relative;width:1180px;max-width:100%;height:700px;border-radius:14px;overflow:hidden;background:var(--bg);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.site.light{--bg:#fff;--surface:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--chip:#f3f3f3;--up:#16a34a;--down:#ef4444}
+.site.phone{width:390px;height:780px}
+.v{position:absolute;inset:0}.v:not(.show){display:none!important}
+.mas{display:block;user-select:none}
+
+/* shared split layout */
+.split{display:grid;grid-template-columns:1.05fr 1fr}
+.art{position:relative;overflow:hidden;padding:40px;display:flex;flex-direction:column}
+.art h2{font:900 40px/1.05 'Inter Tight';letter-spacing:-1px;max-width:440px}
+.art p.lead{font-size:15px;margin-top:10px;max-width:400px;line-height:1.5;opacity:.85}
+.form{display:flex;flex-direction:column;justify-content:center;padding:0 80px}
+.logo{font:900 30px 'Inter Tight';letter-spacing:-1.2px}
+.logo em{font-style:normal;color:var(--accent)}
+.sub{color:var(--soft);margin:6px 0 26px}
+.in{width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 14px;font-size:15px;margin-bottom:10px}
+.rem{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin:4px 0 14px}
+.rem i{width:16px;height:16px;border-radius:4px;background:var(--accent);display:inline-block}
+.go{width:100%;height:46px;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:700;font-size:15px}
+.link{display:block;text-align:center;margin-top:16px;font-size:14px;color:var(--soft);text-decoration:underline}
+.site.phone .split{grid-template-columns:1fr;grid-template-rows:320px 1fr}
+.site.phone .art{padding:22px}.site.phone .art h2{font-size:26px}.site.phone .art p.lead{display:none}.site.phone .form{padding:22px}
+
+/* L1 mascot hero (round 30 A, refined) */
+.L1 .art{background:linear-gradient(160deg,#ff5a1f,#c2340a);color:#fff;justify-content:space-between}
+.L1 .art .mas{position:absolute;right:-20px;bottom:-30px;width:440px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.25))}
+.L1 .tick{display:flex;gap:16px;font-size:13px;font-weight:700;position:relative;z-index:2}
+.site.phone .L1 .art .mas{width:250px;right:-10px;bottom:-30px}
+
+/* L2 mascot + floating news cards */
+.L2 .art{background:radial-gradient(circle at 75% 80%,rgba(255,69,0,.35),transparent 55%),#141417;color:#fff}
+.L2 .art .mas{position:absolute;left:10px;bottom:-24px;width:300px;z-index:2}
+.L2 .cards{position:absolute;right:30px;bottom:60px;width:330px;display:flex;flex-direction:column;gap:10px}
+.L2 .nc{display:flex;gap:10px;align-items:center;background:#fff;color:#111;border-radius:12px;padding:10px 12px;box-shadow:0 10px 24px rgba(0,0,0,.35);font-size:13px;font-weight:700;line-height:1.3;animation:float 5s ease-in-out infinite}
+.L2 .nc:nth-child(2){margin-left:30px;animation-delay:-1.6s}.L2 .nc:nth-child(3){margin-left:10px;animation-delay:-3.2s}
+.L2 .nc b{flex:none;width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font:900 15px 'Inter Tight'}
+.L2 .nc b.m{background:#eee;color:#111}
+@keyframes float{50%{transform:translateY(-6px)}}
+.site.phone .L2 .art .mas{width:170px;bottom:-20px}.site.phone .L2 .cards{width:200px;right:12px;bottom:20px}.site.phone .L2 .nc{font-size:11px;padding:7px 8px}.site.phone .L2 .nc b{width:26px;height:26px;font-size:12px}
+
+/* L3 no mascot: market chart */
+.L3 .art{background:#0b0b0d;color:#fff;justify-content:space-between}
+.L3 svg.ch{position:absolute;left:0;right:0;bottom:120px;width:100%;height:300px}
+.L3 svg.ch .ln{fill:none;stroke:var(--accent);stroke-width:3;stroke-dasharray:1600;stroke-dashoffset:1600;animation:draw 2.4s .2s cubic-bezier(.5,0,.2,1) forwards}
+.L3 svg.ch .ar{opacity:0;animation:fade 1s 1.8s forwards}
+.L3 svg.ch line{stroke:#1d1d22}
+@keyframes draw{to{stroke-dashoffset:0}}@keyframes fade{to{opacity:1}}
+.L3 .quotes{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.L3 .q{background:#151518;border:1px solid #222;border-radius:12px;padding:10px 12px;font-size:12px;color:#aaa}
+.L3 .q b{display:block;color:#fff;font:800 17px 'Inter Tight'}.L3 .q .u{color:#22c55e;font-weight:700}.L3 .q .d{color:#f87171;font-weight:700}
+.site.phone .L3 svg.ch{bottom:70px;height:150px}.site.phone .L3 .quotes{grid-template-columns:repeat(3,1fr);gap:6px}.site.phone .L3 .q{padding:7px}.site.phone .L3 .q b{font-size:13px}
+
+/* L4 no mascot: headline wall */
+.L4 .art{background:#f6f1e7;color:#231d15;padding:0}
+.L4 .wall{position:absolute;left:0;right:0;top:150px;bottom:0;padding:0 40px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 80%,transparent);mask-image:linear-gradient(180deg,transparent,#000 12%,#000 80%,transparent)}
+.L4 .roll{animation:roll 26s linear infinite}
+.L4 .hl{display:flex;gap:12px;align-items:baseline;padding:12px 0;border-bottom:1px solid #e3d8c6;font:700 19px/1.3 Georgia,serif}
+.L4 .hl b{flex:none;font:900 12px Inter;color:#fff;background:#d9480f;border-radius:6px;padding:3px 7px}
+.L4 .hl b.m{background:#c9bba4}
+@keyframes roll{to{transform:translateY(-50%)}}
+.L4 .top{position:absolute;left:0;right:0;top:0;z-index:2;padding:34px 40px 18px;background:#f6f1e7}
+.L4 .top h2{font:700 34px/1.1 Georgia,serif;letter-spacing:-.5px}
+.L4 .top small{display:block;font:800 11px Inter;letter-spacing:.14em;text-transform:uppercase;color:#d9480f;margin-bottom:8px}
+.site.phone .L4 .top{padding:20px}.site.phone .L4 .top h2{font-size:24px}.site.phone .L4 .wall{top:110px;padding:0 20px}.site.phone .L4 .hl{font-size:14px}
+
+/* L5 no mascot: world map */
+.L5 .art{background:#0a0f1c;color:#e7edfb;justify-content:space-between}
+.L5 .map{position:absolute;left:0;right:0;top:120px;bottom:70px;background-image:radial-gradient(#4a6bb0 1.8px,transparent 2.2px);background-size:11px 11px;-webkit-mask-image:var(--world);mask-image:var(--world);-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.L5 .pin{position:absolute;width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--accent);z-index:2}
+.L5 .pin::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--accent);animation:ping 2s infinite}
+.L5 .pin span{position:absolute;left:14px;top:-7px;white-space:nowrap;font-size:11.5px;font-weight:700;background:#101829;border:1px solid #1f2a44;border-radius:6px;padding:2px 6px}
+@keyframes ping{from{transform:scale(.4);opacity:1}to{transform:scale(1.6);opacity:0}}
+.L5 .foot{position:relative;z-index:2;font-size:13px;color:#a8b3cb}
+.site.phone .L5 .pin span{display:none}
+
+/* ---------- Finish line variants (inside a slice of World Brief) ---------- */
+.wb{padding:34px 60px}
+.wb h1{font:800 34px 'Inter Tight';letter-spacing:-.6px;margin-bottom:16px}
+.wb .brief{border-radius:18px;padding:18px 22px;background:#111;color:#fff;margin-bottom:26px;font:800 20px 'Inter Tight'}
+.wb .more{margin-top:26px;display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
+.wb .more div{height:170px;border-radius:14px;background:var(--chip)}
+.site.phone .wb{padding:22px 16px}.site.phone .wb .more{grid-template-columns:1fr}
+.fl{display:flex;align-items:center;gap:14px}
+.flag{font-size:12px;font-weight:800;color:var(--up);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.track{position:relative;flex:1;height:12px;border-radius:99px;background:var(--chip)}
+.track i{position:absolute;inset:0;border-radius:99px;background:linear-gradient(90deg,#16a34a,#22c55e);transform-origin:left;animation:fill 1.2s cubic-bezier(.3,0,.2,1) both}
+@keyframes fill{from{transform:scaleX(.8)}}
+.track .dot{position:absolute;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:#fff;border:3px solid #16a34a}
+.fp{margin-top:10px;color:var(--soft);font-size:14px}.fp b{color:var(--ink)}
+/* F1 face badge */
+.F1 .head{position:relative;width:64px;height:64px;border-radius:50%;background:var(--surface);border:3px solid var(--up);overflow:hidden;flex:none}
+.F1 .head img{position:absolute;width:170%;left:-35%;top:-8%}
+/* F2 standing at the finish */
+.F2 .end{position:relative;flex:none;width:96px;height:20px}
+.F2 .end .mas{position:absolute;left:-6px;bottom:-14px;width:110px}
+.F2 .post{position:absolute;right:-4px;bottom:-14px;width:4px;height:120px;background:#d4d4d8;border-radius:2px}
+.F2 .post::after{content:"";position:absolute;left:4px;top:0;width:30px;height:20px;background:repeating-conic-gradient(#111 0 25%,#fff 0 50%) 0 0/10px 10px}
+.F2 .fl{padding-top:90px}
+/* F3 no mascot: trophy burst */
+.F3 .badge{position:relative;flex:none;width:58px;height:58px;border-radius:50%;background:var(--up);display:grid;place-items:center;color:#fff;box-shadow:0 0 0 6px rgba(34,197,94,.18)}
+.F3 .badge svg{width:28px;height:28px}
+.F3 .badge i{position:absolute;width:6px;height:10px;border-radius:2px;left:50%;top:50%;animation:burst 1.1s .9s ease-out both}
+@keyframes burst{from{transform:translate(-50%,-50%) rotate(var(--r)) translateY(0);opacity:1}to{transform:translate(-50%,-50%) rotate(var(--r)) translateY(-46px);opacity:0}}
+/* F4 no mascot: minimal pill */
+.F4 .pill{flex:none;display:inline-flex;align-items:center;gap:8px;background:rgba(34,197,94,.14);color:var(--up);border:1px solid rgba(34,197,94,.4);border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px}
+.F4 .pill svg{width:16px;height:16px}
+.F4 .next{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+.F4 .next b{color:var(--ink);font-variant-numeric:tabular-nums}
+.site.phone .F4 .fl{flex-wrap:wrap}.site.phone .F4 .next{margin-left:0}
+.notes{max-width:1180px;margin:0 auto 40px;padding:0 16px;color:#bbb;font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Round 31</b>
+  <button data-g="login" class="on">Login (Split)</button><button data-g="fin">All read (Finish line)</button>
+  <span style="width:10px"></span><span id="opts"></span>
+  <span class="sp"></span><select id="ch"></select><button id="th">Light</button><button id="ph">Phone width</button>
+</div>
+<div class="desc" id="desc"></div>
+<div class="wrapx"><div class="site" id="site">
+  <div class="v split L1" data-v="L1"><div class="art"><div><h2>Your news, before the market opens.</h2><p class="lead">Stories that move your stocks, the world in five minutes, and alerts when something big happens.</p></div>
+    <div class="tick"><span>SET 1,451.7</span><span>S&amp;P 500 7,237.2</span><span>NVDA +31%</span></div><img class="mas" data-p="hello" alt=""></div>FORM</div>
+  <div class="v split L2" data-v="L2"><div class="art"><div><h2>Big news finds you first.</h2><p class="lead">Your stocks and topics, ranked by impact. Your presenter flags anything 8 or above.</p></div>
+    <div class="cards"><div class="nc"><b>9</b>Nvidia reinstates Jensen Huang as CEO, shares up 30%</div><div class="nc"><b>8</b>Global markets rally as US tech stocks surge</div><div class="nc"><b class="m">6</b>Bank of Thailand holds rates, flags baht strength</div></div>
+    <img class="mas" data-p="alert-bull" alt=""></div>FORM</div>
+  <div class="v split L3" data-v="L3"><div class="art"><div><h2>Markets, news and alerts in one place.</h2><p class="lead">Live prices, the stories behind them, and a calendar of what's next.</p></div>
+    <svg class="ch" viewBox="0 0 600 300" preserveAspectRatio="none"><defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff4500" stop-opacity=".3"/><stop offset="1" stop-color="#ff4500" stop-opacity="0"/></linearGradient></defs>
+      <line x1="0" y1="75" x2="600" y2="75"/><line x1="0" y1="150" x2="600" y2="150"/><line x1="0" y1="225" x2="600" y2="225"/>
+      <path class="ar" d="M0 240 L50 230 L100 236 L150 200 L200 210 L250 170 L300 182 L350 140 L400 150 L450 96 L500 110 L560 60 L600 50 L600 300 L0 300Z" fill="url(#ga)"/>
+      <path class="ln" d="M0 240 L50 230 L100 236 L150 200 L200 210 L250 170 L300 182 L350 140 L400 150 L450 96 L500 110 L560 60 L600 50"/></svg>
+    <div class="quotes" style="margin-top:auto"><div class="q">SET<b>1,451.7</b><span class="d">-0.20%</span></div><div class="q">S&amp;P 500<b>7,237.2</b><span class="u">+4.73%</span></div><div class="q">NVDA<b>185.05</b><span class="u">+31.48%</span></div></div></div>FORM</div>
+  <div class="v split L4" data-v="L4"><div class="art"><div class="top"><small>Today's front page</small><h2>Everything that moved the markets, in one place.</h2></div>
+    <div class="wall"><div class="roll" id="roll"></div></div></div>FORM</div>
+  <div class="v split L5" data-v="L5"><div class="art"><div><h2>The world in five minutes.</h2><p class="lead">Ranked by how many outlets cover it, with what it means for Thailand and your stocks.</p></div>
+    <div class="map"></div>
+    <div class="pin" style="left:76%;top:52%"><span>Bangkok · BOT holds rates</span></div><div class="pin" style="left:26%;top:40%"><span>New York · tech rally</span></div>
+    <div class="pin" style="left:48%;top:33%"><span>London · LSE open</span></div><div class="pin" style="left:86%;top:39%"><span>Tokyo</span></div><div class="pin" style="left:56%;top:44%"><span>Gulf · oil</span></div>
+    <div class="foot">58 world stories today · 5 widely covered</div></div>FORM</div>
+
+  <div class="v wb F1" data-v="F1"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="fl"><span class="flag">Read first</span><div class="track"><i></i>DOTS</div><div class="head"><img data-p="caught-up" alt=""></div></div>
+    <p class="fp"><b>All 5 read.</b> Finish line reached. Next update in about 40 minutes.</p><div class="more"><div></div><div></div><div></div></div></div>
+  <div class="v wb F2" data-v="F2"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="fl"><span class="flag">Read first</span><div class="track"><i></i>DOTS</div><div class="end"><img class="mas" data-p="caught-up" alt=""><span class="post"></span></div></div>
+    <p class="fp"><b>All 5 read.</b> Your presenter made it to the finish. Next update in about 40 minutes.</p><div class="more"><div></div><div></div><div></div></div></div>
+  <div class="v wb F3" data-v="F3"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="fl"><span class="flag">Read first</span><div class="track"><i></i>DOTS</div><div class="badge" id="burst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div></div>
+    <p class="fp"><b>All 5 read.</b> Finish line reached. Next update in about 40 minutes.</p><div class="more"><div></div><div></div><div></div></div></div>
+  <div class="v wb F4" data-v="F4"><h1>Today's brief</h1><div class="brief">You're caught up ✓</div>
+    <div class="fl"><span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>All 5 read</span><div class="track"><i></i>DOTS</div><span class="next">Next update in <b id="cd">39:58</b></span></div>
+    <div class="more"><div></div><div></div><div></div></div></div>
+</div></div>
+<div class="notes">The mascot options use your real character images (pick one in the dropdown). "Without mascot" options look the same for every theme.</div>
+<script>
+const CH = [["crisp","Reporter"],["newsprint","Pigeon"],["cloud","Cloud mage"],["sage","Sage"],["graphite","Hood"],["black","Noir"],["navy","Celestial"],["winter","Ice queen"],["spring","Blossom"],["summer","Beach kid"],["autumn","Autumn"]];
+const G = {
+  login: { L1: ["1 · Mascot hero", "<b>1 · Mascot hero</b> (your round-30 pick, refined): orange panel, big waving character, one-line promise, live prices along the bottom."],
+           L2: ["2 · Mascot + news", "<b>2 · Mascot + news cards</b>: dark panel with a soft orange glow; your character (excited pose) stands bottom-left while three real story cards with impact scores float beside it. Shows what the site does."],
+           L3: ["3 · No mascot · chart", "<b>3 · Without mascot · market chart</b>: black panel, an orange price line draws itself across, three live quotes below. Feels like a trading app."],
+           L4: ["4 · No mascot · headlines", "<b>4 · Without mascot · front page</b>: warm newsprint panel with real headlines slowly scrolling, each with its impact badge, serif type. Feels like a newspaper."],
+           L5: ["5 · No mascot · world", "<b>5 · Without mascot · world map</b>: midnight-blue dotted world map with pulsing pins (Bangkok, New York, London, Tokyo, Gulf) and short labels. Ties in World Brief."] },
+  fin: { F1: ["1 · Face badge", "<b>1 · With mascot · face badge</b> (your round-30 pick): the bar fills to the end and finishes in a round badge with your character's face."],
+         F2: ["2 · At the finish", "<b>2 · With mascot · at the finish post</b>: the character (full body, small) stands at the end of the bar next to a checkered finish flag."],
+         F3: ["3 · No mascot · tick", "<b>3 · Without mascot · tick badge</b>: the bar ends in a green tick that bursts a few small confetti pieces once."],
+         F4: ["4 · No mascot · minimal", "<b>4 · Without mascot · minimal</b>: a green 'All 5 read' pill, the full bar, and a live countdown to the next update. The quietest option."] },
+};
+let g = "login", v = "L1", ch = "black";
+const $ = (q) => document.querySelector(q);
+const FORM = `<div class="form"><div class="logo">investment <em>center</em></div><div class="sub">Sign in to your news.</div><input class="in" placeholder="Email"><input class="in" placeholder="Password" type="password"><div class="rem"><i></i>Remember me</div><button class="go">Sign in</button><a class="link">Email me a login link instead</a></div>`;
+const DOTS = [18, 38, 58, 78].map((x) => `<span class="dot" style="left:${x}%"></span>`).join("");
+document.querySelectorAll(".v").forEach((x) => (x.innerHTML = x.innerHTML.replace("FORM", FORM).replace("DOTS", DOTS)));
+const HL = [[9, "Nvidia reinstates Jensen Huang as CEO, shares up over 30%"], [8, "Global markets rally as US tech stocks surge"], [8, "Russian missiles hit Polish territory"], [6, "Bank of Thailand holds rates, signals caution on baht"], [7, "CrowdStrike to acquire Zscaler in $44 billion deal"], [8, "Dow and Nasdaq record worst week since March 2020"], [6, "ASEAN nations explore shared oil reserves"], [7, "US probes Iran over cyberattacks on 50 ships"]];
+const rows = HL.map(([n, t]) => `<div class="hl"><b class="${n < 8 ? "m" : ""}">${n}</b>${t}</div>`).join("");
+$("#roll").innerHTML = rows + rows;
+$("#burst").insertAdjacentHTML("beforeend", Array.from({ length: 10 }, (_, k) => `<i style="--r:${k * 36}deg;background:${["#ff4500","#facc15","#22c55e","#3b82f6","#ec4899"][k % 5]}"></i>`).join(""));
+// world silhouette as a mask (very rough continents, enough for a dotted look)
+$(".L5 .map").style.setProperty("--world", `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50'><g fill='black'><path d='M6 10 Q18 4 30 9 L32 18 Q26 22 24 30 L20 26 Q12 22 8 16Z'/><path d='M24 30 L30 32 L32 44 L27 48 L24 40Z'/><path d='M44 8 Q52 5 58 9 L56 16 L48 17 L44 13Z'/><path d='M46 18 L56 18 L60 28 L54 40 L48 34 L45 24Z'/><path d='M58 8 Q74 3 90 10 L92 18 L84 22 L78 30 L72 26 L64 24 L58 16Z'/><path d='M80 34 L90 33 L92 40 L84 42Z'/></g></svg>`)}")`);
+setInterval(() => { const e = $("#cd"); const [m, s] = e.textContent.split(":").map(Number); const t = Math.max(0, m * 60 + s - 1); e.textContent = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`; }, 1000);
+$("#ch").innerHTML = CH.map(([k, n]) => `<option value="${k}" ${k === ch ? "selected" : ""}>${n} (${k})</option>`).join("");
+function draw() {
+  document.querySelectorAll("img[data-p]").forEach((im) => (im.src = `../site/mascot/${ch}/${im.dataset.p}.png`));
+  const o = G[g];
+  $("#opts").innerHTML = Object.keys(o).map((k) => `<button data-o="${k}" class="${k === v ? "on" : ""}" style="margin-right:6px">${o[k][0]}</button>`).join("");
+  document.querySelectorAll(".v").forEach((x) => x.classList.toggle("show", x.dataset.v === v));
+  $("#desc").innerHTML = o[v][1];
+}
+document.addEventListener("click", (e) => {
+  const gb = e.target.closest("[data-g]"), ob = e.target.closest("[data-o]");
+  if (gb) { g = gb.dataset.g; v = Object.keys(G[g])[0]; document.querySelectorAll("[data-g]").forEach((b) => b.classList.toggle("on", b === gb)); draw(); }
+  if (ob) { v = ob.dataset.o; draw(); }
+});
+$("#ch").onchange = (e) => { ch = e.target.value; draw(); };
+$("#th").onclick = (e) => { const l = $("#site").classList.toggle("light"); e.target.textContent = l ? "Dark" : "Light"; };
+$("#ph").onclick = (e) => { const p = $("#site").classList.toggle("phone"); e.target.textContent = p ? "Desktop width" : "Phone width"; };
+draw();
+</script>
+</body>
+</html>
