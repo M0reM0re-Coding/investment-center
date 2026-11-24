@@ -9,3 +9,6 @@ __pycache__/
 
 # Personal planning notes: keep on this PC only
 FEATURES.md
+
+# Obsidian export: last export time (local only)
+robot/.obsidian_export_state.json

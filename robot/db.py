@@ -113,6 +113,7 @@ def cleanup_old(days=90, dry=False):
             ("seen_links", {"first_seen": f"lt.{cutoff}"}, None),
             ("events", {"day": f"lt.{cutoff[:10]}"}, None),
             ("robot_usage", {"day": f"lt.{cutoff[:10]}"}, None),
+            ("econ_events", {"at": f"lt.{cutoff}"}, None),
             ("robot_flags", {"until": f"lt.{datetime.now(timezone.utc).isoformat()}"}, None)]
     out = {}
     for table, f, keep_ids in jobs:

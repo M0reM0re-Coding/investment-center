@@ -16,8 +16,8 @@ const sb = createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { flowType: "p
 const app = document.getElementById("app");
 
 const state = {
-  cal: { filter: "All", wk: 0, sel: null, range: { days: 28, from: null, to: null }, hide: new Set() }, user: null, settings: null, stories: [], saved: new Set(), filter: "All", draft: null, fresh: new Set(),
-  status: new Map(), notes: new Map(), events: [], more: new Map(), since: new Date(Date.now() - 864e5), ready005: false,
+  ecal: { wk: 0, sel: null, from: null }, cal: { filter: "All", wk: 0, sel: null, range: { days: 28, from: null, to: null }, hide: new Set() }, user: null, settings: null, stories: [], saved: new Set(), filter: "All", draft: null, fresh: new Set(),
+  status: new Map(), notes: new Map(), events: [], econ: [], follows: new Set(), earn: [], gauges: {}, mood: [], cnn: null, more: new Map(), since: new Date(Date.now() - 864e5), ready005: false,
   briefing: null, searchQ: "", searchResults: null, loadingStory: null, feedLimit: 30 };
 const FEED_STEP = 30;
 // Local preview only (python -m http.server on this PC): lets Claude show sample data before the database is updated.
@@ -179,10 +179,47 @@ function matches(s) {
 }
 const rank = (s) => s.impact_score * 3 + Math.min(s.n_sources, 10) - hoursAgo(when(s)) / 6;
 
+// ---------- Sort (design round 33, S1 dropdown): the filter picks WHICH stories, the sort picks the ORDER ----------
+// Saved per device (ic_nsort / ic_wsort). World has no AI impact score and no stocks, so it gets fewer options.
+const NSORT = { rec: ["Recommended", "Impact + outlets + freshness"], impact: ["Highest impact", "AI score 10 → 1"], latest: ["Latest", "Newest first"],
+  covered: ["Most covered", "Most outlets"], growing: ["Fastest growing", "Outlets added in the last 6 h"], price: ["Biggest price move", "Since the story was posted"],
+  watch: ["My watchlist first", "Your stocks on top"], unread: ["Oldest unread first", "What has waited longest"] };
+const WSORT = { rec: ["Recommended", "Outlets + freshness + your votes"], latest: NSORT.latest, covered: NSORT.covered, growing: NSORT.growing, unread: NSORT.unread };
+const nSort = () => { const v = safe(() => localStorage.getItem("ic_nsort")); return NSORT[v] ? v : "rec"; };
+const wSort = () => { const v = safe(() => localStorage.getItem("ic_wsort")); return WSORT[v] ? v : "rec"; };
+const tNew = (s) => new Date(when(s)).getTime() || 0;
+// Outlets gained in the last 6 hours (from the Developing history the robot saves)
+function grow6(s) {
+  const g = Array.isArray(s.growth) ? s.growth.filter((p) => p && p.t) : [];
+  if (!g.length) return 0;
+  const last = g[g.length - 1], base = g.filter((p) => hoursAgo(p.t) > 6).pop() || g[0];
+  return hoursAgo(last.t) > 6 ? 0 : Math.max(0, last.n - base.n);
+}
+// Biggest move of the story's stocks since it was posted (-1 = no price known: goes last)
+const priceMove = (s) => Math.max(-1, ...Object.keys(s.prices_at || {}).map((t) => sinceMove(s, t)).filter((v) => v !== null).map(Math.abs));
+// key(s): bigger first; ties: newest first
+function sortBy(list, key) { const k = new Map(list.map((x) => [x, key(x)])); return list.sort((a, b) => k.get(b) - k.get(a) || tNew(b) - tNew(a)); }
+function sortNews(list) {
+  const unread = (s) => !["seen", "done"].includes(stOf(s));
+  const f = { rec: () => sortBy(list, rank), impact: () => sortBy(list, (s) => s.impact_score), latest: () => sortBy(list, () => 0),
+    covered: () => sortBy(list, (s) => s.n_sources), growing: () => sortBy(list, grow6), price: () => sortBy(list, priceMove),
+    watch: () => sortBy(list, (s) => (inWatch(s) ? 1000 + s.impact_score * 10 : 0) + rank(s) / 100),
+    unread: () => list.sort((a, b) => unread(b) - unread(a) || (unread(a) ? tNew(a) - tNew(b) : tNew(b) - tNew(a))) }[nSort()];
+  return (f || (() => sortBy(list, rank)))();
+}
+// The dropdown: a <details> element (opens and closes by itself; a click elsewhere closes it, see the end of this file)
+function sortDD(kind) {
+  const opts = kind === "w" ? WSORT : NSORT, cur = kind === "w" ? wSort() : nSort();
+  return `<details class="sortdd"><summary title="Sort stories"><span class="si">⇅</span><span class="sl">Sort:</span> ${esc(opts[cur][0])}<span class="sc">▾</span></summary>
+    <div class="smenu" role="menu">${Object.entries(opts).map(([k, [t, d]]) => `<button role="menuitemradio" aria-checked="${k === cur}" class="${k === cur ? "on" : ""}" data-${kind}sort="${k}">
+      <i>${k === cur ? "✓" : ""}</i><span><b>${esc(t)}</b><small>${esc(d)}</small></span></button>`).join("")}</div></details>`;
+}
+
 // Stories for one filter (also used for the counts on the filter chips)
 function storiesFor(f) {
   let list = state.stories;
   if (f === "Saved") list = list.filter((s) => state.saved.has(s.id));
+  else if (f === "Following") list = list.filter((s) => isFollowing("story", s.id));
   else if (f === "To read") list = list.filter((s) => matches(s) && !["done", "later"].includes(stOf(s)));
   else if (f === "Later") list = list.filter((s) => stOf(s) === "later");
   else if (f === "Done") list = list.filter((s) => stOf(s) === "done");
@@ -192,7 +229,7 @@ function storiesFor(f) {
   else list = list.filter(matches);
   return list;
 }
-const visibleStories = () => [...storiesFor(state.filter)].sort((a, b) => rank(b) - rank(a));
+const visibleStories = () => sortNews([...storiesFor(state.filter)]);
 
 // ---------- prices (design round 8, option 3a) ----------
 // Yahoo Finance prices via the get_quotes database helper (cached 60 s). May be delayed (Thai stocks ~15 min).
@@ -248,8 +285,9 @@ function heroChart(s) {
 function wantedSymbols() {
   const s = new Set(MARKETS.map((m) => m[0]));
   (state.settings.watchlist || []).forEach((t) => s.add(yahoo(t)));
+  if (nSort() === "price") storiesFor(state.filter).forEach((st) => Object.keys(st.prices_at || {}).forEach((t) => s.add(yahoo(t))));   // to rank by price move
   visibleStories().slice(0, 30).forEach((st) => (st.tickers || []).filter(followed).forEach((t) => s.add(yahoo(t))));
-  return [...s].slice(0, 40);
+  return [...s].slice(0, nSort() === "price" ? 80 : 40);
 }
 async function loadQuotes() {
   if (!state.user || document.hidden) return;
@@ -346,15 +384,30 @@ const mustReads = () => storiesFor("All").filter((s) => s.impact_score >= 7 && h
 const waitingMust = () => mustReads().filter((s) => !["done", "later"].includes(stOf(s))).sort((a, b) => prio(b) - prio(a));
 
 async function loadReading() {
-  const [st, nt, ev] = await Promise.all([
+  const [st, nt, ev, ec, fo, er, ga, md] = await Promise.all([
     sb.from("story_status").select("story_id,status").limit(3000),
     sb.from("story_notes").select("story_id,note").limit(2000),
     sb.from("events").select("*").gte("day", todayISO()).order("day").limit(60),
+    sb.from("econ_events").select("*").gte("at", new Date(Date.now() - 36 * 36e5).toISOString()).order("at").limit(300),
+    sb.from("follows").select("kind,key,label"),
+    sb.from("earnings_results").select("*").gte("seen_at", new Date(Date.now() - 8 * 864e5).toISOString()).limit(100),
+    sb.from("market_gauges").select("*"),
+    (state.settings.watchlist || []).length
+      ? sb.from("stories").select("tickers,sentiment,created_at").gte("created_at", new Date(Date.now() - 14 * 864e5).toISOString()).overlaps("tickers", state.settings.watchlist).limit(1000)
+      : Promise.resolve({ data: [] }),
   ]);
   state.ready005 = !st.error; // false until supabase/005_reading.sql has been run
   if (!st.error) state.status = new Map(st.data.map((r) => [r.story_id, r.status]));
   if (!nt.error) state.notes = new Map(nt.data.map((r) => [r.story_id, r.note]));
   if (!ev.error) state.events = ev.data || [];
+  if (!ec.error) state.econ = ec.data || [];   // empty until supabase/011_econ_calendar.sql has been run
+  // design round 34 (empty until supabase/012_follow_earnings_mood.sql has been run)
+  state.ready012 = !fo.error;
+  if (!fo.error) state.follows = new Set((fo.data || []).map((f) => `${f.kind}:${f.key}`));
+  if (!er.error) state.earn = er.data || [];
+  if (!ga.error) state.gauges = Object.fromEntries((ga.data || []).map((g) => [g.name, g]));
+  if (!md.error) state.mood = md.data || [];
+  loadCnn();
   // Visits: NEW = arrived since your previous visit (a visit = coming back after 30+ minutes away)
   const s = state.settings, now = new Date();
   if (state.ready005 && "last_visit_at" in s) {
@@ -379,7 +432,8 @@ async function setStatus(id, status) {
 
 // Small round actions on each photo (A style): ✓ done, clock = later
 const acts = (s) => `<button class="chk ${stOf(s) === "done" ? "on" : ""}" data-done="${s.id}" title="${stOf(s) === "done" ? "Mark as not done" : "Done"}" aria-label="Done">${CHK}</button>
-  <button class="lat ${stOf(s) === "later" ? "on" : ""}" data-later="${s.id}" title="${stOf(s) === "later" ? "Remove from later" : "Read later"}" aria-label="Read later">${ICO.clock}</button>`;
+  <button class="lat ${stOf(s) === "later" ? "on" : ""}" data-later="${s.id}" title="${stOf(s) === "later" ? "Remove from later" : "Read later"}" aria-label="Read later">${ICO.clock}</button>
+  <button class="fol ${isFollowing("story", s.id) ? "on" : ""}" data-follow="story" data-fkey="${s.id}" data-flabel="${esc(s.headline)}" title="${isFollowing("story", s.id) ? "Stop following" : "Follow: Telegram tells you when it grows"}" aria-label="Follow">${ICO.bell}</button>`;
 const stateCls = (s) => ({ seen: " seen", done: " done", later: " later" }[stOf(s)] || "");
 // ---------- Developing (My News + World Brief, design round 21) ----------
 // The robot saves growth = [{t, n outlets}] and timeline = [{t, text}] each time a story gains outlets.
@@ -525,10 +579,10 @@ function queuePanel() {
     ${later.length ? `<div class="qsec">LATER (${later.length})</div>${later.slice(0, 4).map((s) => row(s, ICO.clock, false)).join("")}` : ""}</div>`;
 }
 
-function trendPanel(list) {
+function trendPanel(list, start = 2) {
   if (!list.length) return "";
   return `<div class="trend a"><h2>Trending now</h2><ol>${list.map((s, i) => `
-    <li class="${stateCls(s).trim()}" data-go="${s.id}"><span class="num">${i + 2}</span><div><div class="meta">${metaTags(s)}${esc(label(s))} · ${agoAt(when(s))}</div>
+    <li class="${stateCls(s).trim()}" data-go="${s.id}"><span class="num">${i + start}</span><div><div class="meta">${metaTags(s)}${esc(label(s))} · ${agoAt(when(s))}</div>
     <h3>${esc(s.headline)}</h3><div class="vote">▲ ${srcs(s.n_sources)} · impact ${s.impact_score}</div></div></li>`).join("")}</ol></div>`;
 }
 
@@ -545,11 +599,21 @@ const monTxt = (x) => x.toLocaleString("en-US", { month: "short" }), wkTxt = (x)
 // Institutions: short badge + website (for its icon; "" = text badge)
 const MACRO = [[/\bfed\b|fomc|federal reserve/i, "FED", "federalreserve.gov"], [/opec/i, "OPEC", "opec.org"],
   [/\bbot\b|bank of thailand/i, "BOT", ""], [/\becb\b|european central bank/i, "ECB", "ecb.europa.eu"], [/\bboj\b|bank of japan/i, "BOJ", "boj.or.jp"]];
-const CENTRAL = /rate decision|interest rate|policy rate|fomc|monetary policy|central bank/i;
+const CENTRAL = /rate decision|interest rate|policy rate|fomc|federal open market|monetary policy|central bank/i;
 const MARKET = "Market & economy";
 
 // Who an event is about (logo), how important it is, and which row it goes in
 function evInfo(e) {
+  if (e.kind === "result") {
+    const mine = (state.settings.watchlist || []).includes(e.ticker), r = e.res;
+    return { sym: e.ticker, site: "", lvl: mine ? "key" : "mid", why: "", kind: "Earnings result", lane: e.ticker,
+      src: `EPS ${eps(r.eps_actual)} vs ${eps(r.eps_estimate)} expected${r.revenue ? ` · revenue ${r.revenue}` : ""} · Yahoo Finance` };
+  }
+  if (e.kind === "macro") {
+    const key = e.impact === "High";
+    return { sym: e.ccy, site: "", txt: true, lvl: key ? "key" : "mid", why: key ? "High impact on Forex Factory: these releases often move currencies and stocks" : "",
+      kind: "Economy", src: "Forex Factory economic calendar", lane: MARKET };
+  }
   const w = state.settings.watchlist || [], s = e.story_id ? findStory(e.story_id) : null;
   let sym = e.ticker || null, site = "";
   if (!sym) { const m = MACRO.find(([rx]) => rx.test(e.title)); if (m) { sym = m[1]; site = m[2]; } }
@@ -565,7 +629,21 @@ function evInfo(e) {
   const src = e.kind === "news" ? "from the news" : e.estimate ? "estimated date · Yahoo Finance" : "confirmed · Yahoo Finance";
   return { sym, site, lvl, why, kind, src, lane: e.kind !== "news" ? e.ticker : w.includes(sym) ? sym : MARKET };
 }
-const calEvents = () => { const t = isoDay(today0()); return state.events.filter((e) => e.day >= t).map((e) => ({ ...e, i: evInfo(e) })); };
+// Forex Factory economic calendar (design round 32 A): High + Medium events join the calendar as kind "macro"
+const hhmm = (x) => `${String(x.getHours()).padStart(2, "0")}:${String(x.getMinutes()).padStart(2, "0")}`;
+const econAsEvents = () => (state.econ || []).filter((e) => e.impact === "High" || e.impact === "Medium").map((e) => {
+  const x = new Date(e.at);
+  return { day: isoDay(x), at: e.at, time: hhmm(x), title: `${e.currency} ${e.title}`, kind: "macro", ccy: e.currency, impact: e.impact, forecast: e.forecast, previous: e.previous, raw: e };
+});
+const earnAsEvents = () => (state.earn || []).filter((r) => r.price_then !== null || hoursAgo(r.seen_at) < 8 * 24).map((r) => {
+  const [v] = earnVerdict(r);
+  return { day: isoDay(new Date(r.seen_at)), title: `${r.ticker} results${v ? `: ${v}` : ""}${r.surprise_pct !== null ? ` ${r.surprise_pct >= 0 ? "+" : ""}${Number(r.surprise_pct).toFixed(1)}%` : ""}`, kind: "result", ticker: r.ticker, res: r };
+});
+const calEvents = () => { const t = isoDay(today0()), wk = isoDay(monday());
+  return [...state.events, ...earnAsEvents()].filter((e) => e.day >= (e.kind === "result" ? wk : t)).map((e) => ({ ...e, i: evInfo(e) })); };
+// Economic calendar (Forex Factory) has its own box + page; this week's past days stay visible so released results show
+const econEvents = () => { const wk = isoDay(monday()); return econAsEvents().filter((e) => e.day >= wk).map((e) => ({ ...e, i: evInfo(e) })); };
+const fpTxt = (e, long) => [e.forecast && `${long ? "Forecast" : "F"} ${e.forecast}`, e.previous && `${long ? "Previous" : "P"} ${e.previous}`].filter(Boolean).join(" · ");
 const topLvl = (list) => list.reduce((a, e) => (LVL[e.i.lvl] > LVL[a] ? e.i.lvl : a), "low");
 const byLvl = (a, b) => LVL[b.i.lvl] - LVL[a.i.lvl];
 
@@ -573,22 +651,181 @@ const byLvl = (a, b) => LVL[b.i.lvl] - LVL[a.i.lvl];
 function evLogo(i, size) {
   const sym = i.sym || "", y = yahoo(sym), txt = esc(sym.slice(0, 4));
   if (!sym) return "";
-  const src = i.site ? `https://www.google.com/s2/favicons?domain=${i.site}&sz=64`
+  const src = i.txt ? "" : i.site ? `https://www.google.com/s2/favicons?domain=${i.site}&sz=64`
     : sym && !MACRO.some((m) => m[1] === sym) && /^[A-Za-z0-9.\-]{1,15}$/.test(y) ? `https://financialmodelingprep.com/image-stock/${y}.png` : "";
   return src ? `<span class="lg" style="--s:${size}px"><img src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('txt');this.parentNode.textContent='${txt}'"></span>`
     : `<span class="lg txt" style="--s:${size}px">${txt}</span>`;
 }
 
+// Countdown: hours for timed (Forex Factory) events less than a day away, otherwise days
+function kdCount(e, d) {
+  const h = e.at ? (new Date(e.at) - Date.now()) / 36e5 : null;
+  if (h !== null && h >= 0 && h < 24) return h < 1 ? `<b>${Math.max(1, Math.round(h * 60))}</b><small>MIN</small>` : `<b>${Math.round(h)}</b><small>${Math.round(h) === 1 ? "HOUR" : "HOURS"}</small>`;
+  if (h !== null && h < 0) return `<b class="sm">OUT</b>`;
+  return d === 0 ? "<b class=\"sm\">TODAY</b>" : `<b>${d}</b><small>${d === 1 ? "DAY" : "DAYS"}</small>`;
+}
 // K1: the next key dates as countdown cards (the nearest one big and dark)
-function keyDates(ev, n) {
-  const all = ev.filter((e) => e.i.lvl === "key").sort((a, b) => (a.day < b.day ? -1 : 1)), ks = all.slice(0, n);
+function keyDates(ev, n, any = false) {   // any = "NEXT DATES": the next dates of any level (when nothing is KEY)
+  const all = ev.filter((e) => (any || e.i.lvl === "key") && e.kind !== "result" && !(e.at && new Date(e.at) < Date.now()))
+    .sort((a, b) => (a.day + (a.time || "") < b.day + (b.time || "") ? -1 : 1)), ks = all.slice(0, n);
   if (!ks.length) return "";
-  return `<div class="kd"><div class="kh"><span>KEY DATES</span><small>${all.length} coming up</small></div>${ks.map((e, k) => {
+  return `<div class="kd"><div class="kh"><span>${any ? "NEXT DATES" : "KEY DATES"}</span><small>${all.length} coming up</small></div>${ks.map((e, k) => {
     const x = dayOf(e.day), d = daysTo(e.day);
-    return `<div class="kc ${k === 0 ? "first" : ""}" data-calday="${e.day}">${evLogo(e.i, k === 0 ? 44 : 36)}
-      <div class="kt"><b>${esc(e.title)}</b><small>${wkTxt(x)} ${x.getDate()} ${monTxt(x)} · ${e.i.kind}</small></div>
-      <div class="kn">${d === 0 ? "<b class=\"sm\">TODAY</b>" : `<b>${d}</b><small>${d === 1 ? "DAY" : "DAYS"}</small>`}</div></div>`;
+    return `<div class="kc ${k === 0 ? "first" : ""}" ${e.kind === "macro" ? "data-ecalday" : "data-calday"}="${e.day}">${evLogo(e.i, k === 0 ? 44 : 36)}
+      <div class="kt"><b>${esc(e.title)}</b><small>${wkTxt(x)} ${x.getDate()} ${monTxt(x)}${e.kind === "macro" ? ` · ${e.time}` : ` · ${e.i.kind}`}</small>${e.kind === "macro" && fpTxt(e) ? `<small class="fp">${esc(fpTxt(e))}</small>` : ""}</div>
+      <div class="kn">${kdCount(e, d)}</div></div>`;
   }).join("")}</div>`;
+}
+
+// ---------- Forex Factory economic calendar (design round 32 B: box, C: "next up" strip) ----------
+const ECONF = { hm: "High + Medium", h: "High only", usd: "USD only" };
+const econFilter = () => (ECONF[lsGet("ic_econf")] ? lsGet("ic_econf") : "hm");
+const untilTxt = (at) => {
+  const m = Math.round((new Date(at) - Date.now()) / 6e4);
+  if (m < 60) return `in ${Math.max(1, m)} min`;
+  if (m < 24 * 60) return `in ${Math.round(m / 60)} h`;
+  const x = new Date(at); return `${wkTxt(x)} ${hhmm(x)}`;
+};
+// One Forex Factory row: time · currency · impact · event · Actual · Forecast · Previous
+function econRow(e, next) {
+  const x = new Date(e.at), past = x < Date.now(), nx = e === next;
+  const act = e.actual ? `<span class="n a ${resCls(e.result)}">${esc(e.actual)}</span>` : past && (e.forecast || e.previous) ? `<span class="n a">${ffLink(e, "↗")}</span>` : `<span class="n a wait">—</span>`;
+  return `<div class="erow${past && !e.actual ? " past" : ""}${nx ? " next" : ""}"><span class="tm tnum">${hhmm(x)}</span><span class="cc">${esc(e.currency)}</span><i class="dot ${e.impact === "High" ? "H" : "M"}" title="${esc(e.impact)} impact"></i>
+    <span class="et"><b>${esc(e.title)}</b>${nx ? `<em>NEXT · ${untilTxt(e.at)}</em>` : ""}</span>${act}<span class="n tnum">${esc(e.forecast || "")}</span><span class="n tnum">${esc(e.previous || "")}</span></div>`;
+}
+const econKeep = () => ({ hm: (e) => e.impact === "High" || e.impact === "Medium", h: (e) => e.impact === "High",
+  usd: (e) => e.currency === "USD" && (e.impact === "High" || e.impact === "Medium") }[econFilter()]);
+const econChips = () => `<div class="echips">${Object.entries(ECONF).map(([k, l]) => `<button class="${k === econFilter() ? "on" : ""}" data-econf="${k}">${l}</button>`).join("")}</div>`;
+const econHead = `<div class="ehead"><span>TIME</span><span></span><span></span><span>EVENT</span><span>ACTUAL</span><span>FCST</span><span>PREV</span></div>`;
+function econPanel() {
+  const keep = econKeep(), t0 = today0(), now = Date.now();
+  const today = (state.econ || []).filter((e) => isoDay(new Date(e.at)) === isoDay(t0) && keep(e)).sort((a, b) => (a.at < b.at ? -1 : 1));
+  const next = (state.econ || []).filter((e) => keep(e) && new Date(e.at) >= now).sort((a, b) => (a.at < b.at ? -1 : 1))[0];
+  const body = !state.econ.length ? `<p class="note" style="margin-top:10px">No calendar yet. It arrives with the robot's next run (every 3 hours).</p>`
+    : today.length ? `<div class="eday today">TODAY · ${wkTxt(t0).toUpperCase()} ${t0.getDate()}</div>${econHead}${today.map((e) => econRow(e, next)).join("")}`
+    : `<p class="note" style="margin-top:10px">Nothing today.${next ? ` Next: <b>${esc(next.currency)} ${esc(next.title)}</b>, ${wkTxt(new Date(next.at))} ${hhmm(new Date(next.at))}.` : ""}</p>`;
+  return `<div class="calp econp a" data-ecal><div class="mh"><h2>Economic calendar</h2><a href="#/econ">Full calendar →</a></div>${body}
+    <p class="esrc">Forex Factory · Bangkok time · Actual: US from FRED, others ↗ Forex Factory · green = better than forecast for that currency</p></div>`;
+}
+// ---------- Round 35: released results. US numbers from FRED (robot/econ_actuals.py); others link to Forex Factory ----------
+const RES_TXT = { better: "BETTER THAN EXPECTED", worse: "WORSE THAN EXPECTED", inline: "AS EXPECTED" };
+const RES_SHORT = { better: "BETTER", worse: "WORSE", inline: "AS EXPECTED" };
+const resCls = (r) => ({ better: "good", worse: "bad", inline: "inl" }[r] || "");
+const released = (e) => new Date(e.at) <= Date.now();
+const ffLink = (e, txt = "Result ↗") => (e.url ? `<a class="ffl" href="${esc(e.url)}" target="_blank" rel="noopener" title="See the result on Forex Factory">${txt}</a>` : "—");
+// A: "Just released" cards on My News: High/Medium events released in the last 6 hours (big card = the newest High one)
+function econCards() {
+  const list = (state.econ || []).filter((e) => (e.impact === "High" || e.impact === "Medium") && released(e) && hoursAgo(e.at) <= 6 && (e.forecast || e.previous || e.actual))
+    .sort((a, b) => (a.impact === "High") - (b.impact === "High") || (a.at < b.at ? -1 : 1)).reverse();
+  if (!list.length) return "";
+  const [h, ...more] = list[0].impact === "High" ? list : [null, ...list];
+  const big = h ? `<div class="ear eres ${resCls(h.result)}"><div class="hd"><span class="ccb">${esc(h.currency)}</span><div class="tt"><b>${esc(h.title)}</b>
+      <small>Released ${hhmm(new Date(h.at))} · ${agoAt(h.at)} · High impact</small></div>${h.result ? `<span class="vd ${resCls(h.result)}">${RES_TXT[h.result]}</span>` : ""}</div>
+      <div class="nums"><div><small>ACTUAL</small><b class="tnum ${resCls(h.result)}">${h.actual ? esc(h.actual) : ffLink(h)}</b></div><div><small>FORECAST</small><b class="tnum">${esc(h.forecast || "—")}</b></div><div><small>PREVIOUS</small><b class="tnum">${esc(h.previous || "—")}</b></div></div>
+      <div class="ft">${h.actual ? "Actual: FRED (St. Louis Fed) · " : "The actual is on Forex Factory · "}Forecast and previous: Forex Factory${h.url ? ` · <a href="${esc(h.url)}" target="_blank" rel="noopener">Forex Factory page ↗</a>` : ""}</div></div>` : "";
+  const small = more.slice(0, 4).map((e) => `<div class="ear2"><i class="dot ${e.impact === "High" ? "H" : "M"}"></i><b>${esc(e.currency)}</b><span>${esc(e.title)} · ${e.actual
+      ? `<b class="${resCls(e.result)}">${esc(e.actual)}</b> vs ${esc(e.forecast || "—")}` : `F ${esc(e.forecast || "—")} · ${ffLink(e)}`}</span>${e.result ? `<span class="vd ${resCls(e.result)}">${RES_SHORT[e.result]}</span>` : ""}</div>`).join("");
+  return `<div class="earns econres a${big ? "" : " only-small"}">${big}${small ? `<div class="ear2s">${small}</div>` : ""}</div>`;
+}
+
+// C: dark strip under the brief bar: the next high-impact release with a countdown, then the next two
+function econStrip() {
+  const now = Date.now(), up = (state.econ || []).filter((e) => new Date(e.at) >= now);
+  const hi = up.filter((e) => e.impact === "High"), list = (hi.length >= 3 ? hi : [...hi, ...up.filter((e) => e.impact === "Medium")]
+    .sort((a, b) => (a.at < b.at ? -1 : 1))).slice(0, 3);
+  const out = (state.econ || []).filter((e) => e.impact === "High" && released(e) && hoursAgo(e.at) <= 2 && (e.forecast || e.previous || e.actual)).sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+  if (!list.length && !out) return "";
+  const just = out ? `<div class="lab">JUST<br>OUT</div><div class="ei jout"><b><i class="dot H"></i>${esc(out.currency)} ${esc(out.title)}</b><small>${out.actual
+      ? `<span class="${resCls(out.result) === "good" ? "g" : resCls(out.result) === "bad" ? "r" : ""}">${esc(out.actual)}</span> vs ${esc(out.forecast || "—")} forecast` : `F ${esc(out.forecast || "—")} · ${ffLink(out)}`} · ${agoAt(out.at)}</small></div>` : "";
+  if (!list.length) return `<div class="estrip a">${just}</div>`;
+  return `<div class="estrip a" data-sig="${esc((out ? out.at + (out.actual || "") : "") + list.map((e) => e.at + e.title + untilTxt(e.at)).join("|"))}">${just}<div class="lab${out ? " sep" : ""}">NEXT<br>UP</div>${list.slice(0, out ? 2 : 3).map((e, k) => {
+    const x = new Date(e.at);
+    return `<div class="ei${k === 0 ? " first" : ""}"><b><i class="dot ${e.impact === "High" ? "H" : "M"}"></i>${esc(e.currency)} ${esc(e.title)}</b>
+      <small><span class="cd">${untilTxt(e.at)}</span>${k ? "" : ` · ${wkTxt(x)} ${hhmm(x)}`}${e.forecast ? ` · F ${esc(e.forecast)}` : ""}${e.previous ? ` · P ${esc(e.previous)}` : ""}</small></div>`;
+  }).join("")}<a class="ff" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open Forex Factory">↗</a></div>`;
+}
+
+// ---------- Follow (design round 34): stories on both pages + World places -> Telegram alerts (robot/follows.py) ----------
+const isFollowing = (kind, key) => state.follows.has(`${kind}:${key}`);
+async function toggleFollow(kind, key, label) {
+  if (!state.ready012) return toast("Run supabase/012_follow_earnings_mood.sql in Supabase first");
+  const id = `${kind}:${key}`, on = state.follows.has(id);
+  if (on) state.follows.delete(id); else state.follows.add(id);
+  render("soft");
+  const q = on ? sb.from("follows").delete().eq("kind", kind).eq("key", key)
+    : sb.from("follows").insert({ user_id: state.user.id, kind, key, label: (label || "").slice(0, 200) });
+  const { error } = await q;
+  if (error) { if (on) state.follows.add(id); else state.follows.delete(id); render("soft"); return toast("Could not save: " + error.message); }
+  toast(on ? "Stopped following" : kind === "place" ? `Following ${key.split(":")[1]} · new World stories there go to Telegram` : "Following · Telegram tells you when it grows");
+}
+const followBtn = (kind, key, label) => `<button class="sbtn ${isFollowing(kind, key) ? "on-follow" : ""}" data-follow="${kind}" data-fkey="${esc(key)}" data-flabel="${esc(label)}">${ICO.bell}${isFollowing(kind, key) ? "Following" : "Follow"}</button>`;
+
+// ---------- Market mood: Fear & Greed + your stocks' news mood ----------
+// Stock Fear & Greed comes from CNN. CNN has no public API and blocks robots, so the robot doesn't fetch it:
+// your browser asks CNN when you open My News (a normal visit, cached 30 min). If CNN says no, the box links to CNN instead.
+async function loadCnn() {
+  const c = safe(() => JSON.parse(sessionStorage.getItem("ic_cnnfg")), null);
+  if (c && Date.now() - c.t < 30 * 6e4) { state.cnn = c.d; return; }
+  try {
+    const r = await fetch("https://production.dataviz.cnn.io/index/fearandgreed/graphdata", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const f = (await r.json()).fear_and_greed;
+    const d = { score: f.score, rating: f.rating, prev_close: f.previous_close, week_ago: f.previous_1_week, month_ago: f.previous_1_month, year_ago: f.previous_1_year };
+    state.cnn = d; safe(() => sessionStorage.setItem("ic_cnnfg", JSON.stringify({ t: Date.now(), d })));
+  } catch { state.cnn = "fail"; }
+  if (location.hash === "" || location.hash === "#/") render(false);
+}
+const FG_BANDS = [[25, "Extreme fear", "#dc2626"], [45, "Fear", "#f97316"], [55, "Neutral", "#a3a3a3"], [75, "Greed", "#65a30d"], [101, "Extreme greed", "#16a34a"]];
+const fgBand = (v) => FG_BANDS.find(([mx]) => v < mx) || FG_BANDS[4];
+function fgGauge(v) {   // half circle, 5 coloured bands, needle
+  const pt = (a, r) => [60 + r * Math.cos(Math.PI * (1 - a / 100)), 62 - r * Math.sin(Math.PI * (1 - a / 100))];
+  let from = 0;
+  const arcs = FG_BANDS.map(([mx, , col]) => { const to = Math.min(mx, 100), [x1, y1] = pt(from + 0.6, 50), [x2, y2] = pt(to - 0.6, 50); from = to;
+    return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} A50 50 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${col}"/>`; }).join("");
+  const [nx, ny] = pt(Math.max(0, Math.min(100, v)), 40);
+  return `<svg class="fgg" viewBox="0 0 120 70" aria-hidden="true"><g fill="none" stroke-width="10">${arcs}</g><line x1="60" y1="62" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"/><circle cx="60" cy="62" r="4"/></svg>`;
+}
+function marketMood() {
+  const c = state.cnn, k = state.gauges.crypto, w = state.settings.watchlist || [];
+  const ago = (lbl, v) => (v === null || v === undefined ? "" : `<span>${lbl} <b class="tnum">${Math.round(v)}</b></span>`);
+  const stocksPart = c && c !== "fail"
+    ? `<div class="fgrow">${fgGauge(c.score)}<div class="fgv"><b class="tnum" style="color:${fgBand(c.score)[2]}">${Math.round(c.score)}</b><span>${esc(fgBand(c.score)[1])}</span><small>Stocks · CNN Fear &amp; Greed</small></div></div>
+       <div class="fgago">${ago("Yesterday", c.prev_close)}${ago("1 week", c.week_ago)}${ago("1 month", c.month_ago)}${ago("1 year", c.year_ago)}</div>`
+    : c === "fail" ? `<p class="note" style="margin:6px 0 0">CNN didn't answer from this browser. <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" rel="noopener">See the stock Fear &amp; Greed on CNN ↗</a></p>`
+    : `<p class="note" style="margin:6px 0 0">Loading CNN Fear &amp; Greed…</p>`;
+  const cryptoPart = k ? `<div class="fgcr"><span>Crypto</span><b class="tnum" style="color:${fgBand(k.score)[2]}">${Math.round(k.score)}</b><em>${esc(k.rating)}</em>${k.week_ago !== null ? `<small>1 week ago ${Math.round(k.week_ago)}</small>` : ""}</div>` : "";
+  // Stock mood: share of this week's stories the AI tagged Bullish / Bearish (Neutral + Mixed in the middle), vs the week before
+  const wk = (t, from, to) => state.mood.filter((r) => (r.tickers || []).includes(t) && hoursAgo(r.created_at) >= from * 24 && hoursAgo(r.created_at) < to * 24);
+  const sc = (l) => (l.filter((r) => r.sentiment === "Bullish").length - l.filter((r) => r.sentiment === "Bearish").length) / Math.max(1, l.length);
+  const rows = w.slice(0, 8).map((t) => {
+    const cur = wk(t, 0, 7), prev = wk(t, 7, 14), bu = cur.filter((r) => r.sentiment === "Bullish").length, be = cur.filter((r) => r.sentiment === "Bearish").length;
+    if (cur.length < 3) return `<div class="smood few" data-stock="${esc(t)}"><b>${esc(t)}</b><span class="note" style="margin:0">not enough news (${cur.length})</span></div>`;
+    const d = prev.length >= 3 ? sc(cur) - sc(prev) : null, pc = (n) => ((n / cur.length) * 100).toFixed(0);
+    const tr = d === null ? `<small class="fl">new</small>` : d > 0.15 ? `<small class="up">▲ better</small>` : d < -0.15 ? `<small class="dn">▼ worse</small>` : `<small class="fl">— same</small>`;
+    return `<div class="smood" data-stock="${esc(t)}" title="Show ${esc(t)} news"><b>${esc(t)}</b><div class="sbar"><i class="u" style="width:${pc(bu)}%"></i><i class="n" style="width:${pc(cur.length - bu - be)}%"></i><i class="d" style="width:${pc(be)}%"></i></div>${tr}
+      <div class="ssub">${cur.length} stories · ${bu} bullish · ${be} bearish</div></div>`;
+  }).join("");
+  return `<div class="mmood a"><div class="mh"><h2>Market mood</h2></div>${stocksPart}${cryptoPart}
+    ${w.length ? `<div class="mml">YOUR STOCKS · NEWS MOOD, 7 DAYS</div>${rows}<p class="note" style="margin:8px 0 0">AI's guess from story tone, not advice.</p>` : ""}</div>`;
+}
+
+// ---------- Earnings result cards (design round 34): watchlist companies that reported in the last 3 days ----------
+const eps = (v) => (v === null || v === undefined ? "—" : Number(v).toFixed(2));
+const earnVerdict = (r) => (r.surprise_pct === null || r.surprise_pct === undefined ? ["", ""] : Math.abs(r.surprise_pct) < 0.5 ? ["IN LINE", "inl"] : r.surprise_pct > 0 ? ["BEAT", "beat"] : ["MISS", "miss"]);
+const qEnd = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+function earnCards() {
+  const w = state.settings.watchlist || [];
+  const list = (state.earn || []).filter((r) => w.includes(r.ticker) && hoursAgo(r.seen_at) <= 72).sort((a, b) => (a.seen_at < b.seen_at ? 1 : -1));
+  if (!list.length) return "";
+  const move = (r) => { const q = quotes[yahoo(r.ticker)]; return r.price_then && q ? ((q.price - r.price_then) / r.price_then) * 100 : null; };
+  const pct = (v) => `${v >= 0 ? "+" : ""}${Number(v).toFixed(1)}%`;
+  const [h, ...more] = list, [vt, vc] = earnVerdict(h), mv = move(h), name = cleanName(state.settings.watch_names?.[h.ticker] || "") || h.ticker;
+  return `<div class="earns a"><div class="ear" data-stock="${esc(h.ticker)}">
+      <div class="hd">${evLogo({ sym: h.ticker }, 42)}<div class="tt"><b>${esc(name)} · results</b><small>Quarter ended ${qEnd(h.quarter_end)} · ${agoAt(h.seen_at)}</small></div>${vt ? `<span class="vd ${vc}">${vt}</span>` : ""}</div>
+      <div class="nums"><div><small>EPS ACTUAL</small><b class="tnum">${eps(h.eps_actual)}</b></div><div><small>EXPECTED</small><b class="tnum">${eps(h.eps_estimate)}</b></div>
+        <div><small>SURPRISE</small><b class="tnum ${vc}">${h.surprise_pct !== null ? pct(h.surprise_pct) : "—"}</b></div></div>
+      <div class="ft">${h.revenue ? `Revenue ${esc(h.revenue)} (no revenue forecast in the free data) · ` : ""}${mv !== null ? `Stock since report: <b class="${mv >= 0 ? "up" : "down"}">${pct(mv)}</b> · ` : ""}Yahoo Finance</div></div>
+    ${more.length ? `<div class="ear2s">${more.map((r) => { const [t, c] = earnVerdict(r); return `<div class="ear2" data-stock="${esc(r.ticker)}"><b>${esc(r.ticker)}</b><span>EPS ${eps(r.eps_actual)} vs ${eps(r.eps_estimate)}${r.surprise_pct !== null ? ` · <b class="${c}">${pct(r.surprise_pct)}</b>` : ""}</span>${t ? `<span class="vd ${c}">${t}</span>` : ""}</div>`; }).join("")}</div>` : ""}</div>`;
 }
 
 // My News right column: mini heat-map calendar (5 weeks) + key dates; click opens the full calendar
@@ -599,15 +836,45 @@ function upcomingPanel() {
     const d = isoDay(x), list = ev.filter((e) => e.day === d).sort(byLvl);
     return `<div class="c ${x < t0 ? "o" : ""} ${d === isoDay(t0) ? "today" : ""} ${list.length ? "h-" + topLvl(list) : ""}" style="--k:${Math.round((x - st) / 864e5)}"${list.length ? ` title="${esc(list.map((e) => e.title).join(" · "))}"` : ""}>${x.getDate()}${list.length ? `<span class="lgrow">${list.slice(0, 2).map((e) => evLogo(e.i, 13)).join("")}</span>` : ""}</div>`;
   };
-  return `<div class="calp a" data-cal><div class="mh"><h2>Upcoming</h2><a href="#/calendar">Full calendar →</a></div>
+  return `<div class="calp a" data-cal><div class="mh"><h2>Upcoming</h2><a href="#/calendar">Stock calendar →</a></div>
     <div class="mini">${["M", "T", "W", "T", "F", "S", "S"].map((w) => `<div class="w">${w}</div>`).join("")}${[...Array(35)].map((_, k) => cell(addDays(st, k))).join("")}</div>
-    ${ev.length ? keyDates(ev, 3) : `<p class="note" style="margin-top:12px">No dates yet. Earnings and dividend dates for your watchlist are added once a day, and dates found in the news as they arrive.</p>`}</div>`;
+    ${ev.length ? keyDates(ev, 3) || keyDates(ev, 3, true) : `<p class="note" style="margin-top:12px">No dates yet. Earnings and dividend dates for your watchlist are added once a day, and dates found in the news as they arrive.</p>`}</div>`;
+}
+
+function viewEconCal() {
+  const c = state.ecal, keep = econKeep(), ev = econEvents().filter((e) => keep(e.raw)), t0 = today0(), now = Date.now();
+  const on = (d) => ev.filter((e) => e.day === d).sort((a, b) => (a.at < b.at ? -1 : 1));
+  const st = addDays(monday(), c.wk * 35), cells = [...Array(35)].map((_, k) => addDays(st, k));
+  const cell = (x) => {
+    const d = isoDay(x), list = on(d);
+    return `<div class="c ${x < t0 ? "o" : ""} ${d === isoDay(t0) ? "today" : ""} ${d === c.sel ? "sel" : ""} ${list.length ? "h-" + topLvl(list) : ""}" data-ecalsel="${d}">
+      <span class="n">${x.getDate() === 1 ? monTxt(x) + " " : ""}${x.getDate()}</span>${list.slice(0, 6).map((e) => `<span class="pill ${e.i.lvl}">${evLogo(e.i, 18)}<span>${esc(e.raw.title)}</span></span>`).join("")}${list.length > 6 ? `<span class="more">+${list.length - 6} more</span>` : ""}</div>`;
+  };
+  const sd = dayOf(c.sel), raw = (state.econ || []).filter((e) => isoDay(new Date(e.at)) === c.sel && keep(e)).sort((a, b) => (a.at < b.at ? -1 : 1));
+  const next = (state.econ || []).filter((e) => keep(e) && new Date(e.at) >= now).sort((a, b) => (a.at < b.at ? -1 : 1))[0];
+  return `${header("news")}<div class="wrap calv">
+    <a class="back a" href="#/">← Back to My News</a>
+    <h1 class="ttl a">Economic calendar</h1>
+    <p class="why a">Economic releases from Forex Factory (High and Medium impact), in Bangkok time. US actuals come from FRED; for others press ↗ to see the result on Forex Factory. Your stock dates are in the <a href="#/calendar">Stock calendar</a>.</p>
+    ${econStrip()}
+    ${econCards()}
+    <div class="a" style="margin-top:14px">${econChips()}</div>
+    <div class="calgrid a"><div>
+      <div class="mtop"><h2>${cells[0].getDate()} ${monTxt(cells[0])} – ${cells[34].getDate()} ${monTxt(cells[34])} ${cells[34].getFullYear()}</h2>
+        <button data-ecalwk="-1" ${c.wk <= 0 ? "disabled" : ""} aria-label="Earlier">‹</button><button data-ecalwk="1" ${c.wk >= 1 ? "disabled" : ""} aria-label="Later">›</button></div>
+      <div class="big">${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<div class="w">${d}</div>`).join("")}${cells.map(cell).join("")}</div>
+      <div class="legend"><span class="heat"><i class="h0"></i><i class="h-mid"></i><i class="h-key"></i></span> quiet → Medium → High impact day</div>
+    </div>
+    <aside class="sidecol">${keyDates(ev, 4)}
+      <div class="dayb econp"><h3>${wkTxt(sd)} ${sd.getDate()} ${monTxt(sd)}</h3><p class="note" style="margin:2px 0 8px">${daysTo(c.sel) >= 0 ? cdTxt(c.sel) : "past"}</p>
+      ${raw.length ? econHead + raw.map((e) => econRow(e, next)).join("") : `<div class="it empty1"><p>No releases on this day.</p></div>`}</div></aside></div>
+    <p class="note">Forex Factory publishes one week at a time: next week's events appear when the new week starts, and past weeks stay here for 90 days. Green = better than forecast for that currency (lower is better for unemployment and jobless claims).</p></div>`;
 }
 
 function viewCalendar() {
   const c = state.cal, all = calEvents(), w = state.settings.watchlist || [], t0 = today0();
   const keep = { All: () => true, "Key only": (e) => e.i.lvl === "key", "My watchlist": (e) => w.includes(e.i.sym),
-    Earnings: (e) => e.kind === "earnings", Dividends: (e) => e.kind === "dividend", News: (e) => e.kind === "news" }[c.filter] || (() => true);
+    Earnings: (e) => e.kind === "earnings" || e.kind === "result", Dividends: (e) => e.kind === "dividend", News: (e) => e.kind === "news", Results: (e) => e.kind === "result" }[c.filter] || (() => true);
   const ev = all.filter(keep), on = (d) => ev.filter((e) => e.day === d).sort(byLvl);
   const st = addDays(monday(), c.wk * 35), cells = [...Array(35)].map((_, k) => addDays(st, k));
   const cell = (x) => {
@@ -617,7 +884,7 @@ function viewCalendar() {
   };
   const sd = dayOf(c.sel), selList = on(c.sel);
   const item = (e) => `<div class="it">${evLogo(e.i, 40)}<div><span class="lvl ${e.i.lvl}">${LVL_TXT[e.i.lvl]}</span><b>${esc(e.title)}</b>
-    <p>${e.i.kind}${e.ticker && quotes[yahoo(e.ticker)] ? ` · ${esc(e.ticker)} ${pxSpan(yahoo(e.ticker))} ${chSpan(yahoo(e.ticker))} today` : ""}</p>
+    <p>${e.i.kind}${e.time ? ` · ${e.time}` : ""}${e.kind === "macro" && fpTxt(e, true) ? ` · ${esc(fpTxt(e, true))}` : ""}${e.ticker && quotes[yahoo(e.ticker)] ? ` · ${esc(e.ticker)} ${pxSpan(yahoo(e.ticker))} ${chSpan(yahoo(e.ticker))} today` : ""}</p>
     ${e.i.why ? `<p class="why">Why key: ${esc(e.i.why)}</p>` : ""}<span class="src">${e.i.src}</span>
     ${e.story_id ? `<a class="linkbtn" href="#/story/${esc(e.story_id)}">Open the story →</a>` : ""}</div></div>`;
   // Stock lanes: one row per stock (watchlist first), market events in their own row.
@@ -648,11 +915,11 @@ function viewCalendar() {
       <span class="note" style="margin:0">${span} days · ${fmtD(rFrom)} – ${fmtD(rTo)}</span></div>
     ${lanesAll.length ? `<div class="lpick"><span>Show:</span>${lanesAll.map((ln) => `<button class="lp ${c.hide.has(ln) ? "" : "on"}" data-lpick="${esc(ln)}">${ln === MARKET ? "" : evLogo({ sym: ln }, 18)}${esc(ln === MARKET ? "Market & economy" : ln)}</button>`).join("")}
       ${c.hide.size ? `<button class="lp all" data-lpick="*">Show all</button>` : ""}</div>` : ""}`;
-  const chips = ["All", "Key only", "My watchlist", "Earnings", "Dividends", "News"];
+  const chips = ["All", "Key only", "My watchlist", "Earnings", "Results", "Dividends", "News"];
   return `${header("news")}<div class="wrap calv">
     <a class="back a" href="#/">← Back to My News</a>
-    <h1 class="ttl a">Calendar</h1>
-    <p class="why a">Earnings, dividends and dates from your news. Red = the dates that matter most.</p>
+    <h1 class="ttl a">Stock calendar</h1>
+    <p class="why a">Earnings, results, dividends and dates from your news. Red = the dates that matter most. Economic releases (Forex Factory) have their own <a href="#/econ">Economic calendar</a>.</p>
     <div class="chips a">${chips.map((f) => `<button class="chip ${f === c.filter ? "on" : ""}" data-calf="${f}">${f}</button>`).join("")}</div>
     <div class="calgrid a"><div>
       <div class="mtop"><h2>${cells[0].getDate()} ${monTxt(cells[0])} – ${cells[34].getDate()} ${monTxt(cells[34])} ${cells[34].getFullYear()}</h2>
@@ -667,7 +934,7 @@ function viewCalendar() {
     ${laneCtl}
     <div class="lanes a"><div class="lanes-in" style="min-width:${170 + span * (span > 35 ? 30 : 34)}px"><div class="lh" style="grid-template-columns:${cols}"><div class="lab">Stock</div>${rangeDays.map((x, k) => `<div class="${dcls(x)}">${x.getDay() === 1 || k === 0 ? `${x.getDate()} ${monTxt(x)}` : x.getDate()}</div>`).join("")}</div>
       ${lanes.length ? lanes.map(laneRow).join("") : `<div class="lane" style="min-height:360px"><div class="lab" style="grid-column:1/-1"><small>${lanesAll.length ? "No stocks selected. Tick one above." : "Nothing in this date range for this filter."}</small></div></div>`}</div></div>
-    <p class="note">Dates come from Yahoo Finance (earnings, dividends) and from your news stories. Logos load from a free logo service.</p></div>`;
+    <p class="note">Dates come from Yahoo Finance (earnings, dividends, results) and from your news stories. Logos load from a free logo service.</p></div>`;
 }
 
 // One story at a time: big photo, key points, Later / Done · next
@@ -899,9 +1166,9 @@ function viewFeed() {
   const fchip = (c) => `<button class="c ${c === state.filter ? "on" : ""}" data-filter="${esc(c)}">${esc(c)}<span class="count">${storiesFor(c).length}</span></button>`;
   const stockChip = state.filter.startsWith("$")
     ? `<div class="quick"><button class="c on" data-filter="All" title="Back to All">${esc(state.filter.slice(1))} news<span class="count">${storiesFor(state.filter).length}</span> ×</button></div>` : "";
-  const filterRow = `<div class="filters a">${stockChip}<div class="quick">${["All", "My watchlist", "Saved"].map(fchip).join("")}</div>
+  const filterRow = `<div class="fbar a"><div class="filters">${stockChip}<div class="quick">${["All", "My watchlist", "Saved", ...(state.follows.size ? ["Following"] : [])].map(fchip).join("")}</div>
     <div class="quick">${["To read", "Later", "Done"].map(fchip).join("")}</div>
-    <div class="scroller"><button class="arrow prev" data-scroll="-1" title="Back" aria-label="Scroll topics back">‹</button><div class="track">${myTopics().map(fchip).join("")}</div><button class="arrow" data-scroll="1" title="More topics" aria-label="More topics">›</button></div></div>`;
+    <div class="scroller"><button class="arrow prev" data-scroll="-1" title="Back" aria-label="Scroll topics back">‹</button><div class="track">${myTopics().map(fchip).join("")}</div><button class="arrow" data-scroll="1" title="More topics" aria-label="More topics">›</button></div></div>${sortDD("n")}</div>`;
   const fr = (s) => (state.fresh.has(s.id) ? " fresh" : "");
   const list = visibleStories();
   let left, trending = [];
@@ -914,8 +1181,9 @@ function viewFeed() {
     // Right column: Trending now (stories 2-6) normally; the Read first queue only in the "To read" view
     const reading = state.filter === "To read";
     const phone = isPhone(); // phone: one list in rank order (no "Trending" side column that would end up at the bottom)
-    trending = reading || phone ? [] : rest0.slice(0, 5);
-    const all = reading || phone ? rest0 : rest0.slice(5);
+    const plain = nSort() !== "rec";
+    trending = reading || phone ? [] : plain ? [...rest0].sort((a, b) => rank(b) - rank(a)).slice(0, 5) : rest0.slice(0, 5);
+    const all = reading || phone || plain ? rest0 : rest0.slice(5);
     // Draw 30 cards at a time: drawing all ~140 froze the page for ~100 ms on every redraw (measured 2026-11-24)
     const rest = all.slice(0, state.feedLimit), hidden = all.length - rest.length;
     left = `<div class="lead-wrap a${fr(h)}${stateCls(h)}" data-id="${h.id}"><div class="mwrap">${`<a class="lead" href="#/story/${h.id}">${media(h, true)}</a>`}${acts(h)}</div>
@@ -931,10 +1199,11 @@ function viewFeed() {
   }
   return `${header("news")}<div class="wrap">
     ${briefBar()}
+    ${earnCards()}
     ${mTicker()}
     ${filterRow}
     ${priceStrip()}
-    <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending)}${seasonNote()}${upcomingPanel()}</aside></div></div>${dock()}`;
+    <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending, nSort() === "rec" ? 2 : 1)}${seasonNote()}${marketMood()}${upcomingPanel()}${econPanel()}</aside></div></div>${dock()}`;
 }
 
 // "The full story" (design round 16): 3-4 paragraphs the AI wrote from the full articles it could read.
@@ -994,6 +1263,7 @@ function viewStory(id) {
         <button class="sbtn ${st === "done" ? "on-done" : ""}" data-sdone="${s.id}">${st === "done" ? "✓ Done" : "✓ Mark as read"}</button>
         <button class="sbtn ${st === "later" ? "on-later" : ""}" data-slater="${s.id}">${st === "later" ? "In Later" : "Read later"}</button>
         ${star(s)}
+        ${followBtn("story", s.id, s.headline)}
         <details class="mute"><summary>Show less like this ▾</summary><div class="menu">
           ${(s.topics || []).map((t) => `<button data-mute-topic="${esc(t)}">Hide topic “${esc(t)}”</button>`).join("")}
           ${outlets.map((o) => `<button data-mute-source="${esc(o)}">Hide news from ${esc(o)}</button>`).join("")}
@@ -1125,6 +1395,13 @@ function wTaste() {
   for (const k in t) t[k] = Math.max(-5, Math.min(5, t[k]));
   return t;
 }
+function sortWorld(items) {
+  const unread = ({ s }) => !wSt(s.id), t = ({ s }) => tNew(s);
+  const by = (key) => items.slice().sort((a, b) => key(b) - key(a) || t(b) - t(a));
+  const f = { latest: () => by(() => 0), covered: () => by(({ s }) => s.n_sources), growing: () => by(({ s }) => grow6(s)),
+    unread: () => items.slice().sort((a, b) => unread(b) - unread(a) || (unread(a) ? t(a) - t(b) : t(b) - t(a))) }[wSort()];
+  return f ? f() : items;
+}
 function wRanked() {
   const t = wTaste();
   return (state.world || []).filter((s) => !s._old).map((s) => {   // _old = only loaded for a search result
@@ -1168,7 +1445,8 @@ function viewWorld() {
   const all = wRanked(), counts = {};
   all.forEach(({ s }) => { counts[s.region] = (counts[s.region] || 0) + 1; });
   const thaiN = all.filter(({ s }) => isThaiStory(s)).length;
-  const list = state.wreg === "All" ? all : state.wreg === "Thailand" ? all.filter(({ s }) => isThaiStory(s)) : all.filter(({ s }) => s.region === state.wreg);
+  const list0 = state.wreg === "All" ? all : state.wreg === "Thailand" ? all.filter(({ s }) => isThaiStory(s)) : all.filter(({ s }) => s.region === state.wreg);
+  const list = state.wview === "map" ? list0 : sortWorld(list0);
   const shown = list.slice(0, state.wlimit), newest = all.length ? Math.max(...all.map(({ s }) => new Date(s.created_at))) : null;
   const chips = ["All", "Thailand", ...Object.keys(WREG).filter((r) => counts[r])].map((r) =>
     `<button class="c ${state.wreg === r ? "on" : ""}${r === "Thailand" ? " thai" : ""}" data-wreg="${esc(r)}">${esc(r)}<span class="count">${r === "All" ? all.length : r === "Thailand" ? thaiN : counts[r]}</span></button>`).join("");
@@ -1189,8 +1467,8 @@ function viewWorld() {
   return `${head}<div class="wrap world">
     <div class="whead a"><h2>Today's brief</h2><small>${new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}${newest ? ` · updated ${ago(new Date(newest).toISOString())}` : ""} · ${all.length} stories</small></div>
     ${all.length ? worldBriefBar() + wReadFirst() : ""}
-    <div class="filters a"><div class="quick wchips">${state.wview === "map" ? "" : chips}</div>
-      <div class="wviews" role="group" aria-label="View"><button class="${state.wview === "list" ? "on" : ""}" data-wview="list" aria-pressed="${state.wview === "list"}">List</button><button class="${state.wview === "map" ? "on" : ""}" data-wview="map" aria-pressed="${state.wview === "map"}">Map</button></div></div>
+    <div class="fbar a"><div class="filters"><div class="quick wchips">${state.wview === "map" ? "" : chips}</div>
+      <div class="wviews" role="group" aria-label="View"><button class="${state.wview === "list" ? "on" : ""}" data-wview="list" aria-pressed="${state.wview === "list"}">List</button><button class="${state.wview === "map" ? "on" : ""}" data-wview="map" aria-pressed="${state.wview === "map"}">Map</button></div></div>${state.wview === "map" ? "" : sortDD("w")}</div>
     ${body}</div>`;
 }
 // ---------- World map (design rounds 22-24): continent colours, 19 situation kinds, region bubbles, ONE line at a time ----------
@@ -1399,6 +1677,8 @@ app.addEventListener("mouseover", (e) => {
   box.innerHTML = wMapSvg(items, sel);
 });
 
+const placeBtn = (type, name) => { const key = `${type}:${name}`, on = isFollowing("place", key);
+  return `<button class="pl ${on ? "on" : ""}" data-follow="place" data-fkey="${esc(key)}" data-flabel="${esc(name)}">${ICO.bell}${on ? "Following" : "Follow"} ${esc(name)}${type === "region" ? " <em>(region)</em>" : ""}</button>`; };
 function viewWorldStory(id) {
   const head = header("world"), found = (state.world || []).find((s) => s.id === id);
   const hit = found && { s: found, own: state.wvotes.get(id)?.vote };
@@ -1412,7 +1692,8 @@ function viewWorldStory(id) {
       <div class="a wsacts">${(() => { const next = wWaiting().filter((x) => x.id !== s.id).length;
         return wSt(s.id) === "done" ? `<button class="sbtn on-done" data-wdone="${s.id}">✓ Read</button>${next ? `<button class="sbtn" data-wnext="${s.id}">Next top story →</button>` : ""}`
           : `<button class="sbtn" data-wnext="${s.id}">${next ? "✓ Read · next story →" : "✓ Mark as read"}</button>`; })()}
-        ${wVote(s, own, false)}<span class="note hide-sm" style="margin:0">Want / No want tunes what World Brief puts first.</span></div>
+        ${wVote(s, own, false)}${followBtn("world", s.id, s.headline)}<span class="note hide-sm" style="margin:0">Want / No want tunes what World Brief puts first.</span></div>
+      <div class="a wplaces">${s.country && s.country !== "Global" ? placeBtn("country", s.country) : ""}${s.region && s.region !== "Global" ? placeBtn("region", s.region) : ""}</div>
       ${/^https:\/\//.test(s.image_url || "") ? `<figure class="hero-fig"><img class="hero-img" src="${esc(bigImg(s.image_url))}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()">${s.image_credit ? `<figcaption>${esc(s.image_credit)}</figcaption>` : ""}</figure>` : ""}
       ${wThai(s)}
       ${(() => { const mark = termMarker(s); return `${fold("What happened", `<ul>${(s.summary || []).map((b) => `<li>${mark(b)}</li>`).join("")}</ul>`, true)}
@@ -1578,6 +1859,14 @@ function viewSettings() {
     <h2 class="sec a" style="margin-top:32px">My watchlist &amp; topics</h2>
     <div class="wlist a">${d.watchlist.map(chip).join("")}${d.topics.map(stchip).join("")}${d.custom_topics.map(tchip).join("")}${none ? `<span class="note">Nothing yet. Search above to add stocks or topics.</span>` : ""}</div>
     <p class="note a">Your own topics: ${d.custom_topics.length} of ${MAX_CUSTOM_TOPICS}. Stocks outside the robot's built-in list get their own news search: ${Math.min(extra.length, MAX_EXTRA_TICKERS)} of ${MAX_EXTRA_TICKERS} used${extra.length > MAX_EXTRA_TICKERS ? ` (the rest still match by name, without their own search)` : ""}. These limits keep the robot inside the free tiers.</p>
+    <h2 class="sec a" style="margin-top:32px">World places you follow</h2>
+    <div class="wlist a">${[...state.follows].filter((k) => k.startsWith("place:")).map((k) => { const key = k.slice(6), [type, name] = key.split(":");
+      return `<span class="chip on">🔔 ${esc(name)}${type === "region" ? " (region)" : ""}<button data-follow="place" data-fkey="${esc(key)}" data-flabel="${esc(name)}" title="Stop following">×</button></span>`; }).join("")
+      || `<span class="note">None yet. Follow a country or region from any World story, or add one here.</span>`}</div>
+    <div class="a placeadd"><input id="placein" list="placelist" placeholder="Country or region, e.g. Japan, Middle East" maxlength="40" autocomplete="off">
+      <datalist id="placelist">${[...new Set([...Object.keys(WREG).filter((r) => r !== "Global"), ...(state.world || []).map((x) => x.country).filter((c) => c && c !== "Global")])].sort().map((x) => `<option value="${esc(x)}">`).join("")}</datalist>
+      <button class="btn ghost" data-act="place-add">Follow</button></div>
+    <p class="note a">Telegram sends each new World story about these places. Saved straight away.</p>
     <h2 class="sec a" style="margin-top:32px">Price alerts</h2>
     <div class="a" id="pa">${alertsPanel()}</div>
     ${(state.settings.muted_topics || []).length || (state.settings.muted_sources || []).length ? `<h2 class="sec a" style="margin-top:32px">Hidden (show less)</h2>
@@ -1951,6 +2240,12 @@ function render(animate = true) {
     if (id) { app.innerHTML = viewWorldStory(id); if (state.world && !wSt(id) && state.world.some((x) => x.id === id)) setWorldStatus(id, "seen"); }  // opening = seen
     else setApp(viewWorld(), animate);
   } else if (h.startsWith("#/search/")) app.innerHTML = viewSearch();
+  else if (h.startsWith("#/econ")) {
+    const d = h.slice(7), c = state.ecal;
+    if (/^\d{4}-\d\d-\d\d$/.test(d) && c.from !== h) { c.from = h; c.sel = d; c.wk = Math.max(0, Math.min(1, Math.floor(Math.round((dayOf(d) - monday()) / 864e5) / 35))); }
+    if (!c.sel) c.sel = isoDay(today0());
+    setApp(viewEconCal(), animate);
+  }
   else if (h.startsWith("#/calendar")) {
     const d = h.slice(11), c = state.cal;
     if (/^\d{4}-\d\d-\d\d$/.test(d) && c.from !== h) { c.from = h; c.sel = d; c.wk = Math.max(0, Math.min(1, Math.floor(Math.round((dayOf(d) - monday()) / 864e5) / 35))); }
@@ -2022,7 +2317,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { ch
 app.addEventListener("click", async (e) => {
   // Clicking outside the search box closes its results
   if (!e.target.closest(".search")) { const r = document.getElementById("res"); if (r) r.innerHTML = ""; }
-  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief],[data-mascot],[data-bigalert],[data-season-pick]");
+  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-econf],[data-ecalsel],[data-ecalwk],[data-ecalday],[data-ecal],[data-nsort],[data-wsort],[data-follow],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief],[data-mascot],[data-bigalert],[data-season-pick]");
   if (!el) return;
   if (el.dataset.wbrief) { const ids = wWaiting().map((s) => s.id); if (ids.length) { state.briefing = { ids, i: 0, res: {}, world: true }; drawBriefing(); } return; }
   if (el.dataset.goWorld) { location.hash = `#/world/${el.dataset.goWorld}`; return; }
@@ -2078,7 +2373,15 @@ app.addEventListener("click", async (e) => {
   if (el.dataset.calday) { location.hash = `#/calendar/${el.dataset.calday}`; return; }
   if (el.dataset.cal !== undefined) { if (!e.target.closest("a")) location.hash = "#/calendar"; return; }
   if (el.dataset.calsel) { state.cal.sel = el.dataset.calsel; return render(false); }
+  if (el.dataset.ecalsel) { state.ecal.sel = el.dataset.ecalsel; return render(false); }
+  if (el.dataset.ecalwk) { state.ecal.wk = Math.max(0, Math.min(1, state.ecal.wk + Number(el.dataset.ecalwk))); return render(false); }
+  if (el.dataset.ecalday) { location.hash = `#/econ/${el.dataset.ecalday}`; return; }
+  if (el.dataset.ecal !== undefined) { if (!e.target.closest("a,button")) location.hash = "#/econ"; return; }
   if (el.dataset.calf) { state.cal.filter = el.dataset.calf; return render("soft"); }
+  if (el.dataset.econf) { lsSet("ic_econf", el.dataset.econf); return render("soft"); }
+  if (el.dataset.follow) { e.stopPropagation(); return toggleFollow(el.dataset.follow, el.dataset.fkey, el.dataset.flabel); }
+  if (el.dataset.nsort) { lsSet("ic_nsort", el.dataset.nsort); state.feedLimit = FEED_STEP; render("soft"); if (el.dataset.nsort === "price") loadQuotes(); return; }
+  if (el.dataset.wsort) { lsSet("ic_wsort", el.dataset.wsort); state.wlimit = 10; return render("soft"); }
   if (el.dataset.calwk) { state.cal.wk = Math.max(0, Math.min(1, state.cal.wk + Number(el.dataset.calwk))); return render(false); }
   if (el.dataset.done) { e.preventDefault(); e.stopPropagation(); if (stOf({ id: el.dataset.done }) !== "done") burst(el); return changeStatus(el.dataset.done, "done"); }
   if (el.dataset.later) { e.preventDefault(); e.stopPropagation(); return changeStatus(el.dataset.later, "later"); }
@@ -2121,6 +2424,13 @@ app.addEventListener("click", async (e) => {
     render("soft"); window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" }); return;
   }
   if (el.dataset.act === "more-stories") { state.feedLimit += FEED_STEP; return render(false); }
+  if (el.dataset.act === "place-add") {   // follow a typed country / region (matched to the region list, else a country)
+    const v = (document.getElementById("placein")?.value || "").trim().replace(/\s+/g, " ");
+    if (v.length < 2) return toast("Type a country or region");
+    const reg = Object.keys(WREG).find((r) => r.toLowerCase() === v.toLowerCase() || (v.toLowerCase() === "asia" && r === "Asia-Pacific"));
+    const known = (state.world || []).map((x) => x.country).find((c) => (c || "").toLowerCase() === v.toLowerCase());
+    return toggleFollow("place", reg ? `region:${reg}` : `country:${known || v.replace(/\b\w/g, (c) => c.toUpperCase())}`, reg || known || v);
+  }
   if (el.dataset.scroll !== undefined) { app.querySelector(".filters .track")?.scrollBy({ left: 320 * (Number(el.dataset.scroll) || 1), behavior: calm() ? "auto" : "smooth" }); return; }
   if (el.dataset.dock !== undefined) {
     state.dockOpen = !state.dockOpen;
@@ -2346,3 +2656,6 @@ sb.auth.onAuthStateChange((event, session) => {
   if (event === "INITIAL_SESSION" || event === "SIGNED_OUT") start(session);
   else if (event === "SIGNED_IN" && session?.user?.id !== state.user?.id) start(session);
 });
+
+// Sort dropdown: a click anywhere else closes it
+document.addEventListener("click", (e) => document.querySelectorAll("details.sortdd[open]").forEach((d) => { if (!d.contains(e.target)) d.removeAttribute("open"); }));

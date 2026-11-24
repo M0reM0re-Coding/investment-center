@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 35 · Economic release results (like the earnings cards)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--soft:#555;--muted:#888;--line:#ececec;--line2:#e2e2e2;--chip:#f3f3f3;--accent:#ff4f00;--bg:#fafafa;--up:#16a34a;--down:#dc2626}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;color:var(--ink);background:var(--bg)}
+.top{max-width:1240px;margin:0 auto;padding:36px 32px 4px}
+h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}
+.lead{color:var(--soft);margin:0;max-width:900px}
+.sec{max-width:1240px;margin:26px auto 8px;padding:0 32px;font:900 20px 'Inter Tight'}
+.sec small{font:600 13.5px Inter;color:var(--soft);display:block;margin-top:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+/* A: result cards (same family as earnings cards) */
+.rc{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:start}
+.big{border-radius:14px;padding:14px;background:linear-gradient(135deg,#2a0f0f,#111);color:#fff}
+.big.good{background:linear-gradient(135deg,#0f2a1a,#111)}
+.hd{display:flex;align-items:center;gap:10px}
+.cc{width:42px;height:42px;border-radius:10px;background:#2b2b2b;display:grid;place-items:center;font:900 12px Inter;flex:none}
+.tt b{display:block;font:800 16px 'Inter Tight'}.tt small{color:#9ca3af;font-size:11.5px}
+.vd{margin-left:auto;font:900 11px Inter;letter-spacing:.8px;border-radius:8px;padding:5px 10px;color:#fff;flex:none}
+.vd.good{background:var(--up)}.vd.bad{background:var(--down)}.vd.inl{background:#6b7280}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.nums div{background:rgba(255,255,255,.06);border-radius:10px;padding:9px 10px}
+.nums small{display:block;color:#9ca3af;font:700 10px Inter;letter-spacing:.8px}
+.nums b{font:900 20px 'Inter Tight'}.nums b.good{color:#4ade80}.nums b.bad{color:#f87171}
+.ft{margin-top:10px;font-size:11.5px;color:#9ca3af}
+.sm{display:grid;gap:8px}
+.s{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;background:#fff}
+.s b.good{color:var(--up)}.s b.bad{color:var(--down)}
+.s .vd{padding:4px 8px;font-size:10px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;flex:none}.dot.H{background:#e5383b}.dot.M{background:#f59e0b}
+/* B: calendar box with Actual column */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.box{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}
+.box h3{margin:0 0 8px;font:800 18px 'Inter Tight'}
+.hrow,.row{display:grid;grid-template-columns:40px 36px 8px 1fr 50px 50px 50px;gap:8px;align-items:center;font-size:12.5px}
+.hrow{font:800 10px Inter;letter-spacing:.8px;color:var(--muted);padding:4px 0}
+.hrow span:nth-child(n+5),.row .n{text-align:right}
+.row{padding:7px 0;border-top:1px solid #f1f1f1}
+.row .tm{font:700 11.5px ui-monospace,Consolas,monospace;color:var(--soft)}
+.row .c{font:800 10px Inter;background:var(--chip);border-radius:5px;padding:2px 0;text-align:center}
+.row .ev{font-weight:600;line-height:1.25}
+.row .n{font:600 12px Inter;color:var(--soft)}
+.row .n.a{font-weight:800}.row .n.good{color:var(--up)}.row .n.bad{color:var(--down)}.row .n.wait{color:#bbb;font-weight:600}
+.day{font:800 10.5px Inter;letter-spacing:1px;color:var(--muted);margin:10px 0 2px}
+.day.t{color:var(--accent)}
+.note{font-size:12px;color:var(--muted);margin:10px 0 0}
+/* C: strip */
+.strip{display:flex;align-items:stretch;background:#111;color:#fff;border-radius:14px;overflow:hidden}
+.strip .lab{padding:10px 14px;font:800 10.5px/1.3 Inter;letter-spacing:1px;color:#ff8a5c;display:flex;align-items:center;border-right:1px solid #2a2a2a}
+.strip .it{padding:9px 14px;border-right:1px solid #2a2a2a;flex:1;min-width:0}
+.strip .it b{display:block;font:700 13px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .it small{display:block;font-size:11.5px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .it.out{background:#1c1c1c}
+.strip .g{color:#4ade80;font-weight:800}.strip .r{color:#f87171;font-weight:800}.strip .cd{color:#ff8a5c;font-weight:800}
+.q{max-width:1240px;margin:26px auto 60px;padding:0 32px}
+.q div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:14px}
+.q li{margin:3px 0}
+</style></head><body>
+<div class="top">
+  <h1>Round 35 · Economic release results, like the earnings cards</h1>
+  <p class="lead">When a High or Medium Forex Factory event is released, the site shows <b>Actual vs Forecast vs Previous</b> and whether it came in <b>better or worse than expected</b> (green / red, like Forex Factory). All numbers below are <b>real releases from 24 Nov</b> (Nasdaq data).</p>
+</div>
+
+<h2 class="sec">A · "Just released" cards on My News <small>Same family as the earnings cards. Shown for 6 hours after release. High impact = big card, the rest small.</small></h2>
+<div class="wrap rc">
+  <div class="big">
+    <div class="hd"><span class="cc">USD</span><div class="tt"><b>S&amp;P Global Composite PMI <span class="dot H"></span></b><small>Released 21:45 Bangkok · 2 h ago · High impact</small></div><span class="vd bad">WORSE THAN EXPECTED</span></div>
+    <div class="nums"><div><small>ACTUAL</small><b class="bad">54.6</b></div><div><small>FORECAST</small><b>55.6</b></div><div><small>PREVIOUS</small><b>55.9</b></div></div>
+    <div class="ft">Below forecast and below last month. A PMI above 50 still means growth, just slower · Forex Factory + Nasdaq</div>
+  </div>
+  <div class="sm">
+    <div class="s"><span class="dot M"></span><b>EUR</b> Manufacturing PMI · <b class="good">52.9</b> vs 52.7<span class="vd good">BETTER</span></div>
+    <div class="s"><span class="dot M"></span><b>GBP</b> Services PMI · <b class="bad">52.0</b> vs 53.0<span class="vd bad">WORSE</span></div>
+    <div class="s"><span class="dot M"></span><b>USD</b> Manufacturing PMI · <b>54.5</b> vs 54.5<span class="vd inl">AS EXPECTED</span></div>
+  </div>
+</div>
+
+<h2 class="sec">B · Economic calendar box gets an "Actual" column <small>Exactly like Forex Factory's own table: Actual (green better / red worse), Forecast, Previous. Waiting events show "—".</small></h2>
+<div class="wrap two">
+  <div class="box">
+    <h3>Economic calendar</h3>
+    <div class="hrow"><span>TIME</span><span></span><span></span><span>EVENT</span><span>ACTUAL</span><span>FCST</span><span>PREV</span></div>
+    <div class="day t">TODAY · TUE 24</div>
+    <div class="row"><span class="tm">15:00</span><span class="c">EUR</span><i class="dot M"></i><span class="ev">Manufacturing PMI</span><span class="n a good">52.9</span><span class="n">52.7</span><span class="n">52.7</span></div>
+    <div class="row"><span class="tm">15:00</span><span class="c">EUR</span><i class="dot M"></i><span class="ev">Services PMI</span><span class="n a bad">51.2</span><span class="n">51.8</span><span class="n">51.4</span></div>
+    <div class="row"><span class="tm">15:30</span><span class="c">GBP</span><i class="dot M"></i><span class="ev">Services PMI</span><span class="n a bad">52.0</span><span class="n">53.0</span><span class="n">52.8</span></div>
+    <div class="row"><span class="tm">21:45</span><span class="c">USD</span><i class="dot H"></i><span class="ev">Composite PMI</span><span class="n a bad">54.6</span><span class="n">55.6</span><span class="n">55.9</span></div>
+    <div class="row"><span class="tm">22:00</span><span class="c">USD</span><i class="dot M"></i><span class="ev">CB Consumer Confidence</span><span class="n a wait">—</span><span class="n">92.4</span><span class="n">91.7</span></div>
+    <p class="note">Green = better than forecast for that economy, red = worse. For unemployment and jobless claims, lower is better.</p>
+  </div>
+  <div>
+    <h3 style="font:800 18px 'Inter Tight';margin:0 0 8px">C · "Next up" strip shows what just came out</h3>
+    <div class="strip">
+      <div class="lab">JUST<br>OUT</div>
+      <div class="it out"><b>USD Composite PMI</b><small><span class="r">54.6</span> vs 55.6 forecast · 2 h ago</small></div>
+      <div class="lab" style="border-left:1px solid #2a2a2a">NEXT<br>UP</div>
+      <div class="it"><b>USD CB Consumer Confidence</b><small><span class="cd">in 15 min</span> · F 92.4</small></div>
+    </div>
+    <p class="note">The strip keeps "Next up", and for 2 hours after a High-impact release it adds a "Just out" item first.</p>
+  </div>
+</div>
+
+<div class="q"><div>
+  <b>Where the "Actual" numbers come from:</b> Forex Factory's free files have no actual values (checked: even yesterday's released events have none). Options:
+  <ul>
+    <li><b>Nasdaq economic calendar</b> (my pick): no sign-up, no key. It had actuals for 41 of 42 events on 24 Nov, and its forecasts match Forex Factory's. It is <b>unofficial</b> (the data behind Nasdaq's calendar page, not a documented API), so it could change. The robot asks politely, ~once every 30 min after a release time, and doesn't disguise itself.</li>
+    <li><b>FMP free key</b>: an official API, but you sign up for a free key, and I couldn't confirm the free plan includes the economic calendar.</li>
+    <li><b>Link only</b>: no actuals; each event links to its Forex Factory page.</li>
+  </ul>
+  If Nasdaq has no match for an event (rare ones, speeches), it shows "—" and links to Forex Factory.
+</div></div>
+</body></html>

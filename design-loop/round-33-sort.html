@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 33 · Sort My News and World Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--soft:#555;--muted:#888;--line:#ececec;--line2:#e2e2e2;--chip:#f3f3f3;--accent:#ff4f00;--bg:#fafafa}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;color:var(--ink);background:var(--bg)}
+.top{max-width:1240px;margin:0 auto;padding:36px 32px 6px}
+h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}
+.lead{color:var(--soft);margin:0;max-width:860px}
+h2.sec{max-width:1240px;margin:30px auto 10px;padding:0 32px;font:900 22px 'Inter Tight';letter-spacing:-.5px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+/* option table */
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+th{font:800 11px Inter;letter-spacing:.8px;color:var(--muted);background:#fcfcfc;border-top:0}
+td b{font-weight:800}
+.tag{font:800 10px Inter;letter-spacing:.6px;border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:1px}
+.tag.def{background:var(--ink);color:#fff}.tag.new{background:#fff1ea;color:var(--accent)}.tag.ask{background:#eef2ff;color:#4338ca}
+.na{color:#bbb}
+/* control styles */
+.styles{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:0 24px}.sty{display:grid;grid-row:span 3;grid-template-rows:subgrid}
+.sty h3{font:800 17px 'Inter Tight';margin:0 0 4px}.sty h3 b{color:var(--accent)}
+.sty p{margin:0 0 12px;color:var(--soft);font-size:13.5px}
+.rec{display:inline-block;background:var(--accent);color:#fff;font:800 10px Inter;letter-spacing:.8px;border-radius:99px;padding:3px 8px;margin-left:6px;vertical-align:2px}
+.page{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;min-height:330px}
+.frow{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.c{flex:none;border:1px solid var(--line2);border-radius:99px;padding:6px 12px;font:600 13px Inter;background:#fff}
+.c.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sp{margin-left:auto}
+.sortbtn{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:99px;padding:6px 12px;font:700 13px Inter;background:#fff;position:relative}
+.sortbtn small{color:var(--muted);font-weight:600}
+.menu{position:absolute;right:0;top:calc(100% + 6px);width:250px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.12);padding:6px;z-index:2;text-align:left}
+.menu div{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:9px;font:600 13px Inter}
+.menu div small{display:block;color:var(--muted);font:500 11.5px Inter;margin-top:1px}
+.menu div.on{background:#fff1ea}.menu div.on b{color:var(--accent)}
+.menu i{font-style:normal;width:16px;color:var(--accent);font-weight:800}
+.seg{display:flex;gap:2px;background:var(--chip);border-radius:99px;padding:3px;margin-top:12px;width:max-content}
+.seg span{font:700 12.5px Inter;border-radius:99px;padding:6px 12px;color:var(--soft)}
+.seg span.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.slabel{font:800 11px Inter;letter-spacing:.8px;color:var(--muted);margin:14px 0 0}
+.cards{display:grid;gap:8px;margin-top:12px}
+.card{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.card .imp{font:900 16px 'Inter Tight';text-align:center;border-radius:9px;padding:5px 0;background:#fee2e2;color:#b91c1c}
+.card .imp.m{background:#ffedd5;color:#c2410c}.card .imp.l{background:#f3f4f6;color:#555}
+.card b{font:700 13.5px Inter;display:block}.card small{color:var(--muted);font-size:11.5px}
+.card .t{font:700 11px Inter;color:var(--muted)}
+.note{max-width:1240px;margin:14px auto 0;padding:0 32px;color:var(--soft);font-size:13.5px}
+.q{max-width:1240px;margin:26px auto 60px;padding:16px 32px}
+.q div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:14px}
+.q b{color:var(--ink)}
+</style></head><body>
+<div class="top">
+  <h1>Round 33 · Sort My News and World Brief</h1>
+  <p class="lead">My proposal: one <b>Sort</b> control on each page. It works together with your existing filters (topics, To read, Saved…): the filter picks <i>which</i> stories, the sort picks the <i>order</i>. The top story (the big one) always follows the sort. Your choice is remembered on each device.</p>
+</div>
+
+<h2 class="sec">1 · Sort options (proposal)</h2>
+<div class="wrap">
+<table>
+  <tr><th style="width:22%">SORT</th><th>WHAT IT DOES</th><th style="width:16%">MY NEWS</th><th style="width:16%">WORLD BRIEF</th></tr>
+  <tr><td><b>Recommended</b><span class="tag def">DEFAULT</span></td><td>Today's order, unchanged. <b>My News:</b> impact ×3 + outlets + freshness. <b>World:</b> outlets + freshness + your Want / No-want votes.</td><td>✓</td><td>✓</td></tr>
+  <tr><td><b>Highest impact</b></td><td>AI impact score 10 → 1. Ties: newest first.</td><td>✓</td><td class="na">— (no score; use "Most covered")</td></tr>
+  <tr><td><b>Latest</b></td><td>Newest first, pure time order. Good for "what just happened?".</td><td>✓</td><td>✓</td></tr>
+  <tr><td><b>Most covered</b></td><td>Number of outlets reporting it. The more outlets, the bigger the story everywhere.</td><td>✓</td><td>✓</td></tr>
+  <tr><td><b>Fastest growing</b><span class="tag new">NEW IDEA</span></td><td>Outlets added in the last 6 hours (uses the "Developing" data you already have). Finds stories that are blowing up right now.</td><td>✓</td><td>✓</td></tr>
+  <tr><td><b>Biggest price move</b><span class="tag new">NEW IDEA</span></td><td>How much the story's stocks moved since it was posted (the "Price reaction" you already have). Stories without stocks go last.</td><td>✓</td><td class="na">—</td></tr>
+  <tr><td><b>My watchlist first</b><span class="tag new">NEW IDEA</span></td><td>Stories about your watchlist stocks on top (by impact), then the rest in Recommended order.</td><td>✓</td><td class="na">—</td></tr>
+  <tr><td><b>Oldest unread first</b><span class="tag ask">OPTIONAL</span></td><td>Catch-up mode: the stories you haven't read that have waited longest.</td><td>✓</td><td>✓</td></tr>
+</table>
+</div>
+
+<h2 class="sec">2 · How the control looks (pick one)</h2>
+<div class="wrap styles">
+  <section class="sty">
+    <h3><b>S1</b> · "Sort" dropdown <span class="rec">RECOMMENDED</span></h3>
+    <p>One small button at the right end of the filter row, showing the current sort. Opens a menu with a one-line explanation of each option. Takes almost no space and works on phone.</p>
+    <div class="page">
+      <div class="frow"><span class="c on">All</span><span class="c">To read 12</span><span class="c">Saved</span><span class="c">Thai economy</span>
+        <span class="sp"></span>
+        <span class="sortbtn">⇅ <small>Sort:</small> Highest impact ▾
+          <div class="menu">
+            <div><i></i><span>Recommended<small>Impact + outlets + freshness</small></span></div>
+            <div class="on"><i>✓</i><span><b>Highest impact</b><small>AI score 10 → 1</small></span></div>
+            <div><i></i><span>Latest<small>Newest first</small></span></div>
+            <div><i></i><span>Most covered<small>Most outlets</small></span></div>
+            <div><i></i><span>Fastest growing<small>Outlets added in 6 h</small></span></div>
+            <div><i></i><span>Biggest price move<small>Since the story was posted</small></span></div>
+            <div><i></i><span>My watchlist first<small>Your stocks on top</small></span></div>
+          </div></span></div>
+      <div class="cards" style="opacity:.35">
+        <div class="card"><span class="imp">9</span><span><b>Fed signals pause as inflation cools</b><small>Reuters · 3 h · 14 outlets</small></span><span class="t">3 h</span></div>
+        <div class="card"><span class="imp">8</span><span><b>NVDA beats; guidance above estimates</b><small>CNBC · 9 h · 11 outlets</small></span><span class="t">9 h</span></div>
+      </div>
+    </div>
+  </section>
+  <section class="sty">
+    <h3><b>S2</b> · Sort pills row</h3>
+    <p>A second row of small pills under the filters, always visible. One click to switch, but it adds a row, and 7 options are too many to fit on phone (it would scroll).</p>
+    <div class="page">
+      <div class="frow"><span class="c on">All</span><span class="c">To read 12</span><span class="c">Saved</span><span class="c">Thai economy</span></div>
+      <div class="slabel">SORT</div>
+      <div class="seg"><span>Recommended</span><span class="on">Highest impact</span><span>Latest</span><span>Most covered</span><span>Growing</span><span>Price move</span></div>
+      <div class="cards">
+        <div class="card"><span class="imp">9</span><span><b>Fed signals pause as inflation cools</b><small>Reuters · 3 h · 14 outlets</small></span><span class="t">3 h</span></div>
+        <div class="card"><span class="imp">8</span><span><b>NVDA beats; guidance above estimates</b><small>CNBC · 9 h · 11 outlets</small></span><span class="t">9 h</span></div>
+        <div class="card"><span class="imp m">6</span><span><b>SET ends higher on bank stocks</b><small>Bangkok Post · 1 h · 4 outlets</small></span><span class="t">1 h</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+<p class="note">Example story cards are placeholders. They only show the order a sort produces.</p>
+
+<div class="q"><div>
+  <b>Decide:</b> (1) which sort options to keep, (2) S1 dropdown or S2 pills, (3) World Brief: keep it on "Most covered" for impact, or should the robot also give World stories an AI impact score 1-10? That would use a little more of the free Gemini quota.
+</div></div>
+</body></html>

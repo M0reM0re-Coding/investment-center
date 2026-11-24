@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 34 · Obsidian, Follow, Stock mood, Follow a place, Earnings card</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--soft:#555;--muted:#888;--line:#ececec;--line2:#e2e2e2;--chip:#f3f3f3;--accent:#ff4f00;--bg:#fafafa;--up:#16a34a;--down:#dc2626}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;color:var(--ink);background:var(--bg)}
+.top{max-width:1240px;margin:0 auto;padding:36px 32px 4px}
+h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}
+.lead{color:var(--soft);margin:0;max-width:880px}
+.grid{max-width:1240px;margin:0 auto;padding:18px 32px 20px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.f{display:grid;grid-template-rows:auto auto 1fr;gap:0}
+.f h2{font:800 19px 'Inter Tight';margin:0 0 4px}.f h2 b{color:var(--accent)}
+.f>p{margin:0 0 12px;color:var(--soft);font-size:13.5px}
+.box{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}
+.lbl{font:800 10.5px Inter;letter-spacing:1px;color:var(--muted);margin:0 0 8px}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px}
+.opt.rec{border:2px solid var(--accent)}
+.opt b{display:block;font:800 14px 'Inter Tight';margin-bottom:4px}
+.rtag{display:inline-block;background:var(--accent);color:#fff;font:800 9.5px Inter;letter-spacing:.8px;border-radius:99px;padding:2px 7px;margin-left:4px;vertical-align:2px}
+code,.md{font:12px/1.5 ui-monospace,Consolas,monospace}
+.md{background:#0f0f0f;color:#e6e6e6;border-radius:12px;padding:12px 14px;margin-top:10px;white-space:pre-wrap}
+.md .h{color:#ff8a5c;font-weight:700}.md .k{color:#8ab4ff}.md .c{color:#888}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:99px;padding:7px 13px;font:700 13px Inter;background:#fff}
+.btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
+.story h3{font:800 20px/1.2 'Inter Tight';margin:4px 0 8px}
+.meta{font:700 11.5px Inter;color:var(--muted);letter-spacing:.3px}
+.acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tg{margin-top:14px;background:#e8f3fb;border-radius:14px;padding:12px;max-width:380px}
+.tg .bub{background:#fff;border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.tg .bub b{display:block;margin-bottom:2px}
+.tg small{display:block;color:#6b8aa3;font-size:10.5px;text-align:right;margin-top:4px}
+.chipf{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}.chipf span{border:1px solid var(--line2);border-radius:99px;padding:5px 11px;font:600 12.5px Inter}
+.chipf span.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mood{display:grid;grid-template-columns:58px 1fr 64px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mood:first-of-type{border-top:0}
+.mood b{font:800 14px 'Inter Tight'}
+.bar{display:flex;height:12px;border-radius:99px;overflow:hidden;background:#eee}
+.bar i{display:block}.bar .u{background:var(--up)}.bar .n{background:#cfcfcf}.bar .d{background:var(--down)}
+.mood small{font:700 11px Inter;text-align:right}
+.mood small.up{color:var(--up)}.mood small.dn{color:var(--down)}.mood small.fl{color:var(--muted)}
+.mood .sub{grid-column:2/4;font-size:11px;color:var(--muted);margin-top:-4px}
+.ai{font-size:11px;color:var(--muted);margin-top:8px}
+.place{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pl{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:99px;padding:6px 12px;font:700 13px Inter;background:#fff}
+.pl.on{border-color:var(--accent);color:var(--accent);background:#fff6f1}
+.pl em{font-style:normal;color:var(--muted);font-weight:600}
+.ear{border-radius:14px;padding:14px;background:linear-gradient(135deg,#0f2a1a,#111);color:#fff}
+.ear .hd{display:flex;align-items:center;gap:10px}
+.ear .lg{width:42px;height:42px;flex:none;border-radius:10px;background:#76b900;display:grid;place-items:center;font:900 10.5px Inter;color:#111}
+.ear .tt b{display:block;font:800 16px 'Inter Tight'}.ear .tt small{color:#9ca3af;font-size:11.5px}
+.ear .beat{margin-left:auto;background:var(--up);color:#fff;font:900 12px Inter;letter-spacing:1px;border-radius:8px;padding:5px 10px}
+.ear .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.ear .nums div{background:rgba(255,255,255,.06);border-radius:10px;padding:9px 10px}
+.ear .nums small{display:block;color:#9ca3af;font:700 10px Inter;letter-spacing:.8px}
+.ear .nums b{font:900 20px 'Inter Tight'}.ear .nums b.g{color:#4ade80}
+.ear .ft{margin-top:10px;font-size:11.5px;color:#9ca3af}
+.ear2{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:13px}
+.ear2 .miss{margin-left:auto;background:var(--down);color:#fff;font:900 11px Inter;letter-spacing:1px;border-radius:7px;padding:4px 8px}
+.ear2 .bt{margin-left:auto;background:var(--up);color:#fff;font:900 11px Inter;letter-spacing:1px;border-radius:7px;padding:4px 8px}
+.foot{max-width:1240px;margin:0 auto 60px;padding:0 32px}
+.foot div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:14px}
+.foot li{margin:3px 0}
+</style></head><body>
+<div class="top">
+  <h1>Round 34 · Five new features for My News and World Brief</h1>
+  <p class="lead">One preview per feature. The NVDA and PTT earnings numbers are <b>real</b> (checked on Yahoo today). Story text, mood counts and places are examples. Everything here uses data the site already has, plus one new free Yahoo call for earnings.</p>
+</div>
+<div class="grid">
+
+<!-- 1 Obsidian -->
+<section class="f">
+  <h2><b>1</b> · Send saved stories + notes to Obsidian</h2>
+  <p>Your saved stories and your notes become one Markdown file in your vault's <code>raw/</code> folder, following its rules (dated name, never edited later). Then saying "ingest" in Claude turns it into wiki pages.</p>
+  <div class="box">
+    <div class="lbl">HOW IT GETS THERE (pick one)</div>
+    <div class="pick">
+      <div class="opt rec"><b>A · One command on your PC <span class="rtag">REC</span></b>Run <code>python robot/obsidian_export.py</code>. It writes straight into <code>second-brain/raw/</code>. Only stories saved or noted since the last export, so no duplicates.</div>
+      <div class="opt"><b>B · Download button</b>"Export to Obsidian" in the Saved view downloads the same .md file. You move it into <code>raw/</code> yourself. Also works from your phone.</div>
+    </div>
+    <div class="md"><span class="c">raw/2026-11-25-investment-center-saved.md</span>
+<span class="h"># Investment Center · saved stories · 18–25 Nov 2026</span>
+<span class="h">## Fed signals pause as inflation cools</span>
+<span class="k">date:</span> 2026-11-24 · <span class="k">impact:</span> 9/10 · <span class="k">mood:</span> Bullish · <span class="k">stocks:</span> SPY, NVDA
+<span class="k">link:</span> https://www.reuters.com/…
+- Key point 1 · Key point 2 · Key point 3
+<span class="k">Why it matters:</span> lower rates help growth stocks…
+<span class="k">My note:</span> check bank margins next week</div>
+  </div>
+</section>
+
+<!-- 2 Follow story -->
+<section class="f">
+  <h2><b>2</b> · Follow a story → alert when it grows</h2>
+  <p>A 🔔 Follow button on the story page and on cards (both pages). Telegram pings you when a followed story gains 3+ outlets or gets a new timeline step. A "Following" filter chip lists them. Alerts stop after 7 days without updates.</p>
+  <div class="box story">
+    <div class="meta">DEVELOPING · DAY 2 · REUTERS · 3 H AGO</div>
+    <h3>Japan weighs yen intervention after slide past 160</h3>
+    <div class="acts"><span class="btn on">🔔 Following</span><span class="btn">☆ Save</span><span class="btn">Later</span><span class="btn dk">✓ Done</span></div>
+    <div class="tg"><div class="bub"><b>🔔 Story you follow grew</b>Japan weighs yen intervention… now 14 outlets (was 6). New: "BOJ official says ready to act".</div><small>Investment Center bot · 14:05</small></div>
+    <div class="chipf"><span>All</span><span>Saved</span><span class="on">🔔 Following 3</span><span>To read</span></div>
+  </div>
+</section>
+
+<!-- 3 Stock mood -->
+<section class="f">
+  <h2><b>3</b> · Stock mood (your watchlist)</h2>
+  <p>A box in the right column of My News. For each watchlist stock, the share of this week's stories the AI tagged Bullish, Neutral/Mixed or Bearish, and the change vs last week. Click a stock to see its stories.</p>
+  <div class="box">
+    <div class="lbl">STOCK MOOD · LAST 7 DAYS</div>
+    <div class="mood"><b>NVDA</b><div class="bar"><i class="u" style="width:62%"></i><i class="n" style="width:23%"></i><i class="d" style="width:15%"></i></div><small class="up">▲ better</small><div class="sub">13 stories · 8 bullish · 2 bearish</div></div>
+    <div class="mood"><b>PTT</b><div class="bar"><i class="u" style="width:25%"></i><i class="n" style="width:25%"></i><i class="d" style="width:50%"></i></div><small class="dn">▼ worse</small><div class="sub">4 stories · 1 bullish · 2 bearish</div></div>
+    <div class="mood"><b>AAPL</b><div class="bar"><i class="u" style="width:40%"></i><i class="n" style="width:40%"></i><i class="d" style="width:20%"></i></div><small class="fl">— same</small><div class="sub">5 stories · 2 bullish · 1 bearish</div></div>
+    <div class="ai">AI's guess from story tone, not advice. Stocks with fewer than 3 stories show "not enough news".</div>
+  </div>
+</section>
+
+<!-- 4 Follow place -->
+<section class="f">
+  <h2><b>4</b> · World: follow a country or region</h2>
+  <p>On any World story: "🔔 Follow Myanmar" (country) or "Follow Asia" (region). Telegram pings you when a <i>new</i> World story about a followed place arrives. Manage the list in Topics &amp; watchlist. Uses the country the AI already saves.</p>
+  <div class="box">
+    <div class="meta">ASIA · MYANMAR · POLITICS · 2 H AGO</div>
+    <h3 style="font:800 18px/1.2 'Inter Tight';margin:4px 0 10px">Myanmar junta extends emergency rule ahead of vote</h3>
+    <div class="place"><span class="pl on">🔔 Following Myanmar</span><span class="pl">🔔 Follow Asia <em>(region)</em></span></div>
+    <div class="lbl" style="margin-top:16px">PLACES YOU FOLLOW (Topics &amp; watchlist)</div>
+    <div class="place"><span class="pl on">Myanmar ×</span><span class="pl on">Japan ×</span><span class="pl on">Middle East ×</span><span class="pl">+ Add a place</span></div>
+    <div class="tg"><div class="bub"><b>🌍 New in Myanmar</b>Myanmar junta extends emergency rule ahead of vote · 7 outlets</div><small>Investment Center bot · 09:12</small></div>
+  </div>
+</section>
+
+<!-- 5 Earnings -->
+<section class="f" style="grid-column:1/-1">
+  <h2><b>5</b> · Earnings result card</h2>
+  <p>When a watchlist company reports, a card appears at the top of My News for 3 days. It shows EPS actual vs expected, BEAT / MISS, the surprise %, revenue, and how the stock moved since the report. It also shows on that day in the Calendar. The robot checks Yahoo once a day per watchlist stock.</p>
+  <div class="box" style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start">
+    <div class="ear">
+      <div class="hd"><span class="lg">NVDA</span><div class="tt"><b>NVIDIA · Q3 results</b><small>Reported · quarter ended 31 Oct 2026</small></div><span class="beat">BEAT</span></div>
+      <div class="nums"><div><small>EPS ACTUAL</small><b>2.68</b></div><div><small>EXPECTED</small><b>2.47</b></div><div><small>SURPRISE</small><b class="g">+8.4%</b></div></div>
+      <div class="ft">Revenue 115.84B (no revenue forecast in the free data) · Stock since report: +3.1% · Yahoo Finance</div>
+    </div>
+    <div>
+      <div class="lbl">SMALLER VERSION (2ND, 3RD COMPANY)</div>
+      <div class="ear2"><b>PTT</b> Q3 · EPS 1.43 vs 1.07 · <b style="color:var(--up)">+33.2%</b><span class="bt">BEAT</span></div>
+      <div class="ear2"><b>AAPL</b> Q4 · EPS 1.52 vs 1.60 · <b style="color:var(--down)">−5.0%</b><span class="miss">MISS</span></div>
+      <p class="ai" style="margin-top:10px">PTT numbers are real. The AAPL line is an example to show how a MISS looks.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="foot"><div>
+  <b>What gets built behind these:</b>
+  <ul>
+    <li>One new SQL file (012): a <i>follows</i> table (stories + places) and an <i>earnings_results</i> table. You run it once.</li>
+    <li>Robot: follow alerts run every 30 minutes, and the earnings check runs once a day. Telegram goes to the same chat as your other alerts.</li>
+    <li>No new accounts, keys or costs. The only new outside call is Yahoo's earnings data (free; the robot already uses Yahoo for dates).</li>
+  </ul>
+  <b>Decide:</b> (1) Obsidian: A (command) or B (button), or both? (2) Anything to change in the 5 previews?
+</div></div>
+</body></html>
