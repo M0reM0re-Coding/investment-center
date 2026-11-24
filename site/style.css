@@ -20,6 +20,21 @@ header{border-bottom:1px solid var(--line);background:var(--head);position:stick
 .nav nav a.soon{color:#bbb;cursor:default}
 .nav nav a.soon small{font-size:10px;font-weight:700;margin-left:4px;color:#bbb}
 .nav .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+/* header labels never wrap or squeeze when the search box widens on focus; the search box gives up space instead */
+.nav .logo,.nav nav,.nav nav a,.nav .r>*:not(.hsearch){flex-shrink:0;white-space:nowrap}
+.nav .r,.nav .hsearch{flex-shrink:1;min-width:0}
+/* laptop widths (incl. Windows display scaling 125-150%): the full header doesn't fit, so compact it */
+@media (min-width:761px) and (max-width:1240px){
+  .nav{gap:20px}.nav nav{gap:18px}.nav .r{gap:8px}
+  .nav .hide-sm{display:none}
+  .nav .hsearch,.nav .hsearch:focus-within{width:220px}
+}
+@media (min-width:761px) and (max-width:1060px){
+  .nav .live{display:none}
+  .nav .logo{font-size:19px}
+  .nav .hsearch,.nav .hsearch:focus-within{width:190px}
+}
+@media (min-width:761px) and (max-width:900px){.nav nav a.soon{display:none}}
 .btn{border:0;border-radius:99px;padding:9px 18px;font-weight:700;font-size:14px;background:var(--ink);color:#fff}
 .btn.ghost{background:var(--chip);color:var(--ink)}
 .btn:disabled{opacity:.5;cursor:default}
