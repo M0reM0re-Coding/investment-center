@@ -138,7 +138,7 @@ function tile(s, big = false) {
 function media(s, big = false) {
   if (!/^https:\/\//.test(s.image_url || "")) return tile(s, big);
   return `<div class="pic">${tile(s, big)}
-    <img src="${esc(s.image_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('noimg')">
+    <img src="${esc(s.image_url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('noimg')">
     <span class="badge ${impClass(s.impact_score)}"><b data-count="${esc(s.impact_score)}">${esc(s.impact_score)}</b> <small>IMPACT</small></span></div>`;
 }
 const star = (s) => `<button class="star ${state.saved.has(s.id) ? "on" : ""}" data-save="${s.id}" title="Save for later">${state.saved.has(s.id) ? "★" : "☆"}</button>`;
@@ -216,7 +216,7 @@ function spark(q, w, h) {
   return `<svg class="spark draw" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="--len:${w * 3}">
     ${q.prev ? `<line x1="0" x2="${w}" y1="${y(q.prev)}" y2="${y(q.prev)}" stroke="#ccc" stroke-dasharray="2 3"/>` : ""}
     <path class="area" d="${d}L${w},${h}L0,${h}Z" fill="${col}"/><path class="ln" d="${d}" stroke="${col}"/>
-    <circle class="now-ring" cx="${w}" cy="${y(pts[n])}" r="3" stroke="${col}"/><circle class="now" cx="${w}" cy="${y(pts[n])}" r="3" fill="${col}"/></svg>`;
+    <circle class="now" cx="${w}" cy="${y(pts[n])}" r="3" fill="${col}"/></svg><i class="nring" style="left:${w}px;top:${y(pts[n])}px;color:${col}"></i>`;   // the pulsing ring is HTML, not SVG, so the browser can animate it without redrawing the chart
 }
 const pxSpan = (y) => `<span class="px tnum" data-px="${esc(y)}">${quotes[y] ? fmtPx(quotes[y].price) : "—"}</span>`;
 const chSpan = (y) => `<span class="ch tnum ${dirOf(quotes[y])}" data-ch="${esc(y)}">${pctTxt(quotes[y])}</span>`;
@@ -502,7 +502,7 @@ function briefBar() {
   const movers = (state.settings.watchlist || []).map((t) => [t, quotes[yahoo(t)]]).filter(([, q]) => q && q.prev)
     .sort((a, b) => Math.abs(pctOf(b[1])) - Math.abs(pctOf(a[1])));
   const mover = movers.length ? ` · ${esc(movers[0][0])} <span class="${dirOf(movers[0][1])}">${pctTxt(movers[0][1])}</span> today` : "";
-  const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="${impClass(s.impact_score)}">${s.impact_score}</span>`);
+  const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="${impClass(s.impact_score)}">${s.impact_score}</span>`);
   return `<div class="brief a" data-sig="${esc([waiting.length, fresh.length, hi, mover].join("|"))}">${calm() ? "" : BRIEF_BG}${seasonArt()}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${hi} high-impact${mover}</p></div>
     <div class="thumbs">${waiting.length ? waiting.slice(0, 4).map(thumb).join("") : `<span class="bmas">${mascotArt("caught-up")}</span>`}</div>
@@ -512,7 +512,7 @@ function briefBar() {
 function queuePanel() {
   const list = storiesFor("To read").sort((a, b) => prio(b) - prio(a)), later = storiesFor("Later");
   const m = mustReads(), done = m.filter((s) => stOf(s) === "done").length;
-  const th = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=&quot;qi ${impClass(s.impact_score)}&quot;>${s.impact_score}</span>'">` : `<span class="qi ${impClass(s.impact_score)}">${s.impact_score}</span>`);
+  const th = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=&quot;qi ${impClass(s.impact_score)}&quot;>${s.impact_score}</span>'">` : `<span class="qi ${impClass(s.impact_score)}">${s.impact_score}</span>`);
   const row = (s, k, next) => `<div class="q${next ? " next" : ""}" data-q="${s.id}"><span class="k">${k}</span>${th(s)}
     <span class="qt">${next ? '<span class="nexttag">NEXT UP</span>' : ""}<b data-go="${s.id}">${esc(s.headline)}</b><small>${s.impact_score} impact · ${esc(label(s))}${stOf(s) === "seen" ? " · opened" : ""}</small></span>
     <button class="qchk" data-qdone="${s.id}" title="Done" aria-label="Done">${CHK}</button></div>`;
@@ -572,7 +572,7 @@ function evLogo(i, size) {
   if (!sym) return "";
   const src = i.site ? `https://www.google.com/s2/favicons?domain=${i.site}&sz=64`
     : sym && !MACRO.some((m) => m[1] === sym) && /^[A-Za-z0-9.\-]{1,15}$/.test(y) ? `https://financialmodelingprep.com/image-stock/${y}.png` : "";
-  return src ? `<span class="lg" style="--s:${size}px"><img src="${src}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('txt');this.parentNode.textContent='${txt}'"></span>`
+  return src ? `<span class="lg" style="--s:${size}px"><img src="${src}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('txt');this.parentNode.textContent='${txt}'"></span>`
     : `<span class="lg txt" style="--s:${size}px">${txt}</span>`;
 }
 
@@ -1103,7 +1103,7 @@ function worldBriefBar() {
   const waiting = wWaiting();
   const fresh = (state.world || []).filter((s) => new Date(s.created_at) > state.since && !wSt(s.id));
   const wide = fresh.filter((s) => s.n_sources >= 10).length;
-  const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`
+  const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`
     : `<span class="wthumb r-${WREG[s.region] || "gl"}">${svgI(WCAT_ICO[s.category] || WCAT_ICO.Society)}</span>`);
   return `<div class="brief a" data-sig="${esc([waiting.map((s) => s.id).join(","), fresh.length, wide].join("|"))}">${calm() ? "" : BRIEF_BG}${seasonArt()}<div>
       <h2>${waiting.length ? `${waiting.length} top ${waiting.length > 1 ? "stories" : "story"} to read` : "You're caught up ✓"}</h2>
@@ -1146,7 +1146,7 @@ const bigImg = (u) => String(u || "").replace("ichef.bbci.co.uk/ace/standard/240
 function wPic(s) {
   const tileHtml = `<span class="wfb r-${WREG[s.region] || "gl"}">${svgI(WCAT_ICO[s.category] || WCAT_ICO.Society)}</span>`;
   if (!/^https:\/\//.test(s.image_url || "")) return `<span class="wpic">${tileHtml}</span>`;
-  return `<span class="wpic">${tileHtml}<img src="${esc(bigImg(s.image_url))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span>`;
+  return `<span class="wpic">${tileHtml}<img src="${esc(bigImg(s.image_url))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()"></span>`;
 }
 const wVote = (s, own, withDone = true) => `<span class="wvote">${withDone ? `<button class="d ${wSt(s.id) === "done" ? "on" : ""}" data-wdone="${s.id}" title="${wSt(s.id) === "done" ? "Mark as not read" : "Mark as read"}" aria-label="Mark as read" aria-pressed="${wSt(s.id) === "done"}">${CHK}</button><i class="sep"></i>` : ""}<button class="w ${own === 1 ? "on" : ""}" data-wvote="${s.id}" data-v="1" title="Want: more like this" aria-label="Want" aria-pressed="${own === 1}">${W_UP}</button><button class="x ${own === -1 ? "on" : ""}" data-wvote="${s.id}" data-v="-1" title="No want: less like this" aria-label="No want" aria-pressed="${own === -1}">${W_DN}</button></span>`;
 function wWhy(s) {
@@ -1439,7 +1439,7 @@ async function setWorldVote(id, v) {
 
 function viewSearch() {
   const q = state.searchQ || "", r = state.searchResults;
-  const row = (s) => `<div class="sr${stateCls(s)}" data-go="${s.id}">${/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="qi ${impClass(s.impact_score)}">${s.impact_score}</span>`}
+  const row = (s) => `<div class="sr${stateCls(s)}" data-go="${s.id}">${/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="qi ${impClass(s.impact_score)}">${s.impact_score}</span>`}
     <div><div class="meta">${metaTags(s)}${esc((s.topics || [])[0] || "")} · ${new Date(when(s)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · impact ${s.impact_score}</div>
     <h3>${esc(s.headline)}</h3>${state.notes.has(s.id) ? `<p class="note"><b>Note:</b> ${esc(state.notes.get(s.id))}</p>` : ""}</div></div>`;
   const wRows = () => { const w = state.searchWorld || []; return w.length ? `<h2 class="sec srhead">World Brief · ${w.length}</h2>${w.map((s) => `<div class="sr" data-go-world="${s.id}">${wPic(s)}
