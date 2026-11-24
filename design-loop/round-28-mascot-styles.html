@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 28 · Mascot styles</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#ff4500;--ink:#111;--muted:#888;--line:#eee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#f4f4f6;color:var(--ink)}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.top{background:#111;color:#fff;padding:14px 16px}
+.top h1{font-size:16px;font-weight:700}
+.top p{font-size:13px;color:#bbb;margin-top:4px;line-height:1.5;max-width:980px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+.char{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.char h2{font-family:"Inter Tight";font-size:22px;font-weight:800;letter-spacing:-.3px}
+.char h2 small{font-family:Inter;font-size:13px;font-weight:600;color:var(--accent);margin-left:8px}
+.char .about{font-size:14px;color:#555;line-height:1.5;margin:4px 0 14px;max-width:920px}
+.row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.cell{background:#fafafa;border:1px solid var(--line);border-radius:12px;padding:8px 8px 12px;text-align:center}
+.cell svg{width:100%;max-width:170px;height:auto;display:block;margin:0 auto}
+.cell b{display:block;font-size:13px;margin-top:4px}
+.cell span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.cell:hover svg{animation:bob .9s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+@media(max-width:760px){.row{grid-template-columns:repeat(2,1fr)}.row .cell:last-child{grid-column:1/-1}}
+.prev{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px}
+.prev h2{font-family:"Inter Tight";font-size:20px;font-weight:800;margin-bottom:10px}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ctrl button{padding:7px 12px;border-radius:8px;background:#eee;font-size:13px;font-weight:600}
+.ctrl button.on{background:var(--accent);color:#fff}
+.ctrl .sep{width:1px;background:#ddd;margin:0 4px}
+.stage{position:relative;height:460px;border-radius:12px;overflow:hidden;background:#fff;border:1px solid #e5e5e5}
+.fake{position:absolute;inset:0;padding:18px 24px}
+.fake i{display:block;height:12px;border-radius:6px;background:#eee;margin:14px 0}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.72)}
+.band{position:absolute;left:0;right:0;top:50%;background:var(--accent);color:#fff;display:flex;align-items:stretch;transform:translateX(-102%)}
+.band .label{background:#fff;color:var(--accent);font-family:"Inter Tight";font-weight:900;font-size:24px;padding:12px 18px;display:flex;align-items:center}
+.band .hl{padding:12px 18px;font-family:"Inter Tight";font-weight:800;font-size:23px;line-height:1.2}
+.lower{position:absolute;left:0;right:0;top:calc(50% + 58px);background:#111;color:#ccc;padding:14px 18px;font-size:14px;line-height:1.5;opacity:0}
+.lower .b{display:inline-block;margin-top:10px;background:var(--accent);color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;font-size:13px}
+.mas{position:absolute;left:4%;bottom:50%;width:210px;transform:translateY(120%)}
+.mas svg{width:100%;height:auto;display:block}
+.stage.play .band{animation:slide .45s .55s cubic-bezier(.2,.8,.2,1) forwards}
+.stage.play .lower{animation:fade .4s 1.1s forwards}
+.stage.play .mas{animation:hop .6s .05s cubic-bezier(.3,1.5,.5,1) forwards}
+.stage.play .mas .blink{animation:blink 3s 1.5s infinite}
+.stage.play .mas .wave{animation:wave .6s 1s 2 ease-in-out;transform-origin:var(--o)}
+@keyframes slide{to{transform:none}}
+@keyframes fade{to{opacity:1}}
+@keyframes hop{to{transform:none}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes wave{50%{transform:rotate(-14deg)}}
+.blink{transform-box:fill-box;transform-origin:center}
+@media(max-width:760px){.mas{width:130px}.band .hl{font-size:17px}.band .label{font-size:17px}.band{top:44%}.lower{top:calc(44% + 70px)}.mas{bottom:56%}}
+.notes{font-size:14px;line-height:1.6;color:#333;background:#fff;border-radius:16px;padding:18px 20px}
+.notes li{margin-left:18px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Round 28 · Mascot in your reference styles: flat chibi, oversized hoodie, bold sticker, line sticker</h1>
+  <p>Styles taken from your 6 references (flat colour shapes, big shiny eyes, chunky sticker tiles, one-colour line stickers). The characters themselves are new and drawn from scratch for Investment Center. Same 5 moods and live alert preview as rounds 26-27.</p>
+</div>
+<div class="wrap">
+  <div class="prev">
+    <h2>Live preview: Broadcast alert + mascot</h2>
+    <div class="ctrl" id="cc"></div>
+    <div class="ctrl" id="sc"></div>
+    <div class="stage" id="stage">
+      <div class="fake"><i style="width:40%"></i><i style="width:70%"></i><i style="width:55%"></i><i style="width:80%"></i><i style="width:60%"></i></div>
+      <div class="dim"></div>
+      <div class="mas" id="mas"></div>
+      <div class="band"><div class="label">BIG NEWS</div><div class="hl" id="hl"></div></div>
+      <div class="lower" id="lower"></div>
+    </div>
+  </div>
+  <div id="sheets"></div>
+  <div class="notes">
+    <b>Mood rules (same as before, no extra AI call):</b> Bullish = sentiment Bullish · Bearish = sentiment Bearish · Breaking = impact 10 or under 1 hour old · Serious = war, disaster, deaths (never smiles) · Caught up = "all read" empty states.
+  </div>
+</div>
+
+<script>
+// ===== anime-style face (chibi A and B) =====
+function animeFace(ex, cx, cy, gap, s, iris, ink, skin) {
+  const L = cx - gap, R = cx + gap, my = cy + 20 * s;
+  const st = (w) => `stroke="${ink}" stroke-width="${w * s}" stroke-linecap="round" fill="none"`;
+  const open = (x, y, k = 1) => `<g class="blink">
+      <ellipse cx="${x}" cy="${y}" rx="${7.5*s*k}" ry="${9.5*s*k}" fill="#fff"/>
+      <ellipse cx="${x}" cy="${y+1.2*s}" rx="${6.2*s*k}" ry="${8.2*s*k}" fill="${iris}"/>
+      <ellipse cx="${x}" cy="${y+3.4*s}" rx="${3.6*s*k}" ry="${4.6*s*k}" fill="${ink}" opacity=".55"/>
+      <circle cx="${x-2.4*s}" cy="${y-3.4*s}" r="${2.6*s*k}" fill="#fff"/><circle cx="${x+2.6*s}" cy="${y+4*s}" r="${1.2*s*k}" fill="#fff"/></g>
+      <path d="M${x-8.5*s*k} ${y-6*s*k} Q${x} ${y-13*s*k} ${x+8.5*s*k} ${y-6*s*k}" ${st(2.8)}/>`;
+  const blush = `<ellipse cx="${L-4*s}" cy="${cy+11*s}" rx="${6*s}" ry="${3*s}" fill="#ff8f9c" opacity=".55"/><ellipse cx="${R+4*s}" cy="${cy+11*s}" rx="${6*s}" ry="${3*s}" fill="#ff8f9c" opacity=".55"/>`;
+  if (ex === "bull") return `${blush}
+    <path d="M${L-7*s} ${cy+2*s} Q${L} ${cy-7*s} ${L+7*s} ${cy+2*s}" ${st(3.4)}/><path d="M${R-7*s} ${cy+2*s} Q${R} ${cy-7*s} ${R+7*s} ${cy+2*s}" ${st(3.4)}/>
+    <path d="M${cx-8*s} ${my-4*s} Q${cx} ${my+9*s} ${cx+8*s} ${my-4*s}Z" fill="#7a1f2b"/><path d="M${cx-4*s} ${my+1.5*s} Q${cx} ${my+5*s} ${cx+4*s} ${my+1.5*s}Z" fill="#ff8f9c"/>`;
+  if (ex === "bear") return `${blush}${open(L, cy)}${open(R, cy)}
+    <path d="M${L-7*s} ${cy-15*s} L${L+5*s} ${cy-18*s}" ${st(2.4)}/><path d="M${R-5*s} ${cy-18*s} L${R+7*s} ${cy-15*s}" ${st(2.4)}/>
+    <path d="M${cx-6*s} ${my} q${3*s} ${-3*s} ${6*s} 0 q${3*s} ${3*s} ${6*s} 0" ${st(2.2)}/>
+    <path d="M${R+16*s} ${cy-14*s} q${3.5*s} ${6*s} 0 ${9*s} q${-3.5*s} ${-3*s} 0 ${-9*s}Z" fill="#7cc8ff"/>`;
+  if (ex === "breaking") return `${blush}${open(L, cy, 1.12)}${open(R, cy, 1.12)}
+    <ellipse cx="${cx}" cy="${my+1*s}" rx="${3.6*s}" ry="${4.6*s}" fill="#7a1f2b"/>
+    <path d="M${R+22*s} ${cy-30*s} v${12*s}" ${st(3.4)}/><circle cx="${R+22*s}" cy="${cy-12*s}" r="${1.8*s}" fill="${ink}"/>`;
+  if (ex === "serious") return `${open(L, cy)}${open(R, cy)}
+    <path d="M${L-9*s} ${cy-11*s} h${18*s} v${8*s} h${-18*s}Z M${R-9*s} ${cy-11*s} h${18*s} v${8*s} h${-18*s}Z" fill="${skin}"/>
+    <path d="M${L-8.5*s} ${cy-3.5*s} h${17*s} M${R-8.5*s} ${cy-3.5*s} h${17*s}" ${st(3)}/>
+    <path d="M${L-7*s} ${cy-14*s} L${L+6*s} ${cy-11*s}" ${st(2.4)}/><path d="M${R-6*s} ${cy-11*s} L${R+7*s} ${cy-14*s}" ${st(2.4)}/>
+    <path d="M${cx-4.5*s} ${my+1*s} h${9*s}" ${st(2.4)}/>`;
+  return `${blush}
+    <path d="M${L-7*s} ${cy} Q${L} ${cy+6*s} ${L+7*s} ${cy}" ${st(3)}/><path d="M${R-7*s} ${cy} Q${R} ${cy+6*s} ${R+7*s} ${cy}" ${st(3)}/>
+    <path d="M${cx-3.5*s} ${my} Q${cx} ${my+3*s} ${cx+3.5*s} ${my}" ${st(2.2)}/>
+    <text x="${R+18*s}" y="${cy-22*s}" font-family="Inter Tight" font-weight="900" font-size="${15*s}" fill="${ink}" opacity=".5">z</text>
+    <text x="${R+28*s}" y="${cy-34*s}" font-family="Inter Tight" font-weight="900" font-size="${11*s}" fill="${ink}" opacity=".35">z</text>`;
+}
+// props in flat style
+function propFlat(ex, x, y, ink) {
+  if (ex === "bull" || ex === "bear") { const up = ex === "bull";
+    return `<g transform="translate(${x} ${y})"><rect x="-14" y="-12" width="30" height="24" rx="5" fill="#fff" stroke="${ink}" stroke-width="2.5"/>
+    <path d="${up ? "M-9 6 L-2 -1 L3 3 L11 -7" : "M-9 -7 L-2 0 L3 -4 L11 6"}" stroke="${up ? "#16a34a" : "#ef4444"}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`; }
+  if (ex === "breaking") return `<g transform="translate(${x} ${y})"><rect x="-3" y="-2" width="6" height="18" rx="3" fill="#2a2a30"/><circle cx="0" cy="-8" r="8" fill="#3a3a42"/><path d="M-5 -11 h10 M-5 -7 h10" stroke="#666" stroke-width="1.4"/><rect x="-6" y="2" width="12" height="6" rx="1" fill="#ff4500"/></g>`;
+  if (ex === "serious") return "";
+  return `<g transform="translate(${x} ${y})"><path d="M-9 -8 h16 v11 a8 8 0 0 1 -16 0z" fill="#fff" stroke="${ink}" stroke-width="2.5"/><path d="M7 -5 a4.5 4.5 0 0 1 0 8" stroke="${ink}" stroke-width="2.5" fill="none"/><path d="M-4 -13 q2.5 -3 0 -6 M2 -13 q2.5 -3 0 -6" stroke="#bbb" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
+}
+// chibi arms: shoulders at (lx,y) and (rx,y)
+function chibiArms(ex, lx, rx, y, sleeve, skin, ink) {
+  const hand = (x, yy) => `<circle cx="${x}" cy="${yy}" r="6.5" fill="${skin}"/>`;
+  const arm = (d) => `<path d="${d}" stroke="${sleeve}" stroke-width="14" stroke-linecap="round" fill="none"/>`;
+  if (ex === "bull") return `<g class="wave" style="--o:${rx}px ${y}px">${arm(`M${rx} ${y} L${rx+18} ${y-30}`)}${hand(rx+20, y-36)}</g>${arm(`M${lx} ${y} L${lx-12} ${y+22}`)}${hand(lx-13, y+28)}${propFlat("bull", lx - 26, y + 20, ink)}`;
+  if (ex === "serious") return `${arm(`M${lx} ${y} Q${lx+6} ${y+24} ${rx-4} ${y+20}`)}${arm(`M${rx} ${y} Q${rx-6} ${y+30} ${lx+6} ${y+26}`)}${hand(rx-2, y+20)}${hand(lx+4, y+26)}`;
+  if (ex === "breaking") return `${arm(`M${lx} ${y} L${lx-10} ${y+24}`)}${hand(lx-11, y+30)}${arm(`M${rx} ${y} Q${rx+14} ${y+10} ${rx+6} ${y+20}`)}${hand(rx+5, y+22)}${propFlat("breaking", rx + 6, y + 6, ink)}`;
+  if (ex === "bear") return `${arm(`M${lx} ${y} Q${lx+2} ${y+22} ${(lx+rx)/2-4} ${y+24}`)}${arm(`M${rx} ${y} Q${rx-2} ${y+22} ${(lx+rx)/2+4} ${y+24}`)}${hand((lx+rx)/2, y+25)}${propFlat("bear", rx + 26, y + 18, ink)}`;
+  return `${arm(`M${lx} ${y} L${lx-10} ${y+24}`)}${hand(lx-11, y+30)}${arm(`M${rx} ${y} Q${rx+12} ${y+14} ${rx+10} ${y+22}`)}${hand(rx+9, y+25)}${propFlat("calm", rx + 22, y + 22, ink)}`;
+}
+
+const CH = {
+  nami: {
+    name: "Nami", tag: "flat vector anchor (refs 1 + 2)",
+    about: "A chibi news anchor in flat colour shapes, no outlines, limited palette: navy bob with an orange hair clip, black blazer, orange LIVE armband. Crosses her arms on serious news like reference 2. Most 'illustration poster' feel; very you if you like anime art.",
+    draw(ex) { const cx = 100, hy = 64, skin = "#ffe0d4", ink = "#1b2147", hair = "#1d2552";
+      return `
+      <path d="M52 74 Q48 22 100 18 Q152 22 148 74 L150 112 Q132 120 120 104 L80 104 Q68 120 50 112Z" fill="${hair}"/>
+      <rect x="84" y="148" width="11" height="16" rx="4" fill="${skin}"/><rect x="105" y="148" width="11" height="16" rx="4" fill="${skin}"/>
+      <rect x="80" y="160" width="17" height="9" rx="4.5" fill="#15151a"/><rect x="103" y="160" width="17" height="9" rx="4.5" fill="#15151a"/>
+      <path d="M72 152 L76 110 Q100 100 124 110 L128 152Z" fill="#17171c"/>
+      <path d="M90 104 L100 124 L110 104Z" fill="#fff"/><path d="M97 106 h6 l1.5 14 l-4.5 5 l-4.5 -5z" fill="#ff4500"/>
+      <path d="M68 116 l-4 12 l16 4 l3 -12z" fill="#ff4500"/><text x="68.5" y="127" font-family="Inter" font-weight="800" font-size="6.5" fill="#fff" transform="rotate(14 70 124)">LIVE</text>
+      ${chibiArms(ex, 76, 124, 114, "#17171c", skin, ink)}
+      <ellipse cx="${cx}" cy="${hy+4}" rx="38" ry="36" fill="${skin}"/>
+      <ellipse cx="${cx-34}" cy="${hy+10}" rx="7" ry="9" fill="#ffc9b8"/>
+      <path d="M60 64 Q58 26 100 24 Q142 26 140 64 L134 54 L127 66 L118 50 L108 62 L98 48 L88 62 L79 50 L71 66 L65 56Z" fill="${hair}"/>
+      <path d="M118 30 l10 -6 l4 8 l-10 5z" fill="#ff4500"/>
+      <path d="M74 40 Q84 30 96 30" stroke="#3a4790" stroke-width="3" fill="none" stroke-linecap="round"/>
+      ${animeFace(ex, cx, hy + 8, 15, 1, "#4f6bff", ink, skin)}`; },
+  },
+  toro: {
+    name: "Toro", tag: "oversized bull hoodie (ref 3)",
+    about: "A cheerful chibi in a huge white hoodie with little bull horns on the hood (the market bull, worn). Soft, light and cute like reference 3, with thin blue lines. Arms up on bullish news; hides in the hood on bearish news.",
+    draw(ex) { const cx = 100, hy = 66, skin = "#ffe6dc", ink = "#203a8f", line = "#9fb4ea";
+      const horns = ex === "bear" || ex === "serious"
+        ? `<path d="M58 40 q-14 4 -16 18" stroke="#f1dcb5" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M142 40 q14 4 16 18" stroke="#f1dcb5" stroke-width="9" stroke-linecap="round" fill="none"/>`
+        : `<path d="M60 36 q-10 -8 -8 -24" stroke="#f1dcb5" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M140 36 q10 -8 8 -24" stroke="#f1dcb5" stroke-width="9" stroke-linecap="round" fill="none"/>`;
+      return `${horns}
+      <path d="M50 74 Q46 20 100 16 Q154 20 150 74 Q152 104 136 110 L64 110 Q48 104 50 74Z" fill="#fff" stroke="${line}" stroke-width="2.5"/>
+      <path d="M64 70 Q62 30 100 28 Q138 30 136 70 L136 104 L64 104Z" fill="#4a73e8"/>
+      <rect x="86" y="150" width="10" height="12" rx="4" fill="${skin}"/><rect x="104" y="150" width="10" height="12" rx="4" fill="${skin}"/>
+      <path d="M80 158 h18 v8 a3 3 0 0 1 -3 3 h-12 a3 3 0 0 1 -3 -3z M102 158 h18 v8 a3 3 0 0 1 -3 3 h-12 a3 3 0 0 1 -3 -3z" fill="#fff" stroke="${line}" stroke-width="2"/>
+      <path d="M66 154 L70 108 Q100 98 130 108 L134 154 Q100 160 66 154Z" fill="#fff" stroke="${line}" stroke-width="2.5"/>
+      <path d="M84 132 h32 v12 q-16 5 -32 0z" fill="none" stroke="${line}" stroke-width="2"/>
+      <path d="M93 108 v16 M107 108 v16" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/><circle cx="93" cy="126" r="2.6" fill="${ink}"/><circle cx="107" cy="126" r="2.6" fill="${ink}"/>
+      ${chibiArms(ex, 72, 128, 114, "#fff", skin, ink).replaceAll('stroke="#fff" stroke-width="14"', `stroke="#fff" stroke-width="15"`)}
+      <ellipse cx="${cx}" cy="${hy+6}" rx="33" ry="31" fill="${skin}"/>
+      <path d="M68 62 Q68 36 100 34 Q132 36 132 62 L126 56 L120 64 L112 52 L104 62 L96 50 L88 62 L80 52 L74 62Z" fill="#4a73e8"/>
+      <path d="M58 72 Q56 22 100 20 Q144 22 142 72" fill="none" stroke="#fff" stroke-width="10"/>
+      <path d="M58 72 Q56 22 100 20 Q144 22 142 72" fill="none" stroke="${line}" stroke-width="2"/>
+      <circle cx="100" cy="10" r="0"/>
+      ${animeFace(ex, cx, hy + 10, 13.5, .92, "#3d8bff", ink, skin)}`; },
+  },
+  oinko: {
+    name: "OINKO", tag: "bold sticker tile (ref 5)",
+    about: "A chunky piggy bank in a bow tie, on a bright square tile with his name in big bold letters, like the sticker sheet in reference 5. The tile colour follows the mood (green up, red down). Loud and fun, the most 'brand mascot'; least serious for war news.",
+    draw(ex) { const tile = { bull: "#2fbf71", bear: "#ff6b5e", breaking: "#ffc21a", serious: "#6b7280", calm: "#7ab8ff" }[ex];
+      const cx = 108, cy = 108, k = "#2b1530";
+      const eyes = {
+        bull: `<path d="M${cx-24} ${cy-8} q8 -12 16 0 M${cx+8} ${cy-8} q8 -12 16 0" stroke="${k}" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+        bear: `<circle cx="${cx-16}" cy="${cy-6}" r="12" fill="#fff"/><circle cx="${cx+16}" cy="${cy-6}" r="12" fill="#fff"/><circle cx="${cx-16}" cy="${cy-1}" r="6.5" fill="${k}"/><circle cx="${cx+16}" cy="${cy-1}" r="6.5" fill="${k}"/><path d="M${cx+30} ${cy-2} q4 8 0 12 q-4 -4 0 -12z" fill="#7cc8ff"/>`,
+        breaking: `<circle cx="${cx-16}" cy="${cy-8}" r="14" fill="#fff"/><circle cx="${cx+16}" cy="${cy-8}" r="14" fill="#fff"/><circle cx="${cx-16}" cy="${cy-8}" r="4.5" fill="${k}"/><circle cx="${cx+16}" cy="${cy-8}" r="4.5" fill="${k}"/>`,
+        serious: `<circle cx="${cx-16}" cy="${cy-6}" r="11" fill="#fff"/><circle cx="${cx+16}" cy="${cy-6}" r="11" fill="#fff"/><circle cx="${cx-16}" cy="${cy-3}" r="6" fill="${k}"/><circle cx="${cx+16}" cy="${cy-3}" r="6" fill="${k}"/><path d="M${cx-28} ${cy-12} h24 v-6 h-24z M${cx+4} ${cy-12} h24 v-6 h-24z" fill="#ff9fb4"/><path d="M${cx-28} ${cy-12} h24 M${cx+4} ${cy-12} h24" stroke="${k}" stroke-width="4" stroke-linecap="round"/>`,
+        calm: `<path d="M${cx-24} ${cy-8} q8 8 16 0 M${cx+8} ${cy-8} q8 8 16 0" stroke="${k}" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+      }[ex];
+      const shine = ex === "bear" || ex === "serious" || ex === "bull" || ex === "calm" ? "" : "";
+      const hi = ex !== "bull" && ex !== "calm" ? `<circle cx="${cx-19}" cy="${cy-12}" r="3" fill="#fff"/><circle cx="${cx+13}" cy="${cy-12}" r="3" fill="#fff"/>` : "";
+      const mouth = { bull: `<path d="M${cx-14} ${cy+30} q14 16 28 0z" fill="${k}"/>`, bear: `<path d="M${cx-8} ${cy+36} q8 -7 16 0" stroke="${k}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+        breaking: `<ellipse cx="${cx}" cy="${cy+34}" rx="6" ry="8" fill="${k}"/>`, serious: `<path d="M${cx-8} ${cy+34} h16" stroke="${k}" stroke-width="4" stroke-linecap="round"/>`, calm: `<path d="M${cx-6} ${cy+32} q6 5 12 0" stroke="${k}" stroke-width="4" fill="none" stroke-linecap="round"/>` }[ex];
+      return `<rect x="-4" y="-4" width="208" height="178" rx="18" fill="${tile}"/>
+      <text x="10" y="42" font-family="Inter Tight" font-weight="900" font-size="36" fill="#fff" stroke="${k}" stroke-width="6" paint-order="stroke" transform="rotate(-6 10 42)">OINKO</text>
+      ${ex === "bull" ? `<g transform="translate(${cx+2} 26)"><circle r="13" fill="#ffc21a" stroke="${k}" stroke-width="3"/><text x="-5" y="5" font-family="Inter Tight" font-weight="900" font-size="15" fill="${k}">$</text></g>` : ""}
+      <path d="M${cx-46} ${cy-38} l-6 -26 l26 12z M${cx+46} ${cy-38} l6 -26 l-26 12z" fill="#ff8fb0" stroke="${k}" stroke-width="3.5" stroke-linejoin="round"/>
+      <ellipse cx="${cx}" cy="${cy+10}" rx="66" ry="60" fill="#ffb3c8" stroke="${k}" stroke-width="4"/>
+      <path d="M${cx+30} ${cy+56} Q${cx+66} ${cy+30} ${cx+60} ${cy-14} Q${cx+68} ${cy+40} ${cx+20} ${cy+66}z" fill="#ff8fb0"/>
+      <rect x="${cx-14}" y="${cy-52}" width="28" height="7" rx="3.5" fill="${k}"/>
+      ${eyes}${hi}
+      <ellipse cx="${cx}" cy="${cy+16}" rx="20" ry="13" fill="#ff8fb0" stroke="${k}" stroke-width="3.5"/><ellipse cx="${cx-7}" cy="${cy+16}" rx="3" ry="4.5" fill="${k}"/><ellipse cx="${cx+7}" cy="${cy+16}" rx="3" ry="4.5" fill="${k}"/>
+      ${mouth}
+      <path d="M${cx-18} ${cy+58} l18 -8 l18 8 l-18 8z" fill="#1e2a4a" stroke="${k}" stroke-width="3" stroke-linejoin="round"/><circle cx="${cx}" cy="${cy+58}" r="4.5" fill="#ff4500" stroke="${k}" stroke-width="2"/>
+      ${ex === "serious" ? `<rect x="${cx+44}" y="${cy+26}" width="26" height="32" rx="3" fill="#fff" stroke="${k}" stroke-width="3"/><path d="M${cx+50} ${cy+36} h14 M${cx+50} ${cy+43} h14 M${cx+50} ${cy+50} h9" stroke="#999" stroke-width="2.4"/>` : ""}
+      ${ex === "breaking" ? `<text x="${cx+52}" y="${cy-30}" font-family="Inter Tight" font-weight="900" font-size="40" fill="#fff" stroke="${k}" stroke-width="5" paint-order="stroke">!</text>` : ""}
+      ${ex === "calm" ? `<text x="${cx+50}" y="${cy-34}" font-family="Inter Tight" font-weight="900" font-size="22" fill="#fff" stroke="${k}" stroke-width="4" paint-order="stroke">z z</text>` : ""}`; },
+  },
+  hammy: {
+    name: "Hammy", tag: "one-colour line sticker (ref 6)",
+    about: "A round hamster drawn in one blue line on white with a thick white sticker border, on a blue tile, like reference 6. Hamsters stash food in their cheeks, so he is a saver: his cheeks puff with coins on bullish news. Calm, cute and very easy to reuse as small stickers around the site.",
+    draw(ex) { const b = "#1f4fd1", cx = 100, cy = 98;
+      const st = `stroke="${b}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"`;
+      const puff = ex === "bull" ? 12 : 4;
+      const body = `M${cx-50} ${cy+10} Q${cx-54-puff} ${cy-40} ${cx} ${cy-46} Q${cx+54+puff} ${cy-40} ${cx+50} ${cy+10} Q${cx+52} ${cy+58} ${cx} ${cy+60} Q${cx-52} ${cy+58} ${cx-50} ${cy+10}Z`;
+      const ears = `M${cx-36} ${cy-34} a12 12 0 1 1 18 -10 M${cx+36} ${cy-34} a12 12 0 1 0 -18 -10`;
+      const eyes = {
+        bull: `<path d="M${cx-24} ${cy-10} q7 -9 14 0 M${cx+10} ${cy-10} q7 -9 14 0" ${st} fill="none"/>`,
+        bear: `<ellipse cx="${cx-17}" cy="${cy-8}" rx="5" ry="7" fill="${b}"/><ellipse cx="${cx+17}" cy="${cy-8}" rx="5" ry="7" fill="${b}"/><path d="M${cx-24} ${cy-22} l12 -3 M${cx+24} ${cy-22} l-12 -3" ${st}/><path d="M${cx+34} ${cy-20} q4 7 0 10 q-4 -3 0 -10z" fill="#fff" ${st}/>`,
+        breaking: `<circle cx="${cx-17}" cy="${cy-9}" r="9" fill="#fff" ${st}/><circle cx="${cx+17}" cy="${cy-9}" r="9" fill="#fff" ${st}/><circle cx="${cx-17}" cy="${cy-9}" r="3.4" fill="${b}"/><circle cx="${cx+17}" cy="${cy-9}" r="3.4" fill="${b}"/>`,
+        serious: `<path d="M${cx-24} ${cy-8} h14 M${cx+10} ${cy-8} h14" ${st}/><path d="M${cx-24} ${cy-18} l13 4 M${cx+24} ${cy-18} l-13 4" ${st}/>`,
+        calm: `<path d="M${cx-24} ${cy-9} q7 7 14 0 M${cx+10} ${cy-9} q7 7 14 0" ${st} fill="none"/>`,
+      }[ex];
+      const mouth = { bull: `<path d="M${cx-8} ${cy+6} q8 10 16 0z" fill="${b}" ${st}/>`, bear: `<path d="M${cx-6} ${cy+10} q6 -5 12 0" ${st} fill="none"/>`,
+        breaking: `<ellipse cx="${cx}" cy="${cy+9}" rx="4" ry="5.5" fill="${b}"/>`, serious: `<path d="M${cx-6} ${cy+8} h12" ${st}/>`, calm: `<path d="M${cx-4} ${cy+6} q4 4 8 0" ${st} fill="none"/>` }[ex];
+      const hold = {
+        bull: `<circle cx="${cx-30}" cy="${cy+30}" r="12" fill="#fff" ${st}/><text x="${cx-35}" y="${cy+36}" font-family="Inter Tight" font-weight="900" font-size="15" fill="${b}">$</text><circle cx="${cx+30}" cy="${cy+30}" r="12" fill="#fff" ${st}/><text x="${cx+25}" y="${cy+36}" font-family="Inter Tight" font-weight="900" font-size="15" fill="${b}">$</text>`,
+        bear: `<path d="M${cx-18} ${cy+26} h36 v22 h-36z" fill="#fff" ${st}/><path d="M${cx-12} ${cy+30} l8 8 l6 -5 l10 10" ${st} fill="none"/>`,
+        breaking: `<rect x="${cx+36}" y="${cy+30}" width="8" height="24" rx="4" fill="#fff" ${st}/><circle cx="${cx+40}" cy="${cy+24}" r="9" fill="#fff" ${st}/>`,
+        serious: `<path d="M${cx-24} ${cy+22} h48 v30 h-48z" fill="#fff" ${st}/><path d="M${cx-17} ${cy+31} h34 M${cx-17} ${cy+39} h34 M${cx-17} ${cy+46} h20" ${st}/><text x="${cx-17}" y="${cy+30}" font-family="Inter Tight" font-weight="900" font-size="7" fill="${b}">NEWS</text>`,
+        calm: `<path d="M${cx-12} ${cy+28} h24 v14 a12 12 0 0 1 -24 0z" fill="#fff" ${st}/><path d="M${cx+12} ${cy+31} a6 6 0 0 1 0 11" ${st} fill="none"/>`,
+      }[ex];
+      return `<rect x="-4" y="-4" width="208" height="178" rx="18" fill="${b}"/>
+      <path d="M8 150 q60 -24 196 -6 V174 H-4z" fill="#1a43b3"/>
+      <g stroke="#fff" stroke-width="16" stroke-linejoin="round" fill="#fff"><path d="${body}"/><path d="${ears}" fill="none"/><ellipse cx="${cx-24}" cy="${cy+62}" rx="12" ry="7"/><ellipse cx="${cx+24}" cy="${cy+62}" rx="12" ry="7"/></g>
+      <path d="${ears}" fill="#fff" ${st}/>
+      <path d="${body}" fill="#fff" ${st}/>
+      <ellipse cx="${cx-24}" cy="${cy+62}" rx="11" ry="6" fill="#fff" ${st}/><ellipse cx="${cx+24}" cy="${cy+62}" rx="11" ry="6" fill="#fff" ${st}/>
+      <path d="M${cx-8} ${cy+52} l8 -6 l8 6 l-8 6z" fill="${b}"/>
+      <ellipse cx="${cx}" cy="${cy+2}" rx="5" ry="3.5" fill="${b}"/>
+      ${eyes}${mouth}${hold}
+      ${ex === "calm" ? `<text x="${cx+40}" y="${cy-44}" font-family="Inter Tight" font-weight="900" font-size="18" fill="#fff">z z</text>` : ""}
+      ${ex === "breaking" ? `<text x="${cx+44}" y="${cy-32}" font-family="Inter Tight" font-weight="900" font-size="34" fill="#fff">!</text>` : ""}`; },
+  },
+};
+const EX = [["bull","Bullish","Good market news"],["bear","Bearish","Bad market news"],["breaking","Breaking","Impact 10 or brand-new"],["serious","Serious","War, disaster: never smiles"],["calm","Caught up","Empty states: all read"]];
+const svg = (c, ex) => `<svg viewBox="-10 -10 220 190" xmlns="http://www.w3.org/2000/svg">${CH[c].draw(ex)}</svg>`;
+document.getElementById("sheets").innerHTML = Object.keys(CH).map((c, i) => `
+  <div class="char"><h2>${"ABCD"[i]}. ${CH[c].name}<small>${CH[c].tag}</small></h2><p class="about">${CH[c].about}</p>
+  <div class="row">${EX.map(([e, n, d]) => `<div class="cell">${svg(c, e)}<b>${n}</b><span>${d}</span></div>`).join("")}</div></div>`).join("");
+const ST = {
+  bull: ["Nvidia reinstates Jensen Huang as CEO, shares up over 30%", "NVDA +30.2% · 37 outlets · Impact 9 of 10 · Bullish"],
+  bear: ["Dow and Nasdaq record worst week since March 2020", "Impact 9 of 10 · Bearish · AAPL, NVDA on your watchlist"],
+  serious: ["Russian missiles hit Polish territory", "World Brief · Strike · Europe · 31 outlets"],
+  breaking: ["Tesla and SpaceX form committees to explore a merger", "Impact 10 of 10 · 12 min ago · TSLA"],
+};
+let cc = "nami", sc = "bull";
+const $ = (s) => document.querySelector(s);
+function play() {
+  $("#mas").innerHTML = svg(cc, sc);
+  $("#hl").textContent = ST[sc][0];
+  $("#lower").innerHTML = ST[sc][1] + '<br><span class="b">Read the story</span>';
+  const st = $("#stage"); st.classList.remove("play"); void st.offsetWidth; st.classList.add("play");
+}
+$("#cc").innerHTML = Object.keys(CH).map((c, i) => `<button data-c="${c}" class="${c===cc?"on":""}">${"ABCD"[i]}. ${CH[c].name}</button>`).join("") + '<span class="sep"></span><button id="rp">Replay</button>';
+$("#sc").innerHTML = Object.keys(ST).map((s) => `<button data-st="${s}" class="${s===sc?"on":""}">${{bull:"Bullish story",bear:"Bearish story",serious:"Serious story",breaking:"Breaking story"}[s]}</button>`).join("");
+document.addEventListener("click", (e) => {
+  const c = e.target.closest("[data-c]"), s = e.target.closest("[data-st]");
+  if (c) { cc = c.dataset.c; document.querySelectorAll("[data-c]").forEach((b) => b.classList.toggle("on", b === c)); play(); }
+  if (s) { sc = s.dataset.st; document.querySelectorAll("[data-st]").forEach((b) => b.classList.toggle("on", b === s)); play(); }
+  if (e.target.id === "rp") play();
+});
+play();
+</script>
+</body>
+</html>

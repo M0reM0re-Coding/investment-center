@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 29 · Season themes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9ec}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.bar{position:sticky;top:0;z-index:50;background:#111;color:#fff;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px}
+.bar b{font-weight:700;margin-right:6px}
+.bar button{padding:7px 12px;border-radius:8px;background:#232327;color:#ddd;font-size:13px;font-weight:600}
+.bar button.on{background:#ff4500;color:#fff}
+.bar .sp{flex:1}
+.desc{background:#fff;border-bottom:1px solid #ddd;padding:12px 16px;font-size:14px;line-height:1.55;color:#333}
+.desc b{color:#111}
+.wrapx{display:flex;justify-content:center;padding:20px 16px 40px}
+
+/* ---------- the site, themed by tokens ---------- */
+.site{--bg:#fff;--surface:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--chip:#f3f3f3;--accent:#ff4500;--up:#16a34a;--down:#ef4444;--head:#fff;--hero:linear-gradient(#fff,#fff);
+  position:relative;width:1180px;max-width:100%;min-height:720px;border-radius:14px;overflow:hidden;background:var(--bg);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.15);transition:background .4s,color .4s}
+.site.phone{width:390px}
+.fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.hd{position:relative;z-index:2;display:flex;align-items:center;gap:22px;height:60px;padding:0 28px;background:var(--head);border-bottom:1px solid var(--line)}
+.logo{font:900 18px "Inter Tight";letter-spacing:-.4px}
+.logo i{font-style:normal;color:var(--accent)}
+.hd span{color:var(--muted);font-size:14px}.hd span.on{color:var(--ink);font-weight:600}
+.hd .live{margin-left:auto;color:var(--accent);font-weight:700;font-size:12px}
+.hero{position:relative;z-index:2;margin:0;padding:22px 28px 18px;background:var(--hero);border-bottom:1px solid var(--line);display:flex;gap:20px;align-items:center}
+.hero h1{font:800 30px "Inter Tight";letter-spacing:-.6px}
+.hero p{color:var(--soft);font-size:14px;margin-top:4px}
+.hero .season{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.mas{margin-left:auto;width:130px;height:130px;border-radius:50%;border:2px dashed var(--accent);display:grid;place-items:center;text-align:center;font-size:11.5px;line-height:1.35;color:var(--soft);padding:12px;background:var(--surface)}
+.mas b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:3px}
+.strip{position:relative;z-index:2;display:flex;gap:22px;padding:10px 28px;border-bottom:1px solid var(--line);font-size:13px;overflow:hidden;white-space:nowrap}
+.strip b{font-weight:700}.strip .u{color:var(--up)}.strip .d{color:var(--down)}
+.body{position:relative;z-index:2;display:grid;grid-template-columns:1fr 300px;gap:28px;padding:20px 28px 30px}
+.card{display:flex;gap:14px;padding:16px;margin-bottom:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.imp{flex:none;width:52px;height:52px;border-radius:12px;display:grid;place-items:center;font:900 20px "Inter Tight";color:#fff;background:var(--accent)}
+.imp.m{background:var(--chip);color:var(--ink)}
+.card h3{font:700 17px/1.3 "Inter Tight";letter-spacing:-.2px}
+.card p{color:var(--soft);font-size:13.5px;line-height:1.5;margin-top:5px}
+.meta{font-size:12px;color:var(--muted);margin-top:8px}
+.meta em{font-style:normal;font-weight:700;color:var(--up)}.meta em.d{color:var(--down)}
+.side{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;height:max-content}
+.side h4{font:800 15px "Inter Tight";margin-bottom:10px}
+.side li{list-style:none;font-size:13px;padding:8px 0;border-top:1px solid var(--line);color:var(--soft)}
+.side li b{color:var(--ink)}
+.chips{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.chips span{padding:6px 12px;border-radius:999px;background:var(--chip);font-size:13px;font-weight:600;color:var(--soft)}
+.chips span.on{background:var(--accent);color:#fff}
+.site.phone .body{grid-template-columns:1fr}.site.phone .side,.site.phone .hd span{display:none}.site.phone .mas{width:96px;height:96px;font-size:10px}
+.site.phone .hero h1{font-size:22px}.site.phone .hd,.site.phone .hero,.site.phone .strip,.site.phone .body{padding-left:16px;padding-right:16px}
+
+/* ---------- 4 seasons x light/dark ---------- */
+.site.winter{--bg:#eef4fa;--surface:#fff;--head:#fff;--ink:#0f2233;--soft:#4a5d70;--muted:#7d8fa1;--line:#dbe6f0;--chip:#e5eef7;--accent:#2b7de9;--hero:linear-gradient(120deg,#e3eefb,#f7fbff 60%)}
+.site.winter.dark{--bg:#0b1522;--surface:#111e2e;--head:#0e1a29;--ink:#e8f1fb;--soft:#a9bccf;--muted:#7a8fa6;--line:#1d2c40;--chip:#17263a;--accent:#5aa7ff;--hero:linear-gradient(120deg,#10233a,#0b1522 70%)}
+.site.spring{--bg:#fbf6f4;--surface:#fff;--head:#fff;--ink:#2a1f22;--soft:#6b5a5f;--muted:#a08f94;--line:#f0e3e3;--chip:#f6eaec;--accent:#e0577f;--up:#2f9e5b;--hero:linear-gradient(120deg,#fde9ef,#f2f8ec 70%)}
+.site.spring.dark{--bg:#17131a;--surface:#211a24;--head:#1c161f;--ink:#f7ecf0;--soft:#c9b5be;--muted:#957f8a;--line:#2f2533;--chip:#2a2130;--accent:#ff7aa2;--hero:linear-gradient(120deg,#2b1a26,#17131a 70%)}
+.site.summer{--bg:#fffaf0;--surface:#fff;--head:#fff;--ink:#1d1a12;--soft:#5d5644;--muted:#9a9076;--line:#f1e8d3;--chip:#fbf1dc;--accent:#ff7a00;--up:#0f9f8a;--hero:linear-gradient(120deg,#fff0c9,#e6f8f5 75%)}
+.site.summer.dark{--bg:#0c1619;--surface:#122125;--head:#0f1c20;--ink:#f3f1e8;--soft:#b9c4bf;--muted:#80918c;--line:#1d3035;--chip:#18292d;--accent:#ffa23a;--up:#2dd4bf;--hero:linear-gradient(120deg,#1a2e2c,#0c1619 70%)}
+.site.autumn{--bg:#f8f1e7;--surface:#fffaf2;--head:#fffaf2;--ink:#2b1d12;--soft:#6a5340;--muted:#a08671;--line:#eadcc8;--chip:#f1e4d1;--accent:#c2541b;--up:#5b8a2f;--hero:linear-gradient(120deg,#f6dfc0,#fbf3e6 70%)}
+.site.autumn .hero h1,.site.autumn .card h3{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacing:-.2px}
+.site.autumn.dark{--bg:#17110c;--surface:#211812;--head:#1c140e;--ink:#f6ebdf;--soft:#c8b39f;--muted:#937c68;--line:#33261c;--chip:#2b2017;--accent:#ff8a3d;--up:#9ccc65;--hero:linear-gradient(120deg,#33200f,#17110c 70%)}
+
+/* particles (only when motion is on) */
+.p{position:absolute;top:-30px;will-change:transform}
+@keyframes fall{to{transform:translate(var(--dx),780px) rotate(var(--r))}}
+.snow{width:var(--s);height:var(--s);border-radius:50%;background:#fff;box-shadow:0 0 6px rgba(43,125,233,.35);opacity:.9}
+.site.winter:not(.dark) .snow{background:#c8dcf3}
+.petal{width:12px;height:8px;border-radius:12px 0 12px 0;background:#f7a8c0;opacity:.85}
+.leaf{width:14px;height:14px;border-radius:0 14px 0 14px;background:var(--lc);opacity:.9}
+.sun{position:absolute;right:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,196,60,.45),rgba(255,196,60,0) 65%);animation:pulse 6s ease-in-out infinite}
+.site.summer.dark .sun{background:radial-gradient(circle,rgba(255,162,58,.22),rgba(255,162,58,0) 65%)}
+@keyframes pulse{50%{transform:scale(1.08);opacity:.8}}
+.still .p{display:none}.still .sun{animation:none}
+
+.notes{max-width:1180px;margin:0 auto 40px;padding:0 16px;font-size:14px;line-height:1.6;color:#333}
+.notes h3{font-size:15px;margin:16px 0 6px}
+.notes table{border-collapse:collapse;width:100%;background:#fff;border-radius:10px;overflow:hidden}
+.notes td,.notes th{border-bottom:1px solid #eee;padding:8px 10px;text-align:left;vertical-align:top;font-size:13.5px}
+.notes th{background:#f6f6f8}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Round 29 · Season themes</b>
+  <button data-s="winter" class="on">Winter</button>
+  <button data-s="spring">Spring</button>
+  <button data-s="summer">Summer</button>
+  <button data-s="autumn">Autumn</button>
+  <span class="sp"></span>
+  <button id="dk">Dark version</button>
+  <button id="ph">Phone width</button>
+  <button id="mo">Motion: on</button>
+</div>
+<div class="desc" id="desc"></div>
+<div class="wrapx"><div class="site winter" id="site">
+  <div class="fx" id="fx"></div>
+  <div class="hd"><div class="logo">investment <i>center</i></div><span class="on">My News</span><span>World Brief</span><span>Charts</span><div class="live">● LIVE</div></div>
+  <div class="hero">
+    <div><div class="season" id="sname">Winter edition</div><h1>Good morning. 4 stories to read.</h1><p>Since you were away: 12 new · 2 on your watchlist</p></div>
+    <div class="mas" id="mas"></div>
+  </div>
+  <div class="strip"><span><b>SET</b> 1,451.7 <span class="d">-0.20%</span></span><span><b>S&amp;P 500</b> 7,237.2 <span class="u">+4.73%</span></span><span><b>NVDA</b> 185.05 <span class="u">+31.48%</span></span><span><b>USD/THB</b> 33.90 <span class="d">-0.12%</span></span><span><b>Gold</b> 3,622.3 <span class="d">-0.80%</span></span></div>
+  <div class="body"><div>
+    <div class="chips"><span class="on">All</span><span>My watchlist</span><span>Thailand</span><span>Markets</span></div>
+    <div class="card"><div class="imp">9</div><div><h3>Nvidia reinstates Jensen Huang as CEO, sending shares up over 30%</h3><p>The unanimous reinstatement removes the leadership uncertainty that had weighed on the company.</p><div class="meta">37 outlets · 20 hr ago · <em>NVDA +30.2%</em></div></div></div>
+    <div class="card"><div class="imp">8</div><div><h3>Global markets rally as US tech stocks surge</h3><p>A sharp rebound in US tech shows strong appetite for AI-related assets; oil prices drop.</p><div class="meta">3 outlets · 9 hr ago · <em>NASDAQ +6.5%</em></div></div></div>
+    <div class="card"><div class="imp m">6</div><div><h3>Bank of Thailand holds rates, signals caution on baht strength</h3><p>The central bank kept its policy rate unchanged and flagged currency moves as a risk to exports.</p><div class="meta">5 outlets · 4 hr ago · <em class="d">SET -0.2%</em></div></div></div>
+  </div>
+  <div class="side"><h4>Upcoming</h4><ul><li><b>NVDA</b> earnings · Wed</li><li><b>Fed</b> minutes · Thu</li><li><b>AMD</b> ex-dividend · Fri</li><li><b>BOT</b> rate decision · Dec 17</li></ul></div></div>
+</div></div>
+
+<div class="notes">
+  <h3>How seasons would work (proposal)</h3>
+  <table>
+    <tr><th>Setting</th><th>What it does</th></tr>
+    <tr><td><b>Season: Automatic</b> (recommended)</td><td>Follows the calendar: Winter Dec-Feb, Spring Mar-May, Summer Jun-Aug, Autumn Sep-Nov. Works on top of your Light/Dark choice (each season has both).</td></tr>
+    <tr><td><b>Season: pick one</b></td><td>Keep one season all year.</td></tr>
+    <tr><td><b>Season: Off</b></td><td>Your normal themes (Crisp, Newsprint, Cloud, Sage / Graphite, True black, Midnight) as today.</td></tr>
+    <tr><td><b>Motion</b></td><td>Falling snow, petals and leaves only with motion on; very few particles, behind nothing important; "Reduced" = still.</td></tr>
+  </table>
+  <h3>Mascot costume per season (for your ChatGPT images)</h3>
+  <table>
+    <tr><th>Season</th><th>Costume</th><th>Images to make</th></tr>
+    <tr><td>Winter</td><td>knitted scarf + earmuffs, a little snow on the head</td><td rowspan="4">Only the 3 big, decorative ones per season: <b>hello</b> (login), <b>present</b> (5th intro), <b>caught-up</b> = 12 images. Alerts, waiting/error and the small head icons stay the base character all year (they carry news, costumes would distract).</td></tr>
+    <tr><td>Spring</td><td>a flower or leaf sprout on the head, light cardigan</td></tr>
+    <tr><td>Summer</td><td>sunglasses pushed up, short-sleeve shirt, iced drink instead of coffee</td></tr>
+    <tr><td>Autumn</td><td>warm knit sweater/vest, a falling leaf, hot drink</td></tr>
+  </table>
+</div>
+
+<script>
+const D = {
+  winter: ["Winter edition", "<b>Winter:</b> icy blue accent on a cool white page, light snowfall. Calm and clean. Dark version = deep night blue.", "<b>Mascot spot</b>scarf + earmuffs"],
+  spring: ["Spring edition", "<b>Spring:</b> soft blossom pink accent, warm white page, a few drifting petals. Fresh and gentle. Dark version = plum night.", "<b>Mascot spot</b>flower sprout + cardigan"],
+  summer: ["Summer edition", "<b>Summer:</b> your orange accent stays, sunny sand page with a soft sun glow and sea-teal for gains. Brightest of the four. Dark version = warm night by the sea.", "<b>Mascot spot</b>sunglasses + iced drink"],
+  autumn: ["Autumn edition", "<b>Autumn:</b> rust accent on warm paper, serif headlines (like Newsprint), a few falling leaves. Cosy, most 'editorial'. Dark version = chestnut night.", "<b>Mascot spot</b>knit sweater + falling leaf"],
+};
+let s = "winter", dark = false, still = false;
+const $ = (q) => document.querySelector(q);
+function particles() {
+  const fx = $("#fx"); fx.innerHTML = "";
+  if (s === "summer") { fx.innerHTML = '<div class="sun"></div>'; return; }
+  const n = s === "winter" ? 34 : 16, leafC = ["#c2541b", "#e08a2e", "#9c3d12", "#d9a13a"];
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement("div");
+    p.className = "p " + (s === "winter" ? "snow" : s === "spring" ? "petal" : "leaf");
+    const dur = (s === "winter" ? 9 : 12) + Math.random() * 8;
+    p.style.cssText = `left:${Math.random() * 100}%;--s:${3 + Math.random() * 4}px;--dx:${(Math.random() * 2 - 1) * 120}px;--r:${Math.random() * 540}deg;--lc:${leafC[i % 4]};animation:fall ${dur}s linear ${-Math.random() * dur}s infinite`;
+    fx.appendChild(p);
+  }
+}
+function apply() {
+  const el = $("#site");
+  el.className = `site ${s}${dark ? " dark" : ""}${$("#site").classList.contains("phone") ? " phone" : ""}${still ? " still" : ""}`;
+  $("#sname").textContent = D[s][0]; $("#desc").innerHTML = D[s][1]; $("#mas").innerHTML = D[s][2];
+  particles();
+}
+document.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => { s = b.dataset.s; document.querySelectorAll("[data-s]").forEach((x) => x.classList.toggle("on", x === b)); apply(); });
+$("#dk").onclick = (e) => { dark = !dark; e.target.textContent = dark ? "Light version" : "Dark version"; apply(); };
+$("#ph").onclick = (e) => { const p = $("#site").classList.toggle("phone"); e.target.textContent = p ? "Desktop width" : "Phone width"; };
+$("#mo").onclick = (e) => { still = !still; e.target.textContent = "Motion: " + (still ? "off" : "on"); apply(); };
+apply();
+</script>
+</body>
+</html>

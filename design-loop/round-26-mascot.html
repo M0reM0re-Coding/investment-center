@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 26 · Mascot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#ff4500;--ink:#111;--muted:#888;--line:#eee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#f4f4f6;color:var(--ink)}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.top{background:#111;color:#fff;padding:14px 16px}
+.top h1{font-size:16px;font-weight:700}
+.top p{font-size:13px;color:#bbb;margin-top:4px;line-height:1.5;max-width:980px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+.char{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.char h2{font-family:"Inter Tight";font-size:22px;font-weight:800;letter-spacing:-.3px}
+.char h2 small{font-family:Inter;font-size:13px;font-weight:600;color:var(--accent);margin-left:8px}
+.char .about{font-size:14px;color:#555;line-height:1.5;margin:4px 0 14px;max-width:900px}
+.row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.cell{background:#fafafa;border:1px solid var(--line);border-radius:12px;padding:10px 8px 12px;text-align:center}
+.cell svg{width:100%;max-width:150px;height:auto;display:block;margin:0 auto}
+.cell b{display:block;font-size:13px;margin-top:4px}
+.cell span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.cell:hover svg{animation:bob .9s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+@media(max-width:760px){.row{grid-template-columns:repeat(2,1fr)}.row .cell:last-child{grid-column:1/-1}}
+
+/* live alert preview (style B from round 25 + mascot) */
+.prev{background:#fff;border-radius:16px;padding:20px;margin-bottom:18px}
+.prev h2{font-family:"Inter Tight";font-size:20px;font-weight:800;margin-bottom:10px}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ctrl button{padding:7px 12px;border-radius:8px;background:#eee;font-size:13px;font-weight:600}
+.ctrl button.on{background:var(--accent);color:#fff}
+.ctrl .sep{width:1px;background:#ddd;margin:0 4px}
+.stage{position:relative;height:440px;border-radius:12px;overflow:hidden;background:#fff;border:1px solid #e5e5e5}
+.fake{position:absolute;inset:0;padding:18px 24px}
+.fake i{display:block;height:12px;border-radius:6px;background:#eee;margin:14px 0}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.72)}
+.band{position:absolute;left:0;right:0;top:46%;background:var(--accent);color:#fff;display:flex;align-items:stretch;transform:translateX(-102%)}
+.band .label{background:#fff;color:var(--accent);font-family:"Inter Tight";font-weight:900;font-size:24px;padding:12px 18px;display:flex;align-items:center}
+.band .hl{padding:12px 18px;font-family:"Inter Tight";font-weight:800;font-size:23px;line-height:1.2}
+.lower{position:absolute;left:0;right:0;top:calc(46% + 58px);background:#111;color:#ccc;padding:14px 18px;font-size:14px;line-height:1.5;opacity:0}
+.lower .b{display:inline-block;margin-top:10px;background:var(--accent);color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;font-size:13px}
+.mas{position:absolute;left:4%;bottom:calc(54% - 6px);width:170px;transform:translateY(120%)}
+.mas svg{width:100%;height:auto;display:block}
+.stage.play .band{animation:slide .45s .55s cubic-bezier(.2,.8,.2,1) forwards}
+.stage.play .lower{animation:fade .4s 1.1s forwards}
+.stage.play .mas{animation:hop .6s .05s cubic-bezier(.3,1.5,.5,1) forwards}
+.stage.play .mas .blink{animation:blink 3s 1.5s infinite}
+.stage.play .mas .wave{animation:wave .6s 1s 2 ease-in-out;transform-origin:var(--o)}
+@keyframes slide{to{transform:none}}
+@keyframes fade{to{opacity:1}}
+@keyframes hop{to{transform:none}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes wave{50%{transform:rotate(-24deg)}}
+.blink{transform-box:fill-box;transform-origin:center}
+@media(max-width:760px){.mas{width:110px}.band .hl{font-size:17px}.band .label{font-size:17px}.band{top:40%}.lower{top:calc(40% + 70px)}.mas{bottom:calc(60% - 6px)}}
+.notes{font-size:14px;line-height:1.6;color:#333;background:#fff;border-radius:16px;padding:18px 20px}
+.notes li{margin-left:18px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Round 26 · Mascot: round, soft, in a suit (original characters, not Kirby)</h1>
+  <p>Four original round characters, each in 5 expressions matched to the news mood. Hover a face to see it bob. At the bottom, try each one inside the round-25 Broadcast (B) alert with real stories.</p>
+</div>
+<div class="wrap">
+  <div class="prev">
+    <h2>Live preview: Broadcast alert + mascot</h2>
+    <div class="ctrl" id="cc"></div>
+    <div class="ctrl" id="sc"></div>
+    <div class="stage" id="stage">
+      <div class="fake"><i style="width:40%"></i><i style="width:70%"></i><i style="width:55%"></i><i style="width:80%"></i><i style="width:60%"></i></div>
+      <div class="dim"></div>
+      <div class="mas" id="mas"></div>
+      <div class="band"><div class="label">BIG NEWS</div><div class="hl" id="hl"></div></div>
+      <div class="lower" id="lower"></div>
+    </div>
+  </div>
+  <div id="sheets"></div>
+  <div class="notes">
+    <b>How the mood is picked (no extra AI call):</b>
+    <ul>
+      <li><b>Bullish:</b> the story's sentiment is Bullish (e.g. NVDA +30%).</li>
+      <li><b>Bearish:</b> sentiment Bearish (e.g. worst week since 2020).</li>
+      <li><b>Breaking:</b> impact 10, or a brand-new story under 1 hour old.</li>
+      <li><b>Serious:</b> conflict, disaster or deaths (war, strikes, attacks): the mascot never smiles at these.</li>
+      <li><b>Caught up:</b> empty states, e.g. "All 5 read" on World Brief.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ---------- faces: same parts for every character, so all four share one expression system ----------
+function face(ex, cx, cy, s, col, light) {
+  const k = col, w = light || "#fff", e = 15 * s, sw = 4.2 * s;
+  const L = cx - e, R = cx + e, my = cy + 17 * s;
+  const eye = (x, y) => `<g class="blink"><ellipse cx="${x}" cy="${y}" rx="${4.6*s}" ry="${7*s}" fill="${k}"/><circle cx="${x+1.6*s}" cy="${y-2.6*s}" r="${1.6*s}" fill="${w}"/></g>`;
+  const st = `stroke="${k}" stroke-width="${sw}" stroke-linecap="round" fill="none"`;
+  if (ex === "bull") return `
+    <path d="M${L-6*s} ${cy+2*s} Q${L} ${cy-8*s} ${L+6*s} ${cy+2*s}" ${st}/>
+    <path d="M${R-6*s} ${cy+2*s} Q${R} ${cy-8*s} ${R+6*s} ${cy+2*s}" ${st}/>
+    <path d="M${cx-10*s} ${my-3*s} Q${cx} ${my+9*s} ${cx+10*s} ${my-3*s} Z" fill="${k}"/>
+    <path d="M${cx-5*s} ${my+2.5*s} Q${cx} ${my+5.5*s} ${cx+5*s} ${my+2.5*s}" fill="#ff7a6b"/>`;
+  if (ex === "bear") return `${eye(L, cy+2*s)}${eye(R, cy+2*s)}
+    <path d="M${L-7*s} ${cy-11*s} L${L+5*s} ${cy-14*s}" ${st}/><path d="M${R-5*s} ${cy-14*s} L${R+7*s} ${cy-11*s}" ${st}/>
+    <path d="M${cx-9*s} ${my+3*s} Q${cx-4.5*s} ${my-2*s} ${cx} ${my+3*s} Q${cx+4.5*s} ${my-2*s} ${cx+9*s} ${my+3*s}" ${st}/>
+    <path d="M${R+20*s} ${cy-12*s} q${4*s} ${7*s} 0 ${10*s} q${-4*s} ${-3*s} 0 ${-10*s}Z" fill="#6cc4ff"/>`;
+  if (ex === "breaking") return `
+    <g class="blink"><circle cx="${L}" cy="${cy}" r="${8*s}" fill="${w}" stroke="${k}" stroke-width="${2.6*s}"/><circle cx="${L}" cy="${cy}" r="${3.6*s}" fill="${k}"/></g>
+    <g class="blink"><circle cx="${R}" cy="${cy}" r="${8*s}" fill="${w}" stroke="${k}" stroke-width="${2.6*s}"/><circle cx="${R}" cy="${cy}" r="${3.6*s}" fill="${k}"/></g>
+    <path d="M${L-7*s} ${cy-15*s} Q${L} ${cy-20*s} ${L+7*s} ${cy-16*s}" ${st}/><path d="M${R-7*s} ${cy-16*s} Q${R} ${cy-20*s} ${R+7*s} ${cy-15*s}" ${st}/>
+    <ellipse cx="${cx}" cy="${my+2*s}" rx="${5.5*s}" ry="${7*s}" fill="${k}"/>`;
+  if (ex === "serious") return `
+    <g class="blink"><rect x="${L-5.5*s}" y="${cy-1.5*s}" width="${11*s}" height="${5*s}" rx="${2.5*s}" fill="${k}"/></g>
+    <g class="blink"><rect x="${R-5.5*s}" y="${cy-1.5*s}" width="${11*s}" height="${5*s}" rx="${2.5*s}" fill="${k}"/></g>
+    <path d="M${L-7*s} ${cy-12*s} L${L+6*s} ${cy-8*s}" ${st}/><path d="M${R-6*s} ${cy-8*s} L${R+7*s} ${cy-12*s}" ${st}/>
+    <path d="M${cx-8*s} ${my+1*s} L${cx+8*s} ${my+1*s}" ${st}/>`;
+  // caught up: closed eyes, small smile, a little Z
+  return `
+    <path d="M${L-6*s} ${cy} Q${L} ${cy+6*s} ${L+6*s} ${cy}" ${st}/><path d="M${R-6*s} ${cy} Q${R} ${cy+6*s} ${R+6*s} ${cy}" ${st}/>
+    <path d="M${cx-5*s} ${my} Q${cx} ${my+4*s} ${cx+5*s} ${my}" ${st}/>
+    <text x="${cx+34*s}" y="${cy-26*s}" font-family="Inter Tight" font-weight="900" font-size="${18*s}" fill="${k}" opacity=".55">z</text>
+    <text x="${cx+46*s}" y="${cy-40*s}" font-family="Inter Tight" font-weight="900" font-size="${13*s}" fill="${k}" opacity=".35">z</text>`;
+}
+// small props per mood, held in the right hand
+function prop(ex, x, y) {
+  if (ex === "bull") return `<g transform="translate(${x} ${y})"><rect x="-2" y="-30" width="26" height="22" rx="4" fill="#fff" stroke="#111" stroke-width="3"/><path d="M2 -13 L9 -20 L14 -16 L20 -25" stroke="#16a34a" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  if (ex === "bear") return `<g transform="translate(${x} ${y})"><rect x="-2" y="-30" width="26" height="22" rx="4" fill="#fff" stroke="#111" stroke-width="3"/><path d="M2 -25 L9 -18 L14 -22 L20 -13" stroke="#ef4444" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  if (ex === "breaking") return `<g transform="translate(${x} ${y})"><rect x="0" y="-12" width="8" height="22" rx="3" fill="#333"/><circle cx="4" cy="-18" r="9" fill="#444"/><circle cx="4" cy="-18" r="9" fill="none" stroke="#222" stroke-width="2"/><path d="M-1 -22 h10 M-1 -18 h10 M-1 -14 h10" stroke="#666" stroke-width="1.4"/></g>`;
+  if (ex === "serious") return `<g transform="translate(${x} ${y})"><rect x="-4" y="-22" width="24" height="30" rx="3" fill="#fff" stroke="#111" stroke-width="3"/><path d="M1 -14 h14 M1 -8 h14 M1 -2 h9" stroke="#999" stroke-width="2.4" stroke-linecap="round"/></g>`;
+  return `<g transform="translate(${x} ${y})"><path d="M0 -14 h18 v12 a9 9 0 0 1 -18 0z" fill="#fff" stroke="#111" stroke-width="3"/><path d="M18 -10 a5 5 0 0 1 0 9" stroke="#111" stroke-width="3" fill="none"/><path d="M5 -20 q3 -4 0 -8 M12 -20 q3 -4 0 -8" stroke="#bbb" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
+}
+// suit lower half for a round body: dark jacket with lapels, white shirt V, tie
+function suit(cx, cy, r, jacket, tie) {
+  const top = cy + r * 0.30, bot = cy + r;
+  return `<clipPath id="c${cx}${cy}${r}${jacket.slice(1)}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+  <g clip-path="url(#c${cx}${cy}${r}${jacket.slice(1)})">
+    <path d="M${cx-r} ${top+10} Q${cx} ${top-8} ${cx+r} ${top+10} L${cx+r} ${bot+4} L${cx-r} ${bot+4}Z" fill="${jacket}"/>
+    <path d="M${cx-17} ${top+1} L${cx} ${top+30} L${cx+17} ${top+1}Z" fill="#fff"/>
+    <path d="M${cx-17} ${top+1} L${cx-5} ${top+24} L${cx-26} ${top+12}Z M${cx+17} ${top+1} L${cx+5} ${top+24} L${cx+26} ${top+12}Z" fill="rgba(255,255,255,.18)"/>
+    <path d="M${cx-4} ${top+4} L${cx+4} ${top+4} L${cx+6} ${top+26} L${cx} ${top+33} L${cx-6} ${top+26}Z" fill="${tie}"/>
+    <circle cx="${cx+r*0.55}" cy="${top+28}" r="2.6" fill="rgba(255,255,255,.5)"/>
+  </g>`;
+}
+const arms = (cx, cy, r, col, ex) => `
+  <path class="wave" style="--o:${cx-r+6}px ${cy+8}px" d="M${cx-r+6} ${cy+10} q-16 ${ex==="bull"?-26:6} -22 ${ex==="bull"?-34:16}" stroke="${col}" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <path d="M${cx+r-6} ${cy+10} q14 6 20 14" stroke="${col}" stroke-width="11" stroke-linecap="round" fill="none"/>
+  ${prop(ex, cx + r + 10, cy + 30)}`;
+const shoes = (cx, cy, r) => `<rect x="${cx-34}" y="${cy+r-6}" width="26" height="13" rx="6.5" fill="#1d1d22"/><rect x="${cx+8}" y="${cy+r-6}" width="26" height="13" rx="6.5" fill="#1d1d22"/>`;
+
+const CH = {
+  coin: {
+    name: "Baht", tag: "a gold coin anchor",
+    about: "A round gold coin with an engraved rim, navy suit and orange tie. Money is literally the character: easy to explain on an investment site. Warm and friendly, closest to the round-and-cute feel you like.",
+    draw(ex) { const cx = 100, cy = 92, r = 64;
+      return `${shoes(cx, cy, r)}${arms(cx, cy, r, "#e8a000", ex)}
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffc21a"/><circle cx="${cx}" cy="${cy}" r="${r-7}" fill="none" stroke="#e8a000" stroke-width="3" stroke-dasharray="2 5"/>
+      <ellipse cx="${cx-26}" cy="${cy-34}" rx="13" ry="7" fill="#fff" opacity=".45" transform="rotate(-30 ${cx-26} ${cy-34})"/>
+      ${suit(cx, cy, r, "#1e2a4a", "#ff4500")}${face(ex, cx, cy - 12, 1, "#3a2600")}`; },
+  },
+  anchor: {
+    name: "Orbie", tag: "the news anchor",
+    about: "A soft orange ball (your accent colour) in a charcoal suit, with a small antenna whose LIVE light glows on breaking news. Made for the Broadcast alert: he is literally the presenter.",
+    draw(ex) { const cx = 100, cy = 92, r = 64;
+      return `<path d="M${cx} ${cy-r+2} L${cx+8} ${cy-r-20}" stroke="#222" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="${cx+9}" cy="${cy-r-23}" r="7" fill="${ex==="breaking"?"#ff2d2d":ex==="serious"?"#999":"#ffb48f"}"/>
+      ${ex==="breaking"?`<circle cx="${cx+9}" cy="${cy-r-23}" r="12" fill="none" stroke="#ff2d2d" stroke-width="2" opacity=".5"/>`:""}
+      ${shoes(cx, cy, r)}${arms(cx, cy, r, "#e85a1c", ex)}
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#ff7a3d"/>
+      <ellipse cx="${cx-26}" cy="${cy-34}" rx="13" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 ${cx-26} ${cy-34})"/>
+      ${suit(cx, cy, r, "#2a2a30", "#1f6feb")}${face(ex, cx, cy - 12, 1, "#2b1205")}`; },
+  },
+  bull: {
+    name: "Bullet", tag: "a tiny bull",
+    about: "A cream round body with small horns and a dark suit: the market bull, made cute. On bearish news his horns droop. Strongest market meaning, slightly more 'finance' than cuddly.",
+    draw(ex) { const cx = 100, cy = 94, r = 62, droop = ex === "bear" || ex === "serious";
+      const horn = (sx) => droop
+        ? `<path d="M${cx+sx*40} ${cy-42} q${sx*16} 4 ${sx*22} 20" stroke="#d9c3a0" stroke-width="11" stroke-linecap="round" fill="none"/>`
+        : `<path d="M${cx+sx*38} ${cy-44} q${sx*12} -6 ${sx*14} -26" stroke="#d9c3a0" stroke-width="11" stroke-linecap="round" fill="none"/>`;
+      return `${horn(-1)}${horn(1)}${shoes(cx, cy, r)}${arms(cx, cy, r, "#e2cfb2", ex)}
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#f4e6cf"/>
+      <ellipse cx="${cx}" cy="${cy+9}" rx="19" ry="9" fill="#f0c9b4"/><circle cx="${cx-7}" cy="${cy+9}" r="2.4" fill="#a86c55"/><circle cx="${cx+7}" cy="${cy+9}" r="2.4" fill="#a86c55"/>
+      ${suit(cx, cy, r, "#16161a", "#ff4500")}${face(ex, cx, cy - 28, .9, "#2b2117")}`; },
+  },
+  globe: {
+    name: "Mundo", tag: "a little world",
+    about: "A round blue planet with orange continents, wearing a suit collar and tie. Ties into World Brief and the map. Most distinctive silhouette; the continents make expressions slightly busier.",
+    draw(ex) { const cx = 100, cy = 92, r = 64;
+      return `${shoes(cx, cy, r)}${arms(cx, cy, r, "#2f7fd6", ex)}
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#4da3ff"/>
+      <clipPath id="gl"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+      <g clip-path="url(#gl)" fill="#ff9a5c" opacity=".85">
+        <path d="M30 60 q18 -14 34 -4 q8 10 -4 18 q-14 6 -20 18 q-10 -6 -10 -32z"/>
+        <path d="M118 40 q22 -6 34 10 q-6 14 -22 12 q-10 -2 -12 -22z"/>
+        <path d="M150 92 q10 10 4 24 q-14 -2 -16 -14z"/>
+      </g>
+      <ellipse cx="${cx-26}" cy="${cy-34}" rx="13" ry="7" fill="#fff" opacity=".35" transform="rotate(-30 ${cx-26} ${cy-34})"/>
+      ${suit(cx, cy, r, "#1b1b22", "#ffc21a")}${face(ex, cx, cy - 12, 1, "#0b2440")}`; },
+  },
+};
+const EX = [
+  ["bull", "Bullish", "Good market news, prices up"],
+  ["bear", "Bearish", "Bad market news, prices down"],
+  ["breaking", "Breaking", "Impact 10 or brand-new"],
+  ["serious", "Serious", "War, disaster, deaths: never smiles"],
+  ["calm", "Caught up", "Empty states: all read"],
+];
+const svg = (c, ex) => `<svg viewBox="-10 -10 220 190" xmlns="http://www.w3.org/2000/svg">${CH[c].draw(ex)}</svg>`;
+document.getElementById("sheets").innerHTML = Object.keys(CH).map((c, i) => `
+  <div class="char"><h2>${"ABCD"[i]}. ${CH[c].name}<small>${CH[c].tag}</small></h2><p class="about">${CH[c].about}</p>
+  <div class="row">${EX.map(([e, n, d]) => `<div class="cell">${svg(c, e)}<b>${n}</b><span>${d}</span></div>`).join("")}</div></div>`).join("");
+
+// live preview with real stories from the database
+const ST = {
+  bull: ["Nvidia reinstates Jensen Huang as CEO, shares up over 30%", "NVDA +30.2% · 37 outlets · Impact 9 of 10 · Bullish"],
+  bear: ["Dow and Nasdaq record worst week since March 2020", "Impact 9 of 10 · Bearish · AAPL, NVDA on your watchlist"],
+  serious: ["Russian missiles hit Polish territory", "World Brief · Strike · Europe · 31 outlets"],
+  breaking: ["Tesla and SpaceX form committees to explore a merger", "Impact 10 of 10 · 12 min ago · TSLA"],
+};
+let cc = "anchor", sc = "bull";
+const $ = (s) => document.querySelector(s);
+function play() {
+  $("#mas").innerHTML = svg(cc, sc);
+  $("#hl").textContent = ST[sc][0];
+  $("#lower").innerHTML = ST[sc][1] + '<br><span class="b">Read the story</span>';
+  const st = $("#stage"); st.classList.remove("play"); void st.offsetWidth; st.classList.add("play");
+}
+$("#cc").innerHTML = Object.keys(CH).map((c, i) => `<button data-c="${c}" class="${c===cc?"on":""}">${"ABCD"[i]}. ${CH[c].name}</button>`).join("") + '<span class="sep"></span><button id="rp">Replay</button>';
+$("#sc").innerHTML = Object.keys(ST).map((s) => `<button data-st="${s}" class="${s===sc?"on":""}">${ {bull:"Bullish story",bear:"Bearish story",serious:"Serious story",breaking:"Breaking story"}[s] }</button>`).join("");
+document.addEventListener("click", (e) => {
+  const c = e.target.closest("[data-c]"), s = e.target.closest("[data-st]");
+  if (c) { cc = c.dataset.c; document.querySelectorAll("[data-c]").forEach((b) => b.classList.toggle("on", b === c)); play(); }
+  if (s) { sc = s.dataset.st; document.querySelectorAll("[data-st]").forEach((b) => b.classList.toggle("on", b === s)); play(); }
+  if (e.target.id === "rp") play();
+});
+play();
+</script>
+</body>
+</html>

@@ -19,7 +19,7 @@ import db
 import developing
 from concurrent.futures import ThreadPoolExecutor
 from fetch import fetch_feed, group_stories, similarity, words
-from images import story_image
+from images import stock_photo, story_image
 
 REGIONS = ["Europe", "Americas", "Middle East", "Asia-Pacific", "Africa"]
 CATEGORIES = ["Politics", "Conflict", "Economy", "Climate", "Science & tech", "Health", "Society"]
@@ -204,6 +204,7 @@ WORLD_SCHEMA = {
             "situation": SITUATION_SCHEMA,
             "terms": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {
                 "term": {"type": "STRING"}, "explain": {"type": "STRING"}}, "required": ["term", "explain"]}},
+            "photo_query": {"type": "STRING"},
         },
         "required": ["id", "event", "headline", "summary", "why_matters", "region", "category", "country"],
     }}},
@@ -234,6 +235,8 @@ FIELDS
 - stocks: tickers from the READER'S WATCHLIST that the thailand line names. Empty list if none.
 - terms: 0-3 words from your summary/why_matters a student might not know (e.g. "sanctions", "ceasefire", "corvette"),
   copied EXACTLY as written there, each with a plain explanation of max 22 words.
+- photo_query: 2-4 plain words for a generic stock photo that fits the story: objects or places only, no people's
+  names, no logos (e.g. "oil tanker sea", "parliament building", "rocket launch", "airport empty terminal").
 - situation (for the world map): what happened BETWEEN countries, or IN one place. Pick the closest kind:
     between two countries (use "from" = who acts, "to" = the country where it lands or happens, e.g. drones hitting Russian
     ships docked in Libya -> to "Libya", not "Russia"; use map names like "country"):
@@ -245,13 +248,18 @@ FIELDS
       protest (protest, strike, unrest), vote (election, referendum), disaster (fire, flood, quake, crash), outbreak (disease)
   "say" = ONE plain sentence, max 10 words, past tense, naming the countries, e.g. "Russia's missiles hit Poland",
   "UK put sanctions on Myanmar's leader", "Belgium: national strike shuts airports". Only what the headlines say.
-  Use kind "none" when no kind fits well (most business, crime and society stories). Never guess who attacked whom:
-  if the headlines don't say, use "none".
+  Prefer a real kind whenever one fits: any meeting of leaders or climate/trade talks = summit; protests, strikes, riots,
+  cartel violence = protest; elections, polls, coalition talks = vote; a court case or arrest between two countries can be
+  "cut" or "threat". Use "none" only for stories with no event to show (e.g. a report, a court case inside one country,
+  a celebrity story). Never guess who attacked whom: if the headlines don't say, use a one-place kind or "none".
 """
 
 
 def clean_situation(s):
-    """Keep only a well-formed situation: a known kind, the countries it needs, and a short plain sentence."""
+    """Keep only a well-formed situation: a known kind, the countries it needs, and a short plain sentence.
+    {"kind": "none"} = the AI checked and nothing fits (so the repair step doesn't ask again; the map shows a plain pin)."""
+    if isinstance(s, dict) and s.get("kind") == "none":
+        return {"kind": "none"}
     if not isinstance(s, dict) or s.get("kind") not in SITUATIONS:
         return None
     say = " ".join(str(s.get("say") or "").split())[:90]
@@ -273,27 +281,51 @@ def clean_situation(s):
     return out if ok else None
 
 
-def fix_situations(limit=10):
-    """One AI call: fill in the map situation for recent saved stories that have none yet (e.g. saved by an older robot)."""
-    rows = db._req("GET", "world_stories", params={"select": "id,headline,summary,links", "situation": "is.null",
-                                                    "order": "created_at.desc", "limit": str(limit)})
+CATEGORY_PHOTO = {"Politics": "parliament building", "Conflict": "military checkpoint", "Economy": "city skyline finance",
+                  "Climate": "storm clouds landscape", "Science & tech": "laboratory technology", "Health": "hospital corridor",
+                  "Society": "city street crowd"}
+
+
+def add_photo(row, query):
+    """A related Unsplash photo for a story the publishers gave no picture. Returns True if one was saved."""
+    img, credit = stock_photo(query) if query else (None, None)
+    if not img:
+        img, credit = stock_photo(CATEGORY_PHOTO.get(row.get("category"), "world map"))
+    if img:
+        db._req("PATCH", "world_stories", {"image_url": img, "image_credit": credit}, params={"id": f"eq.{row['id']}"})
+    return bool(img)
+
+
+def fix_situations(limit=10, hours=48):
+    """One AI call: fill in the map situation and/or a photo idea for recent stories that are missing them.
+    Runs every hour after the new stories are saved; does nothing (no AI call) when nothing is missing."""
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+    rows = db._req("GET", "world_stories", params={
+        "select": "id,headline,summary,links,category,situation,image_url", "created_at": f"gte.{since}",
+        "or": "(situation.is.null,image_url.is.null)", "order": "n_sources.desc", "limit": str(limit)})
     if not rows:
         return 0
     schema = {"type": "OBJECT", "properties": {"stories": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {
-        "id": {"type": "INTEGER"}, "situation": SITUATION_SCHEMA}, "required": ["id", "situation"]}}}, "required": ["stories"]}
-    rule = WORLD_RULES[WORLD_RULES.index("- situation (for the world map)"):]
+        "id": {"type": "INTEGER"}, "situation": SITUATION_SCHEMA, "photo_query": {"type": "STRING"}},
+        "required": ["id", "situation", "photo_query"]}}}, "required": ["stories"]}
+    rule = WORLD_RULES[WORLD_RULES.index("- photo_query"):]
     blocks = [f"STORY id={i}\nHeadline: {r['headline']}\nFacts: {' '.join(r['summary'] or [])}\nOther headlines: "
               + " | ".join(l["title"] for l in (r["links"] or [])[:6]) for i, r in enumerate(rows)]
-    out = ai.gemini_json("For each news story, fill in ONLY the map situation.\n" + rule + "\n\n" + "\n\n".join(blocks), schema, lite_first=True)
-    n = 0
+    out = ai.gemini_json("For each news story, fill in ONLY the map situation and the photo_query.\n" + rule + "\n\n"
+                         + "\n\n".join(blocks), schema, lite_first=True)
+    sits = pics = 0
     for a in out["stories"]:
-        if 0 <= a.get("id", -1) < len(rows):
-            sit = clean_situation(a.get("situation"))
-            if sit:
-                db._req("PATCH", "world_stories", {"situation": sit}, params={"id": f"eq.{rows[a['id']]['id']}"})
-                n += 1
-    print(f"Map situations filled in for {n} of {len(rows)} stories")
-    return n
+        if not 0 <= a.get("id", -1) < len(rows):
+            continue
+        r = rows[a["id"]]
+        if not r["situation"]:
+            sit = clean_situation(a.get("situation")) or {"kind": "none"}
+            db._req("PATCH", "world_stories", {"situation": sit}, params={"id": f"eq.{r['id']}"})
+            sits += sit["kind"] != "none"
+        if not r["image_url"]:
+            pics += add_photo(r, (a.get("photo_query") or "").strip()[:60])
+    print(f"World Brief repair: {sits} map situations and {pics} photos added for {len(rows)} stories")
+    return sits + pics
 
 
 def clean_terms(items, text):
@@ -430,6 +462,9 @@ def run(force=False, reader=None):
                     add_links(by_event[a["event"]], s)
                 continue
             img = s["image"] or story_image(None, s["direct_links"])
+            credit = s["image_credit"] if img else None
+            if not img:  # no publisher picture: a related free photo, like My News
+                img, credit = stock_photo((a.get("photo_query") or "").strip()[:60] or CATEGORY_PHOTO.get(a["category"], "world map"))
             if img:  # BBC feed pictures are 240 px thumbnails; the same picture exists at 976 px
                 img = img.replace("ichef.bbci.co.uk/ace/standard/240/", "ichef.bbci.co.uk/ace/standard/976/")
             watch = set((reader or {}).get("watchlist") or [])
@@ -448,7 +483,7 @@ def run(force=False, reader=None):
                 "region": a["region"] if a["region"] in REGIONS + ["Global"] else "Global",
                 "category": a["category"] if a["category"] in CATEGORIES else "Society",
                 "outlets": s["outlets"], "n_sources": s["n_sources"], "coverage": s["coverage"], "links": s["all_links"][:40],
-                "image_url": img, "image_credit": s["image_credit"] if img else None, "published_at": s["published"],
+                "image_url": img, "image_credit": credit, "published_at": s["published"],
             })
             by_event[a["event"]] = None
         if rows:
@@ -466,6 +501,10 @@ def run(force=False, reader=None):
     if mark:
         db.mark_seen({mark: None})
     print(f"World Brief: saved {saved} new stories")
+    try:  # fill in missing map situations / photos (1 AI call, only when something is missing)
+        fix_situations()
+    except (ai.QuotaReached, RuntimeError, ValueError, KeyError) as e:
+        print(f"World Brief repair skipped ({str(e)[:120]})")
     return saved
 
 

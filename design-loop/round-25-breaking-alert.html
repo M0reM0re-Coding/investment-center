@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 25 · Big news alert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--ink:#111;--muted:#888;--soft:#555;--line:#eee;--chip:#f3f3f3;--surface:#fff;--accent:#ff4500;--up:#16a34a;--down:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9ec;color:var(--ink)}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+
+/* ---------- picker bar ---------- */
+.bar{position:sticky;top:0;z-index:50;background:#111;color:#fff;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px}
+.bar b{font-weight:700;margin-right:6px}
+.bar button{padding:7px 12px;border-radius:8px;background:#232327;color:#ddd;font-size:13px;font-weight:600}
+.bar button.on{background:var(--accent);color:#fff}
+.bar .sp{flex:1}
+.desc{background:#fff;border-bottom:1px solid #ddd;padding:12px 16px;font-size:14px;line-height:1.5;color:#333}
+.desc strong{color:#111}
+
+/* ---------- stage: a fake My News page behind the alert ---------- */
+.stagewrap{display:flex;justify-content:center;padding:20px 16px 40px}
+.stage{position:relative;width:1180px;max-width:100%;height:700px;overflow:hidden;border-radius:12px;background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.15)}
+.stage.phone{width:390px;height:780px}
+.site{position:absolute;inset:0;padding:0 28px}
+.shead{display:flex;align-items:center;gap:22px;height:58px;border-bottom:1px solid var(--line);font-size:14px}
+.logo{font-family:"Inter Tight";font-weight:900;letter-spacing:-.4px;font-size:17px}
+.shead span{color:var(--muted)}
+.shead .live{margin-left:auto;color:var(--accent);font-weight:700;font-size:12px}
+.sbody{display:grid;grid-template-columns:1fr 300px;gap:28px;padding-top:24px}
+.card{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+.imp{width:46px;height:46px;border-radius:10px;background:var(--chip);display:grid;place-items:center;font-weight:800;color:var(--soft)}
+.lines i{display:block;height:11px;border-radius:6px;background:#ececec;margin:6px 0}
+.side{background:#fafafa;border-radius:12px;height:420px}
+.stage.phone .sbody{grid-template-columns:1fr}.stage.phone .side,.stage.phone .shead span{display:none}
+.stage.phone .site{padding:0 16px}
+
+/* shared alert bits */
+.ov{position:absolute;inset:0;z-index:10;display:none}
+.ov.show{display:block}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.hl{font-family:"Inter Tight";font-weight:800;letter-spacing:-.6px;line-height:1.08}
+.meta{font-size:13px;opacity:.75}
+.tick{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;padding:5px 10px;border-radius:999px}
+.tick.up{background:rgba(22,163,74,.14);color:#22c55e}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.bread{background:var(--accent);color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;font-size:14px}
+.blater{padding:12px 16px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid currentColor;opacity:.8}
+.count{font-size:12px;opacity:.6}
+.esc{font-size:11px;opacity:.5}
+
+/* ================= A. Curtain ================= */
+.A{background:transparent}
+.A .cur{position:absolute;inset:0;background:linear-gradient(180deg,#1a0a04 0%,#2b0f05 100%);color:#fff;transform:translateY(-100%);display:flex;flex-direction:column;justify-content:center;padding:0 8%}
+.A.show .cur{animation:curDown .7s cubic-bezier(.7,0,.2,1) forwards}
+.A .stripe{position:absolute;left:0;right:0;bottom:0;height:6px;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+.A.show .stripe{animation:grow .9s .6s ease-out forwards}
+.A .kicker{color:var(--accent);display:flex;align-items:center;gap:10px;opacity:0}
+.A .kicker i{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1.2s infinite}
+.A .hl{font-size:56px;margin:18px 0 16px;max-width:900px;opacity:0;transform:translateY(24px)}
+.A .why{font-size:17px;line-height:1.5;max-width:720px;color:#e9d6cd;opacity:0}
+.A .row{display:flex;gap:14px;align-items:center;margin:22px 0 30px;opacity:0}
+.A .btns{opacity:0}
+.A.show .kicker{animation:fadeUp .4s .65s forwards}
+.A.show .hl{animation:fadeUp .55s .8s forwards}
+.A.show .why{animation:fadeUp .5s 1s forwards}
+.A.show .row{animation:fadeUp .5s 1.15s forwards}
+.A.show .btns{animation:fadeUp .5s 1.3s forwards}
+.A .big9{position:absolute;right:6%;top:50%;transform:translateY(-50%);font-family:"Inter Tight";font-weight:900;font-size:340px;line-height:1;color:rgba(255,69,0,.12);opacity:0}
+.A.show .big9{animation:fade .8s 1s forwards}
+.stage.phone .A .hl{font-size:32px}.stage.phone .A .big9{font-size:200px;top:20%}.stage.phone .A .cur{padding:0 22px}
+@keyframes curDown{to{transform:none}}
+@keyframes grow{to{transform:scaleX(1)}}
+
+/* ================= B. Broadcast ================= */
+.B{background:rgba(0,0,0,0)}
+.B.show{animation:dim .35s forwards}
+.B .band{position:absolute;left:0;right:0;top:32%;background:var(--accent);color:#fff;transform:translateX(-102%);display:flex;align-items:stretch}
+.B.show .band{animation:slideIn .45s .25s cubic-bezier(.2,.8,.2,1) forwards}
+.B .label{background:#fff;color:var(--accent);font-family:"Inter Tight";font-weight:900;font-size:30px;letter-spacing:.02em;padding:14px 22px;display:flex;align-items:center}
+.B .band{overflow:hidden}.B .bhl{margin:14px 22px;font-family:"Inter Tight";font-weight:800;font-size:27px;white-space:nowrap;overflow:hidden;border-right:3px solid #fff;max-width:0;flex:none}
+.B.show .bhl{animation:type 1.6s .75s steps(60,end) forwards,caret .8s 2.4s 3}
+.B .lower{position:absolute;left:0;right:0;top:calc(32% + 66px);background:#111;color:#fff;padding:18px 22px;transform:translateY(-10px);opacity:0}
+.B.show .lower{animation:fadeUp .4s 2.3s forwards}
+.B .lower p{font-size:16px;line-height:1.5;max-width:860px;color:#ccc;margin-bottom:14px}
+.B .ticker{position:absolute;left:0;right:0;bottom:0;height:40px;background:#111;color:#fff;display:flex;align-items:center;overflow:hidden;opacity:0;border-top:2px solid var(--accent)}
+.B.show .ticker{animation:fade .3s .5s forwards}
+.B .ticker div{white-space:nowrap;font-size:13px;font-weight:600;animation:marq 18s linear infinite;padding-left:100%}
+.B .ticker em{font-style:normal;color:#22c55e;margin:0 6px}
+.B .clock{position:absolute;right:22px;top:calc(32% - 34px);color:#fff;font-weight:700;font-size:13px;opacity:0;background:#111;padding:6px 10px;border-radius:6px}
+.B.show .clock{animation:fade .3s .6s forwards}
+.stage.phone .B .band{flex-direction:column;top:22%}.stage.phone .B .bhl{white-space:normal;max-width:none!important;font-size:22px;border:0;animation:fade .5s .8s both!important}
+.stage.phone .B .label{font-size:20px}.stage.phone .B .lower{top:calc(22% + 150px)}
+@keyframes dim{to{background:rgba(0,0,0,.72)}}
+@keyframes slideIn{to{transform:none}}
+@keyframes type{to{max-width:900px}}
+@keyframes caret{50%{border-color:transparent}}
+@keyframes marq{to{transform:translateX(-100%)}}
+
+/* ================= C. Spotlight ================= */
+.C{backdrop-filter:blur(0px);background:rgba(10,10,12,0)}
+.C.show{animation:blurIn .5s forwards}
+.C .box{position:absolute;left:50%;top:50%;width:640px;max-width:calc(100% - 32px);background:#fff;border-radius:18px;overflow:hidden;transform:translate(-50%,-44%) scale(.9);opacity:0;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.C.show .box{animation:pop .55s .2s cubic-bezier(.2,.9,.25,1.15) forwards}
+.C .pic{height:220px;background:#222 center/cover;position:relative}
+.C .pic:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.55),transparent 60%)}
+.C .ring{position:absolute;left:22px;bottom:-34px;width:76px;height:76px;border-radius:50%;background:#fff;display:grid;place-items:center;z-index:2;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.C .ring svg{position:absolute;inset:6px}
+.C .ring circle.fg{stroke:var(--accent);stroke-dasharray:201;stroke-dashoffset:201}
+.C.show .ring circle.fg{animation:ring 1.1s .6s ease-out forwards}
+.C .ring b{font-family:"Inter Tight";font-weight:900;font-size:24px;color:var(--accent)}
+.C .in{padding:46px 26px 24px}
+.C .kicker{color:var(--accent)}
+.C .hl{font-size:30px;margin:8px 0 10px}
+.C .why{color:var(--soft);font-size:15px;line-height:1.5;margin-bottom:16px}
+.C .row{display:flex;gap:10px;align-items:center;margin-bottom:20px}
+.C .tick.up{background:#e8f7ee;color:#15803d}
+.C .meta{color:var(--muted);opacity:1}
+.C .blater{color:#333}
+.C .glow{position:absolute;left:50%;top:50%;width:900px;height:900px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,69,0,.25),transparent 60%);opacity:0}
+.C.show .glow{animation:breathe 2.4s .4s ease-in-out infinite}
+.stage.phone .C .hl{font-size:23px}.stage.phone .C .pic{height:160px}
+@keyframes blurIn{to{backdrop-filter:blur(8px);background:rgba(10,10,12,.55)}}
+@keyframes pop{to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes ring{to{stroke-dashoffset:20}}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:.8}}
+
+/* ================= D. Shockwave ================= */
+.D{background:#0b0b0d;color:#fff;opacity:0}
+.D.show{animation:fade .25s forwards}
+.D .chart{position:absolute;left:0;right:0;top:12%;height:44%}
+.D .chart path{fill:none;stroke:var(--accent);stroke-width:3;stroke-dasharray:2400;stroke-dashoffset:2400}
+.D.show .chart path{animation:draw 1.3s .2s cubic-bezier(.6,0,.2,1) forwards}
+.D .chart .area{fill:url(#gD);stroke:none;opacity:0}
+.D.show .chart .area{animation:fade .6s 1.3s forwards}
+.D .grid line{stroke:#1f1f23}
+.D .num{position:absolute;right:7%;top:9%;font-family:"Inter Tight";font-weight:900;font-size:120px;line-height:1;color:var(--accent);opacity:0}
+.D.show .num{animation:fade .2s 1.2s forwards}
+.D .num small{display:block;font-size:13px;letter-spacing:.14em;color:#999;font-family:Inter;font-weight:700;text-align:right}
+.D .txt{position:absolute;left:7%;right:7%;bottom:9%}
+.D .kicker{color:#999;opacity:0}
+.D .hl{font-size:46px;margin:10px 0 14px;max-width:960px;opacity:0}
+.D .row{display:flex;gap:14px;align-items:center;margin-bottom:22px;opacity:0}
+.D .btns{opacity:0}
+.D.show .kicker{animation:fadeUp .4s 1.4s forwards}
+.D.show .hl{animation:fadeUp .5s 1.5s forwards}
+.D.show .row{animation:fadeUp .5s 1.7s forwards}
+.D.show .btns{animation:fadeUp .5s 1.85s forwards}
+.D.shake{animation:fade .25s forwards,shake .45s 1.15s}
+.stage.phone .D .hl{font-size:26px}.stage.phone .D .num{font-size:80px}.stage.phone .D .txt{left:20px;right:20px}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(-6px,2px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,2px)}80%{transform:translate(2px,-1px)}}
+
+@keyframes fade{to{opacity:1}}
+@keyframes fadeUp{to{opacity:1;transform:none}}
+@keyframes pulse{50%{transform:scale(1.6);opacity:.4}}
+
+/* reduced motion preview: everything appears at once */
+.calm .ov *,.calm .ov{animation-duration:.01s!important;animation-delay:0s!important}
+.calm .B .ticker div{animation:none!important}
+
+.notes{max-width:1180px;margin:0 auto 40px;padding:0 16px;font-size:14px;line-height:1.6;color:#333}
+.notes h3{font-size:15px;margin:14px 0 6px}
+.notes li{margin-left:18px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Round 25 · Big news alert (impact 9+)</b>
+  <button data-s="A" class="on">A · Curtain</button>
+  <button data-s="B">B · Broadcast</button>
+  <button data-s="C">C · Spotlight</button>
+  <button data-s="D">D · Shockwave</button>
+  <span class="sp"></span>
+  <button id="replay">Replay</button>
+  <button id="size">Phone width</button>
+  <button id="calm">Reduced motion: off</button>
+</div>
+<div class="desc" id="desc"></div>
+
+<div class="stagewrap"><div class="stage" id="stage">
+  <div class="site">
+    <div class="shead"><div class="logo">investment center</div><span>My News</span><span>World Brief</span><span>Charts</span><div class="live">● LIVE</div></div>
+    <div class="sbody"><div>
+      <div class="card"><div class="imp">7</div><div class="lines" style="flex:1"><i style="width:80%"></i><i style="width:55%"></i></div></div>
+      <div class="card"><div class="imp">6</div><div class="lines" style="flex:1"><i style="width:70%"></i><i style="width:45%"></i></div></div>
+      <div class="card"><div class="imp">6</div><div class="lines" style="flex:1"><i style="width:85%"></i><i style="width:50%"></i></div></div>
+      <div class="card"><div class="imp">5</div><div class="lines" style="flex:1"><i style="width:65%"></i><i style="width:40%"></i></div></div>
+    </div><div class="side"></div></div>
+  </div>
+
+  <!-- A. Curtain -->
+  <div class="ov A" id="A"><div class="cur">
+    <div class="big9">9</div>
+    <div class="kicker"><i></i>Big news · Impact 9 of 10</div>
+    <h1 class="hl">Nvidia reinstates Jensen Huang as CEO, sending shares up over 30%</h1>
+    <p class="why">The unanimous reinstatement removes the leadership uncertainty that had weighed heavily on the company.</p>
+    <div class="row"><span class="tick up">NVDA +30.2%</span><span class="tick up">AMD +6.1%</span><span class="meta">37 outlets · 2 hr ago · Mon 21:54</span></div>
+    <div class="btns"><button class="bread">Read the story</button><button class="blater">Later</button><span class="count" style="align-self:center">1 of 1 · <span class="esc">Esc to close</span></span></div>
+  </div><div class="stripe"></div></div>
+
+  <!-- B. Broadcast -->
+  <div class="ov B" id="B">
+    <div class="clock">LIVE · 21:54</div>
+    <div class="band"><div class="label">BIG NEWS</div><div class="bhl">Nvidia reinstates Jensen Huang as CEO, shares up over 30%</div></div>
+    <div class="lower">
+      <p>The unanimous reinstatement removes the leadership uncertainty that had weighed heavily on the company. 37 outlets · Impact 9 of 10.</p>
+      <div class="btns"><button class="bread">Read the story</button><button class="blater">Later</button></div>
+    </div>
+    <div class="ticker"><div>NVDA <em>+30.2%</em> · AMD <em>+6.1%</em> · NASDAQ <em>+2.4%</em> · S&amp;P 500 <em>+1.3%</em> · SET <em>+0.4%</em> · Nvidia reinstates Jensen Huang as CEO · 37 outlets covering · Impact 9 of 10 ·</div></div>
+  </div>
+
+  <!-- C. Spotlight -->
+  <div class="ov C" id="C"><div class="glow"></div><div class="box">
+    <div class="pic" style="background-image:url('https://images.unsplash.com/photo-1591405351990-4726e331f141?w=1200&q=70')">
+      <div class="ring"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="none" stroke="#f1f1f1" stroke-width="5" transform="rotate(-90 32 32)" style="r:29"/><circle class="fg" cx="32" cy="32" r="29" fill="none" stroke-width="5" stroke-linecap="round" transform="rotate(-90 32 32)" pathLength="201"/></svg><b>9</b></div>
+    </div>
+    <div class="in">
+      <div class="kicker">Big news · while you were away</div>
+      <h1 class="hl">Nvidia reinstates Jensen Huang as CEO, sending shares up over 30%</h1>
+      <p class="why">The unanimous reinstatement removes the leadership uncertainty that had weighed heavily on the company.</p>
+      <div class="row"><span class="tick up">NVDA +30.2%</span><span class="meta">37 outlets · 2 hr ago</span></div>
+      <div class="btns"><button class="bread">Read the story</button><button class="blater">Later</button><span class="count" style="align-self:center;margin-left:auto">1 of 1</span></div>
+    </div>
+  </div></div>
+
+  <!-- D. Shockwave -->
+  <div class="ov D" id="D">
+    <svg class="chart" viewBox="0 0 1200 300" preserveAspectRatio="none">
+      <defs><linearGradient id="gD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff4500" stop-opacity=".35"/><stop offset="1" stop-color="#ff4500" stop-opacity="0"/></linearGradient></defs>
+      <g class="grid"><line x1="0" y1="75" x2="1200" y2="75"/><line x1="0" y1="150" x2="1200" y2="150"/><line x1="0" y1="225" x2="1200" y2="225"/></g>
+      <path class="area" d="M0 230 L120 226 L240 232 L360 224 L480 229 L600 222 L700 226 L760 220 L800 120 L830 70 L880 60 L960 52 L1080 48 L1200 44 L1200 300 L0 300Z"/>
+      <path d="M0 230 L120 226 L240 232 L360 224 L480 229 L600 222 L700 226 L760 220 L800 120 L830 70 L880 60 L960 52 L1080 48 L1200 44"/>
+    </svg>
+    <div class="num">+30%<small>NVDA · IMPACT 9</small></div>
+    <div class="txt">
+      <div class="kicker">Big news · 37 outlets</div>
+      <h1 class="hl">Nvidia reinstates Jensen Huang as CEO, sending shares up over 30%</h1>
+      <div class="row"><span class="tick up">NVDA +30.2%</span><span class="tick up">AMD +6.1%</span><span class="meta">2 hr ago · Mon 21:54</span></div>
+      <div class="btns"><button class="bread">Read the story</button><button class="blater" style="color:#fff">Later</button></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="notes">
+  <h3>Rules for every style (same in all 4)</h3>
+  <ul>
+    <li><b>When:</b> you open the site and a story with impact 9 or 10 arrived since your last visit (last 24 h), on a topic or stock you follow. Each story covers the screen once only.</li>
+    <li><b>Several at once:</b> "1 of 2", then the next one after Read or Later.</li>
+    <li><b>Read the story</b> opens the story page. <b>Later</b> closes it and marks the story "later". Esc or a click outside = Later.</li>
+    <li><b>Motion setting:</b> follows Settings → Motion. On Reduced, it appears instantly without movement (try the button above).</li>
+    <li>Real story from your database: impact 9, 2026-11-23, 37 outlets (prices shown are from the story).</li>
+  </ul>
+</div>
+
+<script>
+const D = {
+  A: "<strong>A · Curtain:</strong> a dark curtain drops from the top, an orange line runs across, then the headline rises. Bold and unmissable, the most like an emergency banner. Tradeoff: heaviest, feels urgent every time.",
+  B: "<strong>B · Broadcast:</strong> the page dims, a TV-style BIG NEWS band slides in, the headline types out, a price ticker runs along the bottom. Feels live and newsy. Tradeoff: busier; typing takes ~2 s.",
+  C: "<strong>C · Spotlight:</strong> the page blurs, a card with the photo pops up, a ring fills to the impact score. Calm and premium, closest to the current site. Tradeoff: least dramatic, covers the middle rather than the whole screen.",
+  D: "<strong>D · Shockwave:</strong> the screen goes dark, a price line spikes across it, the screen shakes once, then the headline. Data-first: you see the market reaction before the words. Tradeoff: only fits stories with a clear price move."
+};
+let cur = "A";
+const $ = (s) => document.querySelector(s);
+function play() {
+  document.querySelectorAll(".ov").forEach((o) => o.classList.remove("show", "shake"));
+  void document.body.offsetWidth;
+  const o = $("#" + cur); o.classList.add("show"); if (cur === "D") o.classList.add("shake");
+  $("#desc").innerHTML = D[cur];
+}
+document.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("[data-s]").forEach((x) => x.classList.toggle("on", x === b));
+  cur = b.dataset.s; play();
+});
+$("#replay").onclick = play;
+$("#size").onclick = (e) => { const p = $("#stage").classList.toggle("phone"); e.target.textContent = p ? "Desktop width" : "Phone width"; play(); };
+$("#calm").onclick = (e) => { const c = document.body.classList.toggle("calm"); e.target.textContent = "Reduced motion: " + (c ? "on" : "off"); play(); };
+document.addEventListener("click", (e) => { if (e.target.closest(".bread,.blater")) { document.querySelectorAll(".ov").forEach((o) => o.classList.remove("show")); } });
+play();
+</script>
+</body>
+</html>

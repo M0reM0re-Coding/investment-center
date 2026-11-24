@@ -1,5 +1,6 @@
 // Investment Center website: page 1 (My News). Plain JavaScript, no build step.
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
+import { MASCOTS, mascotSvg } from "./mascot.js";
 
 const CFG = window.IC_CONFIG;
 
@@ -43,6 +44,59 @@ function applyTheme() {
   r.dataset.light = lightStyle();
 }
 applyTheme();
+// Season themes (design round 29). Settings -> Season: off (default) / auto (follows the calendar) / winter / spring / summer / autumn.
+// Saved on this device. On localhost, ?season=winter etc. still overrides it for previews.
+const SEASONS = ["winter", "spring", "summer", "autumn"];
+const seasonPref = () => safe(() => localStorage.getItem("ic_season"), null) || "off";
+const calSeason = () => { const m = new Date().getMonth() + 1; return m === 12 || m <= 2 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "autumn"; };
+const seasonUrl = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? new URLSearchParams(location.search).get("season") : null;
+let season = null;
+const SEASON_ICON = {
+  winter: "<g stroke='white' stroke-width='3.4' stroke-linecap='round'><path d='M32 14v36M16.4 23l31.2 18M16.4 41l31.2-18'/><path d='M27 17l5 4 5-4M27 47l5-4 5 4'/></g>",
+  spring: "<g fill='white'><circle cx='32' cy='21' r='8'/><circle cx='42.5' cy='29' r='8'/><circle cx='38.5' cy='41.5' r='8'/><circle cx='25.5' cy='41.5' r='8'/><circle cx='21.5' cy='29' r='8'/></g><circle cx='32' cy='33' r='5' fill='%23ffd166'/>",
+  summer: "<circle cx='32' cy='32' r='10' fill='white'/><g stroke='white' stroke-width='3.4' stroke-linecap='round'><path d='M32 12v6M32 46v6M12 32h6M46 32h6M18 18l4 4M42 42l4 4M46 18l-4 4M22 42l-4 4'/></g>",
+  autumn: "<path d='M32 12c9 8 14 17 9 27-3 6-9 9-9 9s-6-3-9-9c-5-10 0-19 9-27z' fill='white'/><path d='M32 22v32' stroke='%23c2541b' stroke-width='3' stroke-linecap='round'/>",
+};
+function applySeason() {
+  const p = SEASONS.includes(seasonUrl) ? seasonUrl : seasonPref();
+  season = p === "auto" ? calSeason() : SEASONS.includes(p) ? p : null;
+  const r = document.documentElement;
+  document.querySelector(".sfx")?.remove();
+  document.querySelector("link[data-season-icon]")?.remove();
+  if (!season) { delete r.dataset.season; return; }
+  r.dataset.season = season;
+  // falling snow / petals / leaves in the side margins (an inner <b> so the mouse can push it)
+  const fx = document.createElement("div");
+  fx.className = "sfx"; fx.setAttribute("aria-hidden", "true");
+  if (season === "summer") fx.innerHTML = '<div class="sun"></div>';
+  else {
+    const n = season === "winter" ? 40 : 18, kind = { winter: "snow", spring: "petal", autumn: "leaf" }[season];
+    const leaf = ["#c2541b", "#e08a2e", "#9c3d12", "#d9a13a"];
+    fx.innerHTML = Array.from({ length: n }, (_, k) => { const d = (season === "winter" ? 10 : 14) + Math.random() * 10;
+      return `<i class="${kind}" style="left:${Math.random() * 100}%;--s:${3 + Math.random() * 4}px;--dx:${(Math.random() * 2 - 1) * 140}px;--r:${Math.random() * 540}deg;--lc:${leaf[k % 4]};--d:${d}s;--w:${-Math.random() * d}s"><b></b></i>`; }).join("");
+  }
+  document.body.prepend(fx);
+  // a seasonal browser-tab icon
+  const bg = { winter: "%232b7de9", spring: "%23dd4f7a", summer: "%23ff6a00", autumn: "%23c2541b" }[season];
+  const ico = document.createElement("link"); ico.rel = "icon"; ico.dataset.seasonIcon = "1";
+  ico.href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='${bg}'/>${SEASON_ICON[season]}</svg>`;
+  document.head.appendChild(ico);
+}
+applySeason();
+// snow / petals / leaves drift away from the mouse (side margins only, where they are visible)
+{
+  let mx = -999, my = -999, raf = 0;
+  const push = () => {
+    raf = 0;
+    document.querySelectorAll(".sfx i").forEach((p) => {
+      const r = p.getBoundingClientRect(), dx = r.left + r.width / 2 - mx, dy = r.top + r.height / 2 - my, d = Math.hypot(dx, dy);
+      const b = p.firstElementChild;
+      if (d < 120) { const f = (120 - d) / 120 * 70 / (d || 1); b.style.transform = `translate(${dx * f}px,${dy * f}px)`; b.dataset.p = "1"; }
+      else if (b.dataset.p) { b.style.transform = ""; delete b.dataset.p; }
+    });
+  };
+  addEventListener("mousemove", (e) => { if (!season) return; mx = e.clientX; my = e.clientY; if (!raf) raf = requestAnimationFrame(push); }, { passive: true });
+}
 safe(() => matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyTheme(); if (location.hash === "#/prefs") render(false); }));
 safe(() => matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () => { applyMotion(); if (location.hash === "#/prefs") render(false); }));
 const EYE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
@@ -357,6 +411,86 @@ function sinceMove(s, t) {
 }
 const sinceTxt = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
 
+// Season picture for the dark brief bar (item 1): faint, on the right, behind the text
+const SEASON_ART = {
+  winter: `<path d="M0 100 Q60 62 130 78 T260 70 T360 74 V100Z" fill="#fff" opacity=".10"/><path d="M120 100 Q200 70 280 84 T360 82 V100Z" fill="#fff" opacity=".14"/>
+    <g fill="#cfe3ff" opacity=".35"><path d="M300 86 l10 -34 l10 34z"/><path d="M322 88 l8 -26 l8 26z"/><path d="M276 90 l7 -22 l7 22z"/></g>
+    <g stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".45"><path d="M210 18v14M204 21l12 8M204 29l12-8"/><path d="M330 22v10M325.5 24.5l9 5M325.5 29.5l9-5"/><path d="M250 40v8M246.5 42l7 4M246.5 46l7-4"/></g>`,
+  spring: `<path d="M360 6 Q300 18 262 44 Q236 62 214 92" stroke="#7a4a3a" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55"/>
+    <path d="M300 22 Q286 40 290 62" stroke="#7a4a3a" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".5"/>
+    ${[[262, 44], [292, 60], [236, 70], [318, 20], [276, 30], [222, 86], [340, 12]].map(([x, y]) => `<g transform="translate(${x} ${y})" opacity=".75">${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="0" cy="-5" rx="3.6" ry="5" fill="#f7a8c0" transform="rotate(${a})"/>`).join("")}<circle r="2" fill="#ffd166"/></g>`).join("")}`,
+  summer: `<circle cx="300" cy="64" r="34" fill="#ffb347" opacity=".35"/><circle cx="300" cy="64" r="22" fill="#ffd166" opacity=".45"/>
+    <path d="M150 78 q15 -8 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" stroke="#5eead4" stroke-width="2.4" fill="none" opacity=".5"/>
+    <path d="M170 90 q15 -8 30 0 t30 0 t30 0 t30 0 t30 0 t30 0" stroke="#5eead4" stroke-width="2" fill="none" opacity=".35"/>`,
+  autumn: `<path d="M360 4 Q310 22 272 50 Q248 68 230 96" stroke="#6b3d1e" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55"/>
+    ${[[272, 50, "#e0702e", 20], [300, 30, "#c2541b", -30], [248, 70, "#d9a13a", 40], [326, 18, "#e08a2e", -10], [212, 40, "#c2541b", 70], [180, 74, "#d9a13a", 110]].map(([x, y, c, r]) =>
+      `<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -12 L3 -5 L10 -7 L6 0 L11 4 L3 4 L2 11 L0 6 L-2 11 L-3 4 L-11 4 L-6 0 L-10 -7 L-3 -5Z" fill="${c}" opacity=".7"/>`).join("")}`,
+};
+// Season intro scenes (winter / spring / autumn; summer is the sunrise over the sea). Layers rise in one after another.
+function seasonScene(s) {
+  const lay = (d, body) => `<g class="slay" style="--dl:${d}s">${body}</g>`;
+  const pop = (x, y, d, body) => `<g class="spop" style="--dl:${d}s" transform="translate(${x} ${y})"><g>${body}</g></g>`;
+  const flower = `${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="0" cy="-9" rx="6.5" ry="9" fill="#f7a8c0" transform="rotate(${a})"/>`).join("")}<circle r="4" fill="#ffd166"/>`;
+  const leafG = (c) => `<path d="M0 -20 L5 -8 L17 -11 L10 0 L18 7 L5 7 L3 18 L0 10 L-3 18 L-5 7 L-18 7 L-10 0 L-17 -11 L-5 -8Z" fill="${c}"/>`;
+  const pine = (x, h, c) => `<path d="M${x} ${900 - h} L${x + h * .28} 900 L${x - h * .28} 900Z" fill="${c}"/>`;
+  const svg = (body) => `<svg class="sscene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${body}</svg>`;
+  if (s === "winter") return svg(`
+    <defs><linearGradient id="sau" x1="0" x2="1"><stop offset="0" stop-color="#5eead4" stop-opacity="0"/><stop offset=".3" stop-color="#5eead4" stop-opacity=".55"/><stop offset=".7" stop-color="#a78bfa" stop-opacity=".45"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></linearGradient>
+      <radialGradient id="smoon"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#e6efff"/><stop offset="1" stop-color="#e6efff" stop-opacity="0"/></radialGradient></defs>
+    <path class="saur" d="M-100 260 C200 140 420 330 760 220 S1300 120 1700 240 L1700 320 C1300 210 1050 380 760 300 S200 230 -100 340Z" fill="url(#sau)"/>
+    <g class="smoon"><circle cx="1260" cy="210" r="120" fill="url(#smoon)" opacity=".35"/><circle cx="1260" cy="210" r="54" fill="#f4f7ff"/><circle cx="1240" cy="196" r="9" fill="#dfe7f6"/><circle cx="1278" cy="228" r="6" fill="#dfe7f6"/></g>
+    ${lay(0, `<path d="M0 640 L220 420 L360 540 L560 330 L760 560 L940 380 L1160 600 L1360 400 L1600 620 V900 H0Z" fill="#2c4a70"/>
+      <path d="M220 420 L262 462 L240 470 L222 452 L196 472 L180 462Z M560 330 L612 386 L586 392 L562 372 L534 396 L512 384Z M940 380 L984 430 L958 434 L940 418 L916 436 L900 424Z M1360 400 L1408 452 L1380 456 L1362 440 L1338 458 L1320 446Z" fill="#eef4ff"/>`)}
+    ${lay(.15, `<path d="M0 760 Q200 640 420 700 T860 690 T1300 700 T1600 680 V900 H0Z" fill="#1b3354"/>`)}
+    ${lay(.3, `${[[90, 220], [180, 300], [270, 190], [1290, 260], [1380, 330], [1480, 230], [1560, 280]].map(([x, h]) => pine(x, h, "#0f2238")).join("")}
+      <path d="M0 840 Q400 790 800 820 T1600 810 V900 H0Z" fill="#e8f0fb"/>`)}`);
+  if (s === "spring") return svg(`
+    <circle class="smoon" cx="1180" cy="260" r="90" fill="#fff4d6" opacity=".9"/>
+    ${lay(0, `<path d="M0 700 Q300 560 640 640 T1300 600 T1600 640 V900 H0Z" fill="#c9e7b5"/>`)}
+    ${lay(.15, `<path d="M0 790 Q360 680 760 760 T1600 730 V900 H0Z" fill="#9fd48d"/>`)}
+    ${lay(.3, `<path d="M0 860 Q500 800 1000 850 T1600 840 V900 H0Z" fill="#7cc06c"/>
+      ${[[200, 846], [420, 838], [980, 852], [1240, 846], [1460, 842]].map(([x, y]) => `<g transform="translate(${x} ${y}) scale(.7)">${flower}</g>`).join("")}`)}
+    <path class="sdraw" d="M-20 60 Q260 90 420 200 Q520 270 560 380 M300 140 Q330 230 300 300 M420 200 Q520 170 600 190" stroke="#6b4434" stroke-width="16" fill="none" stroke-linecap="round"/>
+    ${[[200, 92, .55], [300, 300, .7], [420, 200, .65], [560, 380, .9], [600, 190, .8], [500, 290, .85], [350, 160, .6], [140, 70, .5]].map(([x, y, d]) => pop(x, y, d, `<g transform="scale(1.9)">${flower}</g>`)).join("")}`);
+  return svg(`
+    <defs><radialGradient id="ssun2"><stop offset="0" stop-color="#ffe2a8"/><stop offset=".5" stop-color="#ffb35c"/><stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient></defs>
+    <g class="smoon"><circle cx="520" cy="560" r="260" fill="url(#ssun2)" opacity=".7"/><circle cx="520" cy="560" r="80" fill="#ffd28a"/></g>
+    ${lay(0, `<path d="M0 640 Q260 520 560 600 T1160 560 T1600 600 V900 H0Z" fill="#8a4122"/>`)}
+    ${lay(.15, `<path d="M0 740 Q320 640 700 710 T1600 690 V900 H0Z" fill="#5e2c16"/>`)}
+    ${lay(.3, `<path d="M0 830 Q500 770 1000 820 T1600 800 V900 H0Z" fill="#3a1a0c"/>
+      <path d="M1290 900 Q1300 700 1280 560 M1284 640 Q1200 560 1120 540 M1282 600 Q1380 520 1460 510 M1286 700 Q1380 660 1430 610" stroke="#2a1208" stroke-width="22" fill="none" stroke-linecap="round"/>`)}
+    ${[[1120, 540, .7, "#e0702e"], [1170, 500, .8, "#d9a13a"], [1460, 510, .75, "#c2541b"], [1400, 470, .85, "#e08a2e"], [1430, 610, .9, "#d9a13a"], [1240, 470, .95, "#c2541b"], [1330, 450, 1, "#e0702e"], [1360, 560, 1.05, "#9c3d12"], [1200, 590, .78, "#c2541b"], [1290, 520, .88, "#d9a13a"], [1500, 560, .82, "#e0702e"], [1380, 410, .92, "#d9a13a"], [1150, 450, .98, "#9c3d12"], [1460, 440, 1.02, "#c2541b"], [1270, 410, 1.08, "#e08a2e"], [1330, 620, 1.1, "#e0702e"]].map(([x, y, d, c]) => pop(x, y, d, `<g transform="scale(1.6)">${leafG(c)}</g>`)).join("")}`);
+}
+const seasonArt = () => (season ?`<svg class="sart" viewBox="0 0 360 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true">${SEASON_ART[season]}</svg>` : "");
+
+// Market season note (item 2): fixed text, no AI. Months = when each line matters; the current month is marked "now".
+const SEASON_NOTES = {
+  winter: ["Winter in the markets", [[[12], "Last month to buy ThaiESG / RMF funds for this year's tax deduction"],
+    [[12], "\"Santa rally\": stocks often drift up in the last week of the year (on average, not a rule)"],
+    [[1, 2], "Q4 earnings: US big tech reports late January, Thai companies by end of February"],
+    [[2], "Full-year results bring the first SET dividend announcements"]]],
+  spring: ["Spring in the markets", [[[3, 4, 5], "Dividend season: many SET stocks go XD. Buy before the XD date to get the dividend"],
+    [[4], "Thai AGM season: shareholders vote on dividends"],
+    [[4, 5], "Q1 earnings: US from mid-April, Thai companies by mid-May"],
+    [[5], "\"Sell in May\" is an old saying, not a rule"]]],
+  summer: ["Summer in the markets", [[[6], "Fed meeting mid-June, with new rate projections"],
+    [[7, 8], "Q2 earnings: US from mid-July, Thai companies by mid-August"],
+    [[8], "Interim dividends: some SET stocks go XD in August-September"],
+    [[8], "Jackson Hole: the Fed chair's late-August speech can move markets"]]],
+  autumn: ["Autumn in the markets", [[[9], "September has historically been a weak month for stocks (on average)"],
+    [[10, 11], "Q3 earnings: US from mid-October, Thai companies by mid-November"],
+    [[11], "US Thanksgiving: thin trading, and a half day on Friday"],
+    [[11], "Plan ThaiESG / RMF buys now, before the December rush"]]],
+};
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function seasonNote() {
+  if (!season) return "";
+  const [title, items] = SEASON_NOTES[season], m = new Date().getMonth() + 1;
+  return `<div class="snote a"><h4>${title}</h4><ul>${items.map(([ms, txt]) =>
+    `<li class="${ms.includes(m) ? "now" : ""}"><span>${ms.length > 1 ? `${MON[ms[0] - 1]}–${MON[ms.at(-1) - 1]}` : MON[ms[0] - 1]}${ms.includes(m) ? " · now" : ""}</span>${esc(txt)}</li>`).join("")}</ul>
+    <p class="note">Typical yearly patterns, not advice. Exact dates are in the calendar below.</p></div>`;
+}
+
 function briefBar() {
   const waiting = waitingMust();
   const fresh = storiesFor("All").filter(isNew), hi = fresh.filter((s) => s.impact_score >= 7).length;
@@ -364,7 +498,7 @@ function briefBar() {
     .sort((a, b) => Math.abs(pctOf(b[1])) - Math.abs(pctOf(a[1])));
   const mover = movers.length ? ` · ${esc(movers[0][0])} <span class="${dirOf(movers[0][1])}">${pctTxt(movers[0][1])}</span> today` : "";
   const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="${impClass(s.impact_score)}">${s.impact_score}</span>`);
-  return `<div class="brief a" data-sig="${esc([waiting.length, fresh.length, hi, mover].join("|"))}">${calm() ? "" : BRIEF_BG}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
+  return `<div class="brief a" data-sig="${esc([waiting.length, fresh.length, hi, mover].join("|"))}">${calm() ? "" : BRIEF_BG}${seasonArt()}<div><h2>${waiting.length ? `${waiting.length} must-read${waiting.length > 1 ? "s" : ""} waiting` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${hi} high-impact${mover}</p></div>
     <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
     ${waiting.length ? `<button class="go" data-brief>▶ Start<span class="hide-sm"> briefing</span> · ~${waiting.length} min</button>` : ""}</div>`;
@@ -792,7 +926,7 @@ function viewFeed() {
     ${mTicker()}
     ${filterRow}
     ${priceStrip()}
-    <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending)}${upcomingPanel()}</aside></div></div>${dock()}`;
+    <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending)}${seasonNote()}${upcomingPanel()}</aside></div></div>${dock()}`;
 }
 
 // "The full story" (design round 16): 3-4 paragraphs the AI wrote from the full articles it could read.
@@ -955,7 +1089,7 @@ function worldBriefBar() {
   const wide = fresh.filter((s) => s.n_sources >= 10).length;
   const thumb = (s) => (/^https:\/\//.test(s.image_url || "") ? `<img src="${esc(s.image_url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`
     : `<span class="wthumb r-${WREG[s.region] || "gl"}">${svgI(WCAT_ICO[s.category] || WCAT_ICO.Society)}</span>`);
-  return `<div class="brief a" data-sig="${esc([waiting.map((s) => s.id).join(","), fresh.length, wide].join("|"))}">${calm() ? "" : BRIEF_BG}<div>
+  return `<div class="brief a" data-sig="${esc([waiting.map((s) => s.id).join(","), fresh.length, wide].join("|"))}">${calm() ? "" : BRIEF_BG}${seasonArt()}<div>
       <h2>${waiting.length ? `${waiting.length} top ${waiting.length > 1 ? "stories" : "story"} to read` : "You're caught up ✓"}</h2>
       <p>Since you were away: ${fresh.length} new · ${wide} widely covered (10+ outlets)</p></div>
     <div class="thumbs">${waiting.slice(0, 4).map(thumb).join("")}</div>
@@ -1337,10 +1471,33 @@ function viewPrefs() {
     <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">Dark style</h3>
     <div class="dpick a">${[["graphite", "Graphite", "Soft charcoal greys", ["#0f0f10", "#18181b", "#222226"]], ["black", "True black", "Pure black, high contrast", ["#000", "#0b0b0c", "#151517"]], ["navy", "Midnight", "Deep blue, trading-terminal feel", ["#0a0f1c", "#101829", "#16203a"]]]
       .map(([k, n, sub, c]) => `<button class="dsw ${darkStyle() === k ? "on" : ""}" data-dark-pick="${k}"><span class="sw" style="background:${c[0]}"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i><i style="background:#ff4500"></i></span><b>${n}</b><small>${sub}</small></button>`).join("")}</div>
+    <h2 class="sec a" style="margin-top:32px">Season</h2>
+    <p class="why a">Seasonal colours, falling snow / petals / leaves at the sides, a seasonal opening intro, a picture in the brief bar and a "… in the markets" note. Works with Light and Dark.</p>
+    <div class="spick a">${[["off", "Off", "Your normal theme", ["#ffffff", "#111111", "#ff4500"]], ["auto", "Automatic", `Follows the calendar (now: ${calSeason()})`, null],
+      ["winter", "Winter", "Icy blue, snowfall", ["#eef4fa", "#2b7de9", "#0f2233"]], ["spring", "Spring", "Blossom pink, petals", ["#fcf6f5", "#dd4f7a", "#9fd48d"]],
+      ["summer", "Summer", "Sunny sand, sea teal", ["#fff9ee", "#ff6a00", "#14b8a6"]], ["autumn", "Autumn", "Rust, falling leaves", ["#f7efe3", "#c2541b", "#d9a13a"]]]
+      .map(([k, n, sub, c]) => { const on = seasonPref() === k;
+        const sw = c ? `<span class="sw" style="background:${c[0]};border:1px solid #0000001a"><i style="background:${c[1]}"></i><i style="background:${c[2]}"></i></span>`
+          : `<span class="sw auto"><i style="background:#2b7de9"></i><i style="background:#dd4f7a"></i><i style="background:#ff6a00"></i><i style="background:#c2541b"></i></span>`;
+        return `<button class="dsw ${on ? "on" : ""}" data-season-pick="${k}" aria-pressed="${on}">${sw}<b>${n}</b><small>${sub}</small></button>`; }).join("")}</div>
     <h2 class="sec a" style="margin-top:32px">Market hours</h2>
     <p class="why a">Pick up to ${MAX_MKTS} markets to show as open / closed next to Markets on My News. ${"markets" in (state.settings || {}) ? "Saved to your account, so phone and computer match." : "Saved on this device."}</p>
     <div class="mktpick a">${MARKETS_ALL.map(([n, city, tz, s]) => { const on = myMarkets().some((m) => m[0] === n), o = mktOpen(tz, s);
       return `<button class="mkp ${on ? "on" : ""}" data-mkt-pick="${n}" aria-pressed="${on}"><span class="ck">${on ? CHK : ""}</span><span><b>${n}</b><small>${city}</small></span><span class="mkt ${o ? "open" : ""}"><i></i>${o ? "open" : "closed"}</span></button>`; }).join("")}</div>
+    <h2 class="sec a" style="margin-top:32px">Big news alert</h2>
+    <p class="why a">When a story with impact 9 or 10 about your topics or watchlist arrives, it covers the screen once, the next time you open the site. Pick who presents it.</p>
+    <div class="mopts a">
+      <button class="mopt ${bigOn() ? "on" : ""}" data-bigalert="on" aria-pressed="${bigOn()}"><span class="radio"></span><span><b>On</b><small>Show big news full screen once, then it stays in your feed as usual.</small></span></button>
+      <button class="mopt ${bigOn() ? "" : "on"}" data-bigalert="off" aria-pressed="${!bigOn()}"><span class="radio"></span><span><b>Off</b><small>Big news only appears in the feed (Telegram alerts are not affected).</small></span></button>
+    </div>
+    ${[["Official", MASCOTS.slice(0, 4)], ["Retro", [...MASCOTS.slice(4), ["none", "No mascot", "just the news band"]]]].map(([h, list]) => `
+    <h3 class="a" style="margin-top:20px;font:800 15px 'Inter Tight'">${h}</h3>
+    <div class="mscpick a">${list.map(([id, n, sub]) => `<button class="msc ${mascotPref() === id ? "on" : ""}" data-mascot="${id}" aria-pressed="${mascotPref() === id}">
+      ${id === "none" ? `<span class="msc-none">BIG NEWS</span>` : mascotSvg(id, "bull")}<b>${n}</b><small>${sub}</small></button>`).join("")}</div>`).join("")}
+    <div class="a" style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn ghost" data-act="big-preview" ${state.stories?.length ? "" : "disabled"}>▶ Preview with today's top story</button>
+      <span class="note" style="margin:0">The face follows the news: happy for bullish, worried for bearish, alert for breaking, never smiling for war or disasters.</span>
+    </div>
     <h2 class="sec a" style="margin-top:32px">Motion</h2>
     <div class="mopts a">
       ${opt("auto", "Automatic", `Follow this device's setting. Right now your device asks for <b>${dev ? "less motion" : "normal motion"}</b>, so motion is <b>${dev ? "reduced" : "on"}</b>.`)}
@@ -1557,7 +1714,15 @@ function playIntro(now = false) {
   el.className = "intro";
   el.setAttribute("aria-hidden", "true");
   let total = 2300;
-  if (n === 0) {          // A. chart line
+  if (season) {           // season intro: snow / petals / leaves sweep in and settle, or the sun rises
+    el.classList.add("i-s", `s-${season}`);
+    total = 2600;
+    const kind = { winter: "snow", spring: "petal", autumn: "leaf", summer: "" }[season], leaf = ["#e0702e", "#c2541b", "#d9a13a", "#9c3d12"];
+    // wind: spring petals blow left -> right, autumn leaves right -> left, snow falls gently
+    const wind = { winter: () => (Math.random() * 2 - 1) * 160, spring: () => 300 + Math.random() * 400, autumn: () => -(250 + Math.random() * 400) }[season];
+    const parts = kind ? Array.from({ length: season === "winter" ? 90 : 50 }, (_, k) => `<i class="${kind}" style="left:${season === "spring" ? Math.random() * 70 - 20 : season === "autumn" ? 20 + Math.random() * 90 : Math.random() * 100}%;--dx:${wind()}px;--r:${Math.random() * 720}deg;--lc:${leaf[k % 4]};--d:${1.4 + Math.random() * 1.2}s;--w:${Math.random() * .7}s;--s:${3 + Math.random() * 6}px"></i>`).join("") : "";
+    el.innerHTML = `${season === "summer" ? `<div class="ssun"></div><div class="swave"></div>` : seasonScene(season)}${parts}<div class="sbrand">investment center</div>`;
+  } else if (n === 0) {          // A. chart line
     el.classList.add("i-a");
     const p = "M0 160 L70 150 L130 156 L190 120 L250 130 L320 92 L380 104 L450 70 L510 80 L580 44 L640 52 L700 20";
     el.innerHTML = `<svg viewBox="0 0 700 200" preserveAspectRatio="none"><defs><linearGradient id="iga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#16a34a" stop-opacity=".18"/><stop offset="1" stop-color="#16a34a" stop-opacity="0"/></linearGradient></defs>
@@ -1822,7 +1987,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { ch
 app.addEventListener("click", async (e) => {
   // Clicking outside the search box closes its results
   if (!e.target.closest(".search")) { const r = document.getElementById("res"); if (r) r.innerHTML = ""; }
-  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief]");
+  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief],[data-mascot],[data-bigalert],[data-season-pick]");
   if (!el) return;
   if (el.dataset.wbrief) { const ids = wWaiting().map((s) => s.id); if (ids.length) { state.briefing = { ids, i: 0, res: {}, world: true }; drawBriefing(); } return; }
   if (el.dataset.goWorld) { location.hash = `#/world/${el.dataset.goWorld}`; return; }
@@ -1858,6 +2023,14 @@ app.addEventListener("click", async (e) => {
     applyTheme();
     return render(false);
   }
+  if (el.dataset.seasonPick) {
+    safe(() => localStorage.setItem("ic_season", el.dataset.seasonPick));
+    applySeason(); render(false);
+    toast(`Season: ${esc(el.querySelector("b")?.textContent || "")} · saved on this device`);
+    return;
+  }
+  if (el.dataset.mascot) { lsSet("ic_mascot", el.dataset.mascot); render(false); toast(`Presenter: ${esc(el.querySelector("b")?.textContent || "")} · saved on this device`); return; }
+  if (el.dataset.bigalert) { lsSet("ic_bigalert", el.dataset.bigalert); render(false); return; }
   if (el.dataset.motion) {
     safe(() => localStorage.setItem("ic_motion", el.dataset.motion));
     applyMotion();
@@ -1957,6 +2130,7 @@ app.addEventListener("click", async (e) => {
   }
   if (act === "magic") { e.preventDefault(); return sendMagicLink(); }
   if (act === "play-intro") { playIntro(true); return; }
+  if (act === "big-preview") { const top = [...(state.stories || [])].sort((a, b) => b.impact_score - a.impact_score)[0]; if (top) showBig([top], true); return; }
   if (act === "logout") { clearInterval(pollTimer); clearInterval(priceTimer); await sb.auth.signOut(); return; }
   if (act === "save-settings" && d) {
     const row = { topics: d.topics, watchlist: d.watchlist, custom_topics: d.custom_topics, watch_names: d.watch_names, updated_at: new Date().toISOString() };
@@ -2022,6 +2196,72 @@ async function sendMagicLink() {
 }
 
 // ---------- start ----------
+// ---------- Big news alert (design round 25 style B + mascots from rounds 26-27) ----------
+// Impact 9-10, last 24 h, about your topics/watchlist, not read or saved for later: covers the screen once per story (per device).
+const bigOn = () => lsGet("ic_bigalert") !== "off";
+const mascotPref = () => lsGet("ic_mascot") || "anchor";
+const bigSeen = () => safe(() => JSON.parse(lsGet("ic_big_seen") || "[]"), []);
+const SERIOUS_RX = /\b(war|missiles?|airstrikes?|attacks?|killed|kills|dead|deaths?|bomb\w*|invasion|invades?|earthquake|floods?|disaster|shooting|terror\w*|explosion|hostages?)\b/i;
+function bigMood(s) {   // no AI needed: the story already has sentiment and impact
+  if (SERIOUS_RX.test(s.headline || "")) return "serious";
+  if (Number(s.impact_score) >= 10 || Date.now() - new Date(when(s)) < 36e5) return "breaking";
+  return s.sentiment === "Bullish" ? "bull" : s.sentiment === "Bearish" ? "bear" : "breaking";
+}
+function bigQueue() {
+  const seen = new Set(bigSeen()), day = Date.now() - 864e5;
+  return (state.stories || []).filter((s) => Number(s.impact_score) >= 9 && new Date(s.created_at) > day && matches(s)
+      && !seen.has(s.id) && !["done", "later"].includes(stOf(s)))
+    .sort((a, b) => b.impact_score - a.impact_score || (b.created_at > a.created_at ? 1 : -1)).slice(0, 3);
+}
+const markBigSeen = (id) => lsSet("ic_big_seen", JSON.stringify([...bigSeen().filter((x) => x !== id), id].slice(-60)));
+function afterIntro(fn, n = 0) {   // wait for the opening intro to finish (max ~10 s)
+  if (document.documentElement.classList.contains("intro-on") && n < 40) return setTimeout(() => afterIntro(fn, n + 1), 250);
+  fn();
+}
+function showBig(list, preview = false) {
+  if (!list.length || document.querySelector(".bigal")) return;
+  let i = 0;
+  const el = document.createElement("div");
+  el.className = "bigal";
+  el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Big news");
+  const ticks = lastQuotes();
+  const draw = () => {
+    const s = list[i], m = mascotPref(), mood = bigMood(s), pic = m !== "none" ? mascotSvg(m, mood) : "";
+    const tk = ticks.map((q) => `<span><b>${esc(q[0])}</b> ${esc(q[1])} <em class="${String(q[2]).startsWith("-") ? "d" : "u"}">${esc(q[2])}</em></span>`).join("");
+    el.innerHTML = `<div class="bg-dim" data-bgx="1"></div>
+      ${pic ? `<div class="bg-mas">${pic}</div>` : ""}
+      <div class="bg-band"><div class="bg-label">BIG NEWS</div><div class="bg-hl">${esc(s.headline)}</div></div>
+      <div class="bg-low">
+        ${s.what_it_means ? `<p>${esc(s.what_it_means)}</p>` : ""}
+        <div class="bg-meta">Impact ${esc(s.impact_score)} of 10 · ${esc(s.n_sources)} outlet${s.n_sources > 1 ? "s" : ""} · ${agoAt(when(s))}${(s.tickers || []).length ? ` · ${s.tickers.slice(0, 4).map(esc).join(", ")}` : ""}</div>
+        <div class="bg-btns"><button class="bg-read" data-bg="read">Read the story</button><button class="bg-later" data-bg="${preview ? "close" : "later"}">${preview ? "Close" : "Later"}</button>
+          <span class="bg-n">${list.length > 1 ? `${i + 1} of ${list.length} · ` : ""}Esc to close</span></div>
+      </div>
+      ${tk ? `<div class="bg-tick"><div>${tk}${tk}</div></div>` : ""}`;
+    el.style.setProperty("--bandh", `${el.querySelector(".bg-band").offsetHeight}px`);   // the black box sits right under the band
+    el.classList.remove("play"); void el.offsetWidth; el.classList.add("play");
+    el.querySelector(".bg-read")?.focus({ preventScroll: true });
+  };
+  const close = () => { removeEventListener("keydown", key); el.classList.add("out"); setTimeout(() => el.remove(), 260); };
+  const next = (act) => {
+    const s = list[i];
+    if (!preview) {
+      markBigSeen(s.id);
+      if (act === "later") { setStatus(s.id, "later"); render(false); }
+    }
+    if (act === "read") { close(); location.hash = `#/story/${s.id}`; return; }
+    if (++i < list.length) draw(); else close();
+  };
+  const key = (e) => { if (e.key === "Escape") next(preview ? "close" : "later"); };
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-bg]");
+    if (b) next(b.dataset.bg); else if (e.target.dataset.bgx) next(preview ? "close" : "later");
+  });
+  addEventListener("keydown", key);
+  document.body.appendChild(el);
+  draw();
+}
+
 let loading = null; // the user id currently being loaded, so two login signals don't load twice
 async function start(session) {
   const uid = session?.user?.id || null;
@@ -2039,6 +2279,7 @@ async function start(session) {
     render();
     pageReady = true;
     startPolling();
+    if (bigOn()) afterIntro(() => { try { showBig(bigQueue()); } catch (e) { console.warn("big news alert", e); } });
     if ((location.hash || "").startsWith("#/search/")) window.dispatchEvent(new HashChangeEvent("hashchange"));
   } catch (err) {
     loading = null; // allow a retry on reload
