@@ -832,7 +832,7 @@ async function searchStories(q) {
 // ---------- views ----------
 function header(active) {
   return `<header><div class="wrap nav">
-    <a class="logo" href="#/">investment center</a>
+    <a class="logo" href="#/"><i class="lmark" aria-hidden="true"></i>investment center</a>
     <nav>
       <a class="${active === "news" ? "on" : ""}" href="#/">My News</a>
       <a class="${active === "world" ? "on" : ""}" href="#/world">World Brief</a>
@@ -1663,7 +1663,7 @@ function viewLogin(msg = "", err = false, email = "") {   // design round 31, sp
         <line x1="0" y1="75" x2="600" y2="75"/><line x1="0" y1="150" x2="600" y2="150"/><line x1="0" y1="225" x2="600" y2="225"/>
         <path class="ar" d="${line} L600 300 L0 300Z" fill="url(#lga)"/><path class="ln" d="${line}"/></svg>
       <div class="lqs">${quotes}</div></div>
-    <div class="lform"><div class="logo a">investment <em>center</em></div>
+    <div class="lform"><div class="logo a"><i class="lmark" aria-hidden="true"></i><span>investment <em>center</em></span></div>
     <p class="why a" style="margin-top:6px">Sign in to your news.</p>
     <form id="login" class="login-form">
       <input class="a" type="email" id="email" placeholder="Email" autocomplete="username" required value="${esc(email)}">
