@@ -72,8 +72,11 @@ function applySeason() {
   else {
     const n = season === "winter" ? 40 : 18, kind = { winter: "snow", spring: "petal", autumn: "leaf" }[season];
     const leaf = ["#c2541b", "#e08a2e", "#9c3d12", "#d9a13a"];
-    fx.innerHTML = Array.from({ length: n }, (_, k) => { const d = (season === "winter" ? 10 : 14) + Math.random() * 10;
-      return `<i class="${kind}" style="left:${Math.random() * 100}%;--s:${3 + Math.random() * 4}px;--dx:${(Math.random() * 2 - 1) * 140}px;--r:${Math.random() * 540}deg;--lc:${leaf[k % 4]};--d:${d}s;--w:${-Math.random() * d}s"><b></b></i>`; }).join("");
+    // two strips, one per side margin (no full-screen fade mask: that mask made scrolling stutter, 34 vs 53 fps measured)
+    const one = (k) => { const d = (season === "winter" ? 10 : 14) + Math.random() * 10;
+      return `<i class="${kind}" style="left:${Math.random() * 100}%;--s:${3 + Math.random() * 4}px;--dx:${(Math.random() * 2 - 1) * 60}px;--r:${Math.random() * 540}deg;--lc:${leaf[k % 4]};--d:${d}s;--w:${-Math.random() * d}s"><b></b></i>`; };
+    const half = (side) => `<div class="sfs ${side}">${Array.from({ length: Math.ceil(n / 2) }, (_, k) => one(k + (side === "r" ? 1 : 0))).join("")}</div>`;
+    fx.innerHTML = half("l") + half("r");
   }
   document.body.prepend(fx);
   // a seasonal browser-tab icon
