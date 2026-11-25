@@ -170,6 +170,7 @@ function kcToolbar(el) {   // top bar, bottom bar and chart-type menu clicks
   if (a === "alertw") return kcAlertWindow();
   if (a === "tree") return ktTreeToggle();
   if (a === "cmp") return kcCompareWindow();
+  if (a === "mkn" || a === "mke") return mkToggle(a === "mkn" ? "n" : "e");
   if (a === "pct" || a === "log") { kc[a] = !kc[a]; if (a === "pct" && kc.pct) kc.log = false; if (a === "log" && kc.log) kc.pct = false; kcStyle(); return render(false); }
   if (a === "shot" && kc.chart) { const url = kc.chart.getConvertPictureUrl(true, "png", isDark() ? "#18181b" : "#ffffff"); const l = document.createElement("a"); l.href = url; l.download = `${kc.sym || "chart"}-${isoDay(new Date())}.png`; l.click(); return; }
   if (a === "full") kcFull();

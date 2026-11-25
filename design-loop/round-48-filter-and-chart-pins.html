@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Round 48: compact filter + news pins / events on the chart</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f10;--surface:#18181b;--surface2:#222226;--ink:#f4f4f5;--soft:#b4b4bb;--muted:#8a8a93;--line:#2a2a2f;--chip:#232327;--accent:#ff4500;--up:#22c55e;--down:#f87171;--amb:#f59e0b;--blue:#3b82f6}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:28px 40px 80px}
+h1{font:800 22px Inter;margin-bottom:4px}h1+p{color:var(--muted);font-size:13px;margin-bottom:26px}
+h2{font:800 17px Inter;margin:38px 0 4px;padding-top:22px;border-top:1px solid var(--line)}h2+p{color:var(--muted);font-size:13px;margin-bottom:14px}
+.opt{margin:18px 0 30px}.opt>.t{font:800 14px Inter;margin-bottom:3px}.opt>.t b{color:var(--accent)}.opt>.d{color:var(--soft);font-size:12.5px;margin-bottom:10px;max-width:980px;line-height:1.5}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:visible}
+.ttl{font:800 18px Inter;margin:0 0 10px}
+/* table */
+.tb .h,.tb .r{display:grid;grid-template-columns:2.4fr 1fr 1.6fr .8fr .8fr .8fr;gap:10px;padding:9px 16px;align-items:center;font-size:13px}
+.tb .h{font:700 10.5px Inter;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--line)}
+.tb .h span.s{color:var(--ink);cursor:pointer}.tb .h span.s i{font-style:normal;color:var(--accent);margin-left:3px}
+.tb .r{border-bottom:1px solid var(--line)}.tb .r:last-child{border:0}.tb .n{text-align:right;font-variant-numeric:tabular-nums}
+.tb .nm{display:flex;gap:9px;align-items:center}.tb .nm i{width:24px;height:24px;border-radius:99px;background:var(--chip);display:grid;place-items:center;font:800 9px Inter;font-style:normal}
+.tb small{display:block;color:var(--muted);font-size:11px}.up{color:var(--up)}.down{color:var(--down)}.g{padding:8px 16px 4px;font:800 11px Inter;color:var(--accent);letter-spacing:.04em}
+/* A: dropdown bar */
+.fbar{display:flex;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;position:relative}
+.dd{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:7px 11px;font:600 12.5px Inter;color:var(--ink);cursor:pointer}
+.dd small{color:var(--muted);font-weight:600}.dd .c{background:var(--accent);color:#fff;border-radius:99px;font:800 10px Inter;padding:1px 6px}.dd.open{border-color:var(--ink)}
+.dd::after{content:"▾";color:var(--muted);font-size:11px}
+.tok{display:inline-flex;gap:6px;align-items:center;background:var(--chip);border-radius:99px;padding:4px 6px 4px 10px;font:600 12px Inter}.tok b{width:16px;height:16px;border-radius:99px;display:grid;place-items:center;background:var(--surface2);color:var(--muted);font-size:10px;cursor:pointer}
+.clr{color:var(--muted);font:600 12px Inter;margin-left:2px;cursor:pointer}.sp{flex:1}.cnt{color:var(--muted);font-size:12px}
+.pop{position:absolute;top:52px;left:118px;width:440px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.5);z-index:5;padding:10px}
+.pop input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);font:500 12.5px Inter;margin-bottom:8px}
+.pop .cols{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}.pop .gh{font:800 10.5px Inter;color:var(--muted);letter-spacing:.06em;margin:4px 0 3px}
+.pop label{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:3px 2px}.pop label em{font-style:normal;color:var(--muted);margin-left:auto;font-size:11px}
+.cb{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--muted);flex:none}.cb.on{background:var(--accent);border-color:var(--accent)}
+.pop .ft{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:8px;padding-top:8px;font:600 12px Inter;color:var(--muted)}.pop .ft b{color:var(--ink)}
+/* B: side panel */
+.sidelay{display:grid;grid-template-columns:230px 1fr}.fside{border-right:1px solid var(--line);padding:12px 14px}
+.fside .gh{display:flex;justify-content:space-between;font:800 10.5px Inter;letter-spacing:.06em;color:var(--muted);margin:12px 0 6px}.fside .gh:first-child{margin-top:0}
+.fside label{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:3.5px 0}.fside label em{font-style:normal;color:var(--muted);margin-left:auto;font-size:11px}
+.fside .more{color:var(--accent);font:700 12px Inter;margin-top:4px}
+.seg{display:flex;background:var(--bg);border-radius:9px;padding:3px}.seg span{flex:1;text-align:center;font:700 11.5px Inter;padding:5px 0;border-radius:7px;color:var(--muted)}.seg span.on{background:var(--surface2);color:var(--ink)}
+/* C: one search field */
+.tfield{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:12px 16px;border:1px solid var(--ink);border-radius:10px;padding:6px 8px;background:var(--bg);position:relative}
+.tfield .ph{color:var(--soft);font-size:12.5px;padding:3px}.tfield .ph::after{content:"|";color:var(--accent);margin-left:1px}
+.sug{position:absolute;top:40px;left:0;width:360px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.5);z-index:5;padding:6px}
+.sug div{display:flex;justify-content:space-between;padding:7px 9px;border-radius:7px;font-size:12.5px}.sug div.on{background:var(--chip)}.sug small{color:var(--muted)}
+.tok.mk{background:rgba(59,130,246,.18)}.tok.in{background:rgba(255,69,0,.16)}
+/* chart */
+.chartbox{position:relative}.ctop{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font:600 12.5px Inter;color:var(--soft)}
+.ctop .tg{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:5px 9px}.ctop .tg.on{border-color:var(--ink);color:var(--ink)}
+.ctop .tg i{width:9px;height:9px;border-radius:99px;display:inline-block}
+svg{display:block}.tip{position:absolute;width:300px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;box-shadow:0 18px 40px rgba(0,0,0,.55);font-size:12px;z-index:4}
+.tip .m{color:var(--muted);font:600 11px Inter;margin-bottom:5px;display:flex;gap:8px}.tip b{display:block;font:700 13px/1.35 Inter;margin-bottom:6px}.tip .a{color:var(--accent);font:700 11.5px Inter}
+.imp{border-radius:5px;padding:1px 6px;font:800 10.5px Inter;color:#fff}
+.legend{display:flex;gap:16px;color:var(--muted);font-size:11.5px;padding:8px 14px;border-top:1px solid var(--line)}.legend span{display:inline-flex;gap:6px;align-items:center}
+.rec{background:rgba(255,69,0,.08);border:1px solid rgba(255,69,0,.35);border-radius:12px;padding:12px 14px;font-size:13px;margin-top:8px}
+</style></head><body>
+<h1>Round 48</h1>
+<p>Part 1: a compact filter for "Stocks by market &amp; industry" instead of 3 rows of pills. Part 2: #1 news pins and #2 events on the stock chart. Real headlines (your NVDA stories, Nov 23-24) and real industry counts; the candles and event dates are a made-up shape. Dark graphite look, as on your screen.</p>
+
+<h2>Part 1 · Stocks by market &amp; industry: filter</h2>
+<p>Today: Market row + 26 Industry pills + Sort row take ~240 px before the first stock. All options below fit in one line, and <b>Sort moves into the column headers</b> (click COMPANY / CHG % / MKT CAP … ; click a 2nd one to sort ties; numbers show the order).</p>
+
+<div class="opt"><div class="t"><b>F1</b> · Dropdown bar</div>
+<div class="d">Three buttons: Market ▾ · Industry ▾ (checkbox list grouped <b>US</b> / <b>Thailand</b>, with a search box and stock counts) · chosen ones appear as small tokens with ×. Familiar (like Finviz / shopping sites), uses one row. Picking needs 2 clicks instead of 1.</div>
+<div class="ttl">Stocks by market &amp; industry</div>
+<div class="card tb">
+  <div class="fbar"><span class="dd"><small>Market</small> All</span><span class="dd open"><small>Industry</small> <span class="c">2</span></span>
+    <span class="tok">Information Technology <b>×</b></span><span class="tok">Banking <b>×</b></span><span class="clr">Clear all</span><span class="sp"></span><span class="cnt">84 stocks</span>
+    <div class="pop"><input placeholder="Search industries…" value="">
+      <div class="cols"><div><div class="gh">US · S&amp;P 500</div>
+        <label><span class="cb"></span>Communication Services<em>22</em></label><label><span class="cb"></span>Consumer Discretionary<em>47</em></label><label><span class="cb"></span>Consumer Staples<em>33</em></label><label><span class="cb"></span>Energy<em>21</em></label><label><span class="cb"></span>Financials<em>76</em></label><label><span class="cb"></span>Health Care<em>60</em></label><label><span class="cb"></span>Industrials<em>83</em></label><label><span class="cb on"></span>Information Technology<em>76</em></label><label><span class="cb"></span>Materials<em>24</em></label><label><span class="cb"></span>Real Estate<em>30</em></label><label><span class="cb"></span>Utilities<em>31</em></label></div>
+      <div><div class="gh">THAILAND · SET50</div>
+        <label><span class="cb on"></span>Banking<em>8</em></label><label><span class="cb"></span>Commerce<em>5</em></label><label><span class="cb"></span>Construction Materials<em>1</em></label><label><span class="cb"></span>Electronic Components<em>3</em></label><label><span class="cb"></span>Energy &amp; Utilities<em>10</em></label><label><span class="cb"></span>Finance &amp; Securities<em>3</em></label><label><span class="cb"></span>Food &amp; Beverage<em>5</em></label><label><span class="cb"></span>Health Care Services<em>2</em></label><label><span class="cb"></span>Info. &amp; Comm. Technology<em>2</em></label><label><span class="cb"></span>Insurance<em>1</em></label><label><span class="cb"></span>Media &amp; Publishing<em>1</em></label><label><span class="cb"></span>Packaging<em>1</em></label><label><span class="cb"></span>Petrochemicals &amp; Chemicals<em>2</em></label><label><span class="cb"></span>Property Development<em>4</em></label><label><span class="cb"></span>Transportation &amp; Logistics<em>3</em></label></div></div>
+      <div class="ft"><span>Clear</span><b>Show 84 stocks</b></div></div>
+  </div>
+  <div style="height:300px"></div>
+  <div class="h"><span class="s">COMPANY</span><span>MARKET</span><span class="s">INDUSTRY<i>①</i></span><span class="n">PRICE</span><span class="n s">CHG %<i>② ▼</i></span><span class="n s">MKT CAP</span></div>
+  <div class="g">BANKING</div>
+  <div class="r"><span class="nm"><i>KB</i><span><b>KBANK</b><small>Kasikornbank</small></span></span><span>Thailand</span><span>Banking</span><span class="n">152.50</span><span class="n up">+1.33%</span><span class="n">361B</span></div>
+  <div class="g">INFORMATION TECHNOLOGY</div>
+  <div class="r"><span class="nm"><i>NV</i><span><b>NVDA</b><small>NVIDIA Corporation</small></span></span><span>US</span><span>Information Technology</span><span class="n">155.38</span><span class="n down">−5.86%</span><span class="n">3.79T</span></div>
+</div></div>
+
+<div class="opt"><div class="t"><b>F2</b> · Filter panel on the left</div>
+<div class="d">A narrow column with Market as a 3-way switch and Industry checkboxes (first 6 + "Show all"), table on the right. Everything visible at once, 1 click per choice. Costs ~230 px of table width (Price / Mkt cap get tighter on a laptop).</div>
+<div class="ttl">Stocks by market &amp; industry</div>
+<div class="card tb sidelay"><div class="fside">
+  <div class="gh">MARKET</div><div class="seg"><span class="on">All</span><span>US</span><span>Thailand</span></div>
+  <div class="gh">INDUSTRY <span style="color:var(--accent)">Clear</span></div>
+  <label><span class="cb on"></span>Information Technology<em>76</em></label><label><span class="cb on"></span>Banking<em>8</em></label><label><span class="cb"></span>Financials<em>76</em></label><label><span class="cb"></span>Health Care<em>60</em></label><label><span class="cb"></span>Energy &amp; Utilities<em>10</em></label><label><span class="cb"></span>Industrials<em>83</em></label>
+  <div class="more">Show all 26 ▾ <span style='color:var(--muted);font-weight:600'>(25 after merging Food &amp; Beverage)</span></div></div>
+  <div><div class="h"><span class="s">COMPANY</span><span>MARKET</span><span class="s">INDUSTRY<i>①</i></span><span class="n">PRICE</span><span class="n s">CHG %<i>② ▼</i></span><span class="n s">MKT CAP</span></div>
+  <div class="g">BANKING</div>
+  <div class="r"><span class="nm"><i>KB</i><span><b>KBANK</b><small>Kasikornbank</small></span></span><span>Thailand</span><span>Banking</span><span class="n">152.50</span><span class="n up">+1.33%</span><span class="n">361B</span></div>
+  <div class="g">INFORMATION TECHNOLOGY</div>
+  <div class="r"><span class="nm"><i>NV</i><span><b>NVDA</b><small>NVIDIA Corporation</small></span></span><span>US</span><span>Information Technology</span><span class="n">155.38</span><span class="n down">−5.86%</span><span class="n">3.79T</span></div>
+  <div class="r"><span class="nm"><i>AM</i><span><b>AMD</b><small>Advanced Micro Devices</small></span></span><span>US</span><span>Information Technology</span><span class="n">—</span><span class="n down">−8.86%</span><span class="n">—</span></div></div>
+</div></div>
+
+<div class="opt"><div class="t"><b>F3</b> · One "type to filter" box</div>
+<div class="d">A single field: type "bank", "tech", "thai"… and pick from suggestions; choices become coloured tokens (blue = market, orange = industry). Smallest (one line), fastest if you know what you want; you can't see every industry at a glance until you click in.</div>
+<div class="ttl">Stocks by market &amp; industry</div>
+<div class="card tb">
+  <div class="tfield"><span class="tok mk">Thailand <b>×</b></span><span class="tok in">Banking <b>×</b></span><span class="ph">ener</span>
+    <div class="sug"><div class="on"><span>Energy &amp; Utilities</span><small>Industry · Thailand · 10</small></div><div><span>Energy</span><small>Industry · US · 21</small></div><div><span>Petrochemicals &amp; Chemicals</span><small>Industry · Thailand · 2</small></div></div></div>
+  <div style="height:118px"></div>
+  <div class="h"><span class="s">COMPANY</span><span>MARKET</span><span class="s">INDUSTRY</span><span class="n">PRICE</span><span class="n s">CHG %<i>▼</i></span><span class="n s">MKT CAP</span></div>
+  <div class="r"><span class="nm"><i>KB</i><span><b>KBANK</b><small>Kasikornbank</small></span></span><span>Thailand</span><span>Banking</span><span class="n">152.50</span><span class="n up">+1.33%</span><span class="n">361B</span></div>
+</div></div>
+
+<h2>Part 2 · News pins (#1) + events (#2) on the stock chart</h2>
+<p>Both get an on/off switch in the chart's top bar. News = your stories with impact 6+ on this stock (last 90 days: the robot deletes older ones). Events = earnings, dividends (this stock) + Fed / CPI / jobs (US stocks) or BOT (Thai stocks).</p>
+<div id="charts"></div>
+
+<div class="rec"><b>My recommendation:</b> <b>F1</b> (one row, grouped US / Thailand, also fixes the confusing look-alike names like "Food &amp; Beverage" vs "Food &amp; Beverages") + <b>P1</b> (pins sit where the price reacted, so cause → effect reads at a glance; events stay out of the way on the bottom edge).</div>
+
+<script>
+// fake NVDA-like daily candles (shape only), last 2 days = real story days
+const N=70;let p=180,seed=7;const rnd=()=>((seed=seed*16807%2147483647)/2147483647);
+const C=[];for(let i=0;i<N;i++){let o=p,ch=(rnd()-.5)*7+(i>40&&i<58?.9:-.15);if(i===N-6)ch=-14;if(i===N-5)ch=-9;if(i===N-3)ch=-6;if(i===N-2)ch=+11;if(i===N-1)ch=-9;
+let c=Math.max(120,o+ch);C.push({o,c,h:Math.max(o,c)+rnd()*4,l:Math.min(o,c)-rnd()*4});p=c}
+const days=i=>{const d=new Date(2026,10,24);d.setDate(d.getDate()-(N-1-i)*1.4);return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})};
+const NEWS=[{i:N-2,s:9,mood:"Bullish",t:"Nvidia Reinstates Jensen Huang as CEO Sending Shares Up Over 30 Percent",d:"Nov 23",n:3},
+ {i:N-3,s:8,mood:"Bearish",t:"US Tracked Alice Huang Contacts With Chinese Spy Agency in Nvidia Probe",d:"Nov 23"},
+ {i:N-1,s:8,mood:"Mixed",t:"Nvidia Reinstates CEO Jensen Huang Amid Ongoing Governance and Federal Probes",d:"Nov 24"},
+ {i:N-6,s:7,mood:"Bearish",t:"Reported SEC Probe Raises Questions Over Potential Drop in Nvidia Stock",d:"Nov 18"},
+ {i:44,s:6,mood:"Bullish",t:"Data-center demand lifts chip orders (sample older story)",d:"Oct 20"}];
+const EV=[{i:30,k:"E",c:"#f59e0b",t:"Earnings · Q3 FY27",x:"EPS 1.30 vs est 1.25 · beat"},{i:22,k:"D",c:"#22c55e",t:"Dividend · ex-date",x:"$0.01 per share"},
+ {i:15,k:"F",c:"#3b82f6",t:"Fed rate decision",x:"Held at 3.75%"},{i:52,k:"C",c:"#3b82f6",t:"US CPI",x:"Actual 2.9% · forecast 3.0%"},{i:62,k:"F",c:"#3b82f6",t:"Fed rate decision",x:"Cut 0.25%"},{i:N+4,k:"E",c:"#f59e0b",t:"Next earnings (estimate)",x:"Feb 25, 2027",fut:1}];
+const col=s=>s>=9?"#ff4500":s>=8?"#fb3a64":s>=7?"#f59e0b":"#8a8a93";
+function chart(opt){
+ const W=1180,H=opt==="P2"?400:360,pad=12,ph=opt==="P2"?300:330,N2=N+8,cw=(W-60)/N2;
+ const hi=Math.max(...C.map(c=>c.h))+8,lo=Math.min(...C.map(c=>c.l))-8,y=v=>pad+ (hi-v)/(hi-lo)*(ph-pad*2),x=i=>10+i*cw+cw/2;
+ let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+ for(let k=0;k<5;k++){const yy=pad+k*(ph-pad*2)/4;s+=`<line x1="0" x2="${W-50}" y1="${yy}" y2="${yy}" stroke="#2a2a2f"/><text x="${W-44}" y="${yy+4}" fill="#8a8a93" font-size="10">${(hi-k*(hi-lo)/4).toFixed(0)}</text>`}
+ if(opt==="P3") EV.concat(NEWS.filter(n=>n.s>=8).map(n=>({i:n.i,c:col(n.s),k:"N",t:n.t}))).forEach(e=>{s+=`<line x1="${x(e.i)}" x2="${x(e.i)}" y1="16" y2="${ph}" stroke="${e.c}" stroke-dasharray="3 4" opacity=".55"/>`});
+ C.forEach((c,i)=>{const up=c.c>=c.o,cl=up?"#22c55e":"#f87171";s+=`<line x1="${x(i)}" x2="${x(i)}" y1="${y(c.h)}" y2="${y(c.l)}" stroke="${cl}"/><rect x="${x(i)-cw*.33}" y="${y(Math.max(c.o,c.c))}" width="${cw*.66}" height="${Math.max(1,Math.abs(y(c.o)-y(c.c)))}" fill="${cl}"/>`});
+ if(opt==="P1"){NEWS.forEach(n=>{const c=C[n.i],up=n.mood!=="Bearish",yy=up?y(c.h)-14:y(c.l)+14,r=n.s>=9?9:n.s>=8?8:6.5;
+   s+=`<line x1="${x(n.i)}" x2="${x(n.i)}" y1="${up?y(c.h)-4:y(c.l)+4}" y2="${yy}" stroke="${col(n.s)}"/><circle cx="${x(n.i)}" cy="${yy}" r="${r}" fill="${col(n.s)}" stroke="#18181b" stroke-width="2"/><text x="${x(n.i)}" y="${yy+3.5}" text-anchor="middle" fill="#fff" font-size="9.5" font-weight="800">${n.s}</text>`});
+  EV.forEach(e=>{const yy=ph-14;s+=`<rect x="${x(e.i)-9}" y="${yy-9}" width="18" height="18" rx="5" fill="${e.fut?"none":e.c}" stroke="${e.c}" ${e.fut?'stroke-dasharray="3 2"':""}/><text x="${x(e.i)}" y="${yy+4}" text-anchor="middle" fill="${e.fut?e.c:"#0f0f10"}" font-size="10.5" font-weight="800">${e.k}</text>`})}
+ if(opt==="P2"){const ly=ph+18;s+=`<line x1="0" x2="${W-50}" y1="${ph+4}" y2="${ph+4}" stroke="#2a2a2f"/><text x="4" y="${ly-2}" fill="#8a8a93" font-size="9.5" font-weight="700">NEWS</text><text x="4" y="${ly+38}" fill="#8a8a93" font-size="9.5" font-weight="700">EVENTS</text>`;
+  NEWS.forEach(n=>{const r=4+(n.s-5)*1.6;s+=`<circle cx="${x(n.i)}" cy="${ly+12}" r="${r}" fill="${col(n.s)}" opacity=".9"/>`});
+  EV.forEach(e=>{s+=`<text x="${x(e.i)}" y="${ly+56}" text-anchor="middle" fill="${e.c}" font-size="12" font-weight="800">${e.k==="E"?"◆":e.k==="D"?"●":"▲"}</text>`})}
+ if(opt==="P3"){EV.concat(NEWS.filter(n=>n.s>=8).map(n=>({i:n.i,c:col(n.s),k:"N"+n.s}))).forEach((e,k)=>{s+=`<rect x="${x(e.i)-12}" y="${2+(k%2)*0}" width="24" height="14" rx="3" fill="${e.c}"/><text x="${x(e.i)}" y="12.5" text-anchor="middle" fill="#0f0f10" font-size="9" font-weight="800">${e.k==="N9"||e.k==="N8"?e.k.replace("N","★"):e.k}</text>`})}
+ for(let i=0;i<N2;i+=10)s+=`<text x="${x(i)}" y="${H-4}" fill="#8a8a93" font-size="10" text-anchor="middle">${days(i)}</text>`;
+ return s+"</svg>"}
+const n9=NEWS[0];
+const tipNews=`<div class="tip" style="left:830px;top:20px"><div class="m"><span class="imp" style="background:#ff4500">9</span>Nov 23 · Bullish · 3 outlets</div><b>${n9.t}</b><div style="color:var(--soft);margin-bottom:6px">Price that day: <span class="up">+11.2%</span></div><span class="a">Open story →</span></div>`;
+const tipEv=`<div class="tip" style="left:300px;top:200px;width:230px"><div class="m"><span class="imp" style="background:#f59e0b;color:#111">E</span>Earnings · Aug 27</div><b>Q3 FY27 results</b><div style="color:var(--soft)">EPS 1.30 vs est 1.25 · <span class="up">beat</span></div></div>`;
+const top=(a)=>`<div class="ctop"><span>NVDA · 1D</span><span class="sp"></span><span class="tg on"><i style="background:#ff4500"></i>News pins ${a||""}</span><span class="tg on"><i style="background:#3b82f6"></i>Events</span></div>`;
+const L=`<div class="legend"><span><i style="width:10px;height:10px;border-radius:99px;background:#ff4500;display:inline-block"></i>impact 9-10</span><span><i style="width:10px;height:10px;border-radius:99px;background:#fb3a64;display:inline-block"></i>8</span><span><i style="width:10px;height:10px;border-radius:99px;background:#f59e0b;display:inline-block"></i>7</span><span><i style="width:10px;height:10px;border-radius:99px;background:#8a8a93;display:inline-block"></i>6</span><span>E earnings · D dividend · F Fed · C CPI · dashed = coming up</span></div>`;
+const OPTS=[["P1","Pins on the candles + event badges on the bottom edge","News = a numbered dot (impact) above the candle for good news, below for bad, on a short stem pointing at the day. Events = small lettered badges along the bottom; dashed = upcoming. Hover = card with headline, price move that day, Open story. Closest to TradingView's own earnings / dividend marks; can get busy on a 5-year view (we'd show only 8+ when zoomed out).",tipNews+tipEv],
+ ["P2","Separate lane under the chart","Price stays completely clean; a thin NEWS row (bubble size = impact) and EVENTS row sit under the candles on the same dates. Never covers the price; the eye has to jump down to connect story → candle.",""],
+ ["P3","Vertical lines with flags","Every event and every 8+ story draws a faint dashed line through the whole chart with a flag at the top. Easiest to see exactly which candle; with many events it looks like a barcode and fights your own drawn lines / Fibonacci.",""]];
+document.getElementById("charts").innerHTML=OPTS.map(([k,t,d,tip])=>`<div class="opt"><div class="t"><b>${k}</b> · ${t}</div><div class="d">${d}</div><div class="card chartbox">${top()}${chart(k)}${tip}${L}</div></div>`).join("");
+</script>
+</body></html>

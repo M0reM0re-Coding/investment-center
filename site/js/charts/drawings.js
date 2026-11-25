@@ -35,10 +35,10 @@ function kcUndo(redo = false) {
   kcSave();
 }
 function kcHook(c) {
-  kc.chart = c; kc.indFor = null;
+  kc.chart = c; kc.indFor = null; mkHook(c);   // news pins + event badges (charts/markers.js)
   const co = c.createOverlay.bind(c), an = c.applyNewData.bind(c);
   c.createOverlay = (v, pane) => co(Array.isArray(v) ? v.map(kcWrap) : kcWrap(v), pane);
-  c.applyNewData = (d, more, cb) => { an(d, more, cb); if (d?.length) { kcInitInds(); kcRestore(); if (kc.pendingBars) setTimeout(kcZoom, 30); if (cmpList().length) setTimeout(kcCmpApply, 0); } };
+  c.applyNewData = (d, more, cb) => { an(d, more, cb); if (d?.length) { kcInitInds(); kcRestore(); if (kc.pendingBars) setTimeout(kcZoom, 30); if (cmpList().length) setTimeout(kcCmpApply, 0); mkLoad(kc.sym).then(mkDraw); } };
   c.subscribeAction("onTooltipIconClick", (d) => {
     const n = d?.indicatorName, a = kc.active.find((x) => x.name === n); if (!a) return;
     if (d.iconId === "ic_del") kcRemoveInd(n);

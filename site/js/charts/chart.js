@@ -64,6 +64,7 @@ const kcDatafeed = {
     kc.loaded = key;
     if (error || !data) { kcNote(error && /get_candles/.test(error.message) ? "The chart needs supabase/013_charts.sql (run it once in Supabase)." : "Yahoo didn't send chart data. Try again in a minute."); return []; }
     if (data.meta) { kc.meta = data.meta; kc.metaFor = symbol.ticker; }
+    kc.divs = Object.values(data.ev || {}).map((d) => ({ ts: d.date * 1000, amt: d.amount }));   // past dividends (supabase/015) for the chart badges
     const out = [];
     (data.t || []).forEach((ts, i) => { const o = data.o?.[i], h = data.h?.[i], l = data.l?.[i], c = data.c?.[i];
       if ([o, h, l, c].every((v) => typeof v === "number")) out.push({ timestamp: ts * 1000, open: o, high: h, low: l, close: c, volume: data.v?.[i] || 0 }); });

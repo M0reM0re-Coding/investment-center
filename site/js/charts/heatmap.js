@@ -3,7 +3,7 @@
 "use strict";
 
 // ----- Stock heat map page (#/heatmap, design round 40/41): one tile per company, size = company value, colour = today's move -----
-const HM_IDX = [["@SP500", "S&P 500"], ["@SET50", "SET50"]];
+const HM_IDX = [["@SP500", "S&P 500"], ["@SET50", "SET50"], ["@N225", "Nikkei 225"], ["@HSI", "Hang Seng"], ["@KS200", "KOSPI 200"], ["@FTSE", "FTSE 100"], ["@DAX", "DAX"]];   // robot/heatmap.py
 function squarify(items, x, y, w, h) {   // items sorted big -> small, each {v}; returns rectangles (squarified treemap)
   const out = [], total = items.reduce((a, b) => a + b.v, 0) || 1, k = (w * h) / total;
   let rest = items.map((o) => ({ ...o, a: Math.max(o.v * k, 0.0001) }));

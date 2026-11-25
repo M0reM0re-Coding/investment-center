@@ -67,6 +67,7 @@ function render(animate = true) {
     if (!c.sel) c.sel = isoDay(today0());
     setApp(viewCalendar(), animate);
   }
+  else if (h === "#/stocks") { setApp(viewStocks(), animate); if (Date.now() - (chOf().loadedAt || 0) > 55e3) { chOf().loadedAt = Date.now(); loadChartData(); } }
   else if (h === "#/heatmap") { setApp(viewHeatmap(), animate); if (Date.now() - (chOf().loadedAt || 0) > 55e3) { chOf().loadedAt = Date.now(); loadChartData(); } const c = chOf(); if (!c.hm || Date.now() - (c.hmAt?.[c.hmIdx || "@SP500"] || 0) > 55e3) loadHeatmap(); }
   else if (h.startsWith("#/charts")) {
     const t = decodeURIComponent(h.slice(9)).toUpperCase(), ch = chOf();
@@ -131,7 +132,7 @@ let priceTimer = null;
 function startPolling() {
   clearInterval(pollTimer); clearInterval(priceTimer);
   pollTimer = setInterval(checkNew, 120000);
-  priceTimer = setInterval(() => { loadQuotes(); if ((location.hash || "").startsWith("#/charts") && !document.hidden) { chOf().loadedAt = Date.now(); loadChartData(kc.sym ? [yahoo(kc.sym)] : []); } if (location.hash === "#/heatmap" && !document.hidden) loadHeatmap(); }, 60000);
+  priceTimer = setInterval(() => { loadQuotes(); if ((location.hash || "").startsWith("#/charts") && !document.hidden) { chOf().loadedAt = Date.now(); loadChartData(kc.sym ? [yahoo(kc.sym)] : []); } if (location.hash === "#/heatmap" && !document.hidden) loadHeatmap(); if (location.hash === "#/stocks" && !document.hidden) loadScr(chOf().scrNeed); }, 60000);
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { checkNew(); loadQuotes(); } });
 

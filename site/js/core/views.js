@@ -44,7 +44,7 @@ function tabBar() {
   return `<nav class="tabbar" aria-label="Pages">
     <a class="${on("news")}" href="#/">${ICO.news}News</a>
     <a class="${h.startsWith("#/world") ? "on" : ""}" href="#/world">${ICO.globe}World</a>
-    <a class="${h.startsWith("#/charts") || h === "#/heatmap" ? "on" : ""}" href="#/charts">${ICO.chart}Charts</a>
+    <a class="${h.startsWith("#/charts") || h === "#/heatmap" || h === "#/stocks" ? "on" : ""}" href="#/charts">${ICO.chart}Charts</a>
     <a class="${on("cal")}" href="#/calendar">${ICO.cal}Calendar</a>
     <a class="${on("alerts")}" href="#/settings" data-tab-alerts="1">${ICO.bell}Alerts</a>
     <a class="${on("topics")}" href="#/settings" data-tab-topics="1">${ICO.topics}Topics</a></nav>`;

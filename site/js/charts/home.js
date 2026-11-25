@@ -169,66 +169,13 @@ function chHeat() {
   }).join("");
   return `<section class="chcat a" id="cat-heat"><h3>Heat map <a href="#/heatmap">›</a></h3><div class="chc chheat"><div class="mh"><h2>Big stocks · bigger tile = bigger company</h2><a href="#/heatmap">Full heat map →</a></div><div class="chhm">${grp}</div></div></section>`;
 }
-// ----- Charts home: "Stocks by market & industry" (round 47). Members of the S&P 500 + SET50 (from the heat map lists),
-// filters you can combine (several markets x several industries) and sorts you can combine (1st, then 2nd for ties...) -----
-const SCR_MK = [["@SP500", "US · S&P 500"], ["@SET50", "Thailand · SET50"]];
-const SCR_SORT = { mkt: "Market", sec: "Industry", chg: "Biggest gain", chgdn: "Biggest loss", cap: "Company size", name: "Name A→Z" };
-const scrOf = () => { const ch = chOf(); return ch.scr || (ch.scr = safe(() => JSON.parse(localStorage.getItem("ic_scr") || "null"), null) || { mk: [], sec: [], sort: ["sec", "chg"], lim: 30 }); };
-const scrSave = () => { const { lim: _, ...x } = scrOf(); safe(() => localStorage.setItem("ic_scr", JSON.stringify(x))); };
-async function loadScr() {   // member lists (once) + prices of the chosen markets (every 2 minutes while you look)
-  const ch = chOf(); if (ch.scrLoading) return;
-  ch.scrLoading = true;
-  try {
-    if (!ch.hm) { const { data, error } = await sb.from("stock_stats").select("symbol,data,updated_at").in("symbol", HM_IDX.map((x) => x[0])); ch.hm = {}; (data || []).forEach((r) => { ch.hm[r.symbol] = r.data; }); ch.hmErr = error?.message || null; }
-    const f = scrOf(), keys = f.mk.length ? f.mk : SCR_MK.map((x) => x[0]), syms = [...new Set(keys.flatMap((k) => (ch.hm[k]?.members || []).map((m) => m.s)))];
-    const parts = []; for (let i = 0; i < syms.length; i += 40) parts.push(syms.slice(i, i + 40));
-    for (let i = 0; i < parts.length; i += 4) { const res = await Promise.all(parts.slice(i, i + 4).map((p) => sb.rpc("get_quotes", { syms: p }))); res.forEach(({ data }) => Object.assign(quotes, data || {})); }
-    ch.scrAt = Date.now();
-  } finally { ch.scrLoading = false; }
-  if ((location.hash || "#/charts") === "#/charts") render("soft");
-}
-function chScreen() {
-  const ch = chOf(), f = scrOf();
-  if (!ch.scrLoading && Date.now() - (ch.scrAt || 0) > 120e3) setTimeout(loadScr, 0);
-  const keys = f.mk.length ? f.mk : SCR_MK.map((x) => x[0]), mkName = Object.fromEntries(SCR_MK.map(([k, l]) => [k, l.split(" · ")[0]]));
-  const all = keys.flatMap((k) => (ch.hm?.[k]?.members || []).map((m) => ({ ...m, mk: k })));
-  const secs = [...new Set(all.map((m) => m.sec).filter(Boolean))].sort();
-  const sel = f.sec.filter((x) => secs.includes(x)), rows = sel.length ? all.filter((m) => sel.includes(m.sec)) : all;
-  const chg = (m) => chPct(m.s), num = (v, dflt) => (v === null || v === undefined || !Number.isFinite(v) ? dflt : v);
-  const cmp = { mkt: (a, b) => mkName[a.mk].localeCompare(mkName[b.mk]), sec: (a, b) => String(a.sec).localeCompare(String(b.sec)), chg: (a, b) => num(chg(b), -1e9) - num(chg(a), -1e9),
-    chgdn: (a, b) => num(chg(a), 1e9) - num(chg(b), 1e9), cap: (a, b) => (b.cap || 0) - (a.cap || 0), name: (a, b) => String(a.t).localeCompare(String(b.t)) };
-  rows.sort((a, b) => { for (const k of f.sort) { const r = cmp[k]?.(a, b) || 0; if (r) return r; } return (b.cap || 0) - (a.cap || 0); });
-  const shown = rows.slice(0, f.lim || 30), grp = f.sort[0] === "sec" || f.sort[0] === "mkt";
-  const pill = (attr, v, on, label, n) => `<button class="scp${on ? " on" : ""}" data-${attr}="${esc(v)}">${n ? `<em>${n}</em>` : ""}${esc(label)}</button>`;
-  let last = null;
-  const body = !ch.hm ? `<div class="chempty">Loading the member lists…</div>` : !all.length ? `<div class="chempty">The member lists arrive with the robot's next daily run.</div>`
-    : shown.map((m) => { const p = plainOf(m.s), v = chg(m), head = grp ? (f.sort[0] === "sec" ? m.sec : mkName[m.mk]) : null, hd = head && head !== last ? `<div class="g">${esc(head)}</div>` : ""; last = head;
-      return `${hd}<a class="r" href="${chHref(p)}"><span class="nm">${evLogo({ sym: p }, 24)}<span><b>${esc(m.t)}</b><small>${esc(m.n || "")}</small></span></span><span>${esc(mkName[m.mk])}</span><span class="sec">${esc(m.sec || "—")}</span>
-        <span class="n tnum">${quotes[m.s] ? fmtPx(quotes[m.s].price) : "…"}</span><span class="n tnum ${v === null ? "" : v >= 0 ? "up" : "down"}">${v === null ? "…" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`}</span><span class="n tnum">${m.cap ? bigNum(m.cap) : "—"}</span></a>`; }).join("");
-  return `<section class="chcat a" id="cat-scr"><h3>Stocks by market &amp; industry</h3><div class="chc scr">
-    <div class="scrf"><span class="lab">Market</span>${pill("scrmk", "*", !f.mk.length, "All")}${SCR_MK.map(([k, l]) => pill("scrmk", k, f.mk.includes(k), l)).join("")}</div>
-    <div class="scrf"><span class="lab">Industry</span>${pill("scrsec", "*", !sel.length, "All")}${secs.map((x) => pill("scrsec", x, sel.includes(x), x)).join("")}</div>
-    <div class="scrf"><span class="lab">Sort</span>${Object.entries(SCR_SORT).map(([k, l]) => { const i = f.sort.indexOf(k); return pill("scrsort", k, i >= 0, l, i >= 0 && f.sort.length > 1 ? i + 1 : ""); }).join("")}<span class="note" style="margin:0 0 0 6px">pick several: 1 first, then 2 for ties</span></div>
-    <div class="scrt"><div class="h"><span>COMPANY</span><span>MARKET</span><span>INDUSTRY</span><span class="n">PRICE</span><span class="n">CHG %</span><span class="n">MKT CAP</span></div>${body}</div>
-    <div class="scrb"><span class="note" style="margin:0">${shown.length} of ${rows.length} stocks${sel.length || f.mk.length ? " match" : ""} · prices refresh every 2 minutes</span>${rows.length > shown.length ? `<button class="scp" data-scrmore="1">Show 30 more</button>` : ""}</div></div></section>`;
-}
-function scrClick(el) {
-  const f = scrOf();
-  const tog = (arr, v) => { const i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); };
-  if (el.dataset.scrmk) { if (el.dataset.scrmk === "*") f.mk = []; else tog(f.mk, el.dataset.scrmk); if (f.mk.length === SCR_MK.length) f.mk = []; chOf().scrAt = 0; }
-  else if (el.dataset.scrsec) { if (el.dataset.scrsec === "*") f.sec = []; else tog(f.sec, el.dataset.scrsec); }
-  else if (el.dataset.scrsort) { if (el.dataset.scrsort === "chg") f.sort = f.sort.filter((x) => x !== "chgdn"); if (el.dataset.scrsort === "chgdn") f.sort = f.sort.filter((x) => x !== "chg"); tog(f.sort, el.dataset.scrsort); if (!f.sort.length) f.sort = ["cap"]; }
-  else if (el.dataset.scrmore) { f.lim = (f.lim || 30) + 30; }
-  if (!el.dataset.scrmore) f.lim = 30;
-  scrSave(); render(false);
-}
 function viewCharts() {
   const cats = CH_CATS();
   return `${header("charts")}<div class="wrap chp">
     ${chSearchBox()}
     <div class="chlay"><div class="chmain">
-      <nav class="chcnav">${cats.map(([k], i) => `<a href="#/charts" data-chjump="cat-${i}">${esc(k)}</a>`).join("")}<a href="#/charts" data-chjump="cat-scr">Stocks by industry</a><a href="#/charts" data-chjump="cat-heat">Heat map</a><a class="hm" href="#/heatmap">${chI("grid", 16)} Stock heat map</a></nav>
-      ${cats.map(chCat).join("")}${chScreen()}${chHeat()}
+      <nav class="chcnav">${cats.map(([k], i) => `<a href="#/charts" data-chjump="cat-${i}">${esc(k)}</a>`).join("")}<a href="#/charts" data-chjump="cat-heat">Heat map</a><a class="hm" href="#/stocks">${chI("list", 16)} Stocks by industry</a><a class="hm" href="#/heatmap">${chI("grid", 16)} Stock heat map</a></nav>
+      ${cats.map(chCat).join("")}${chHeat()}
       <p class="note">Prices: Yahoo Finance, may be delayed (Thai stocks ~15 min). Click anything to open its chart.</p>
     </div>${chSide()}</div></div>`;
 }

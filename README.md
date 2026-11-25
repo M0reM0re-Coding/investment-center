@@ -62,6 +62,8 @@ Website files are under `site/js/` and `site/css/`. Robot files are under `robot
 | World Brief | `#/world` | `world/brief.js` | `10-world`, `13-login-misc` | `world.py` | `008`, `009` |
 | World map | `#/world` (Map) | `world/map.js` | `10-world` | `world.py` | `009` |
 | Charts home + sidebar | `#/charts` | `charts/home.js` | `15-charts`, `16-charts-pro` | `stock_stats.py` | `013` |
+| Stocks by market & industry (7 markets: S&P 500, SET50, Nikkei 225, Hang Seng, KOSPI 200, FTSE 100, DAX; filter, sort by column titles) | `#/stocks` | `charts/stocks-page.js` | `18-chart-tools`, `19-stocks-and-markers` | `heatmap.py` (member lists + sizes in USD, daily) | `013` |
+| News pins + event badges on the chart (News / Events switches) | stock page | `charts/markers.js` | `19-stocks-and-markers` | `fetch.py` + `analyze.py` (stories), `earnings.py`, `econ.py` | `015` (dividends) |
 | Stock page (Overview, Technicals) | `#/charts/<TICKER>` | `charts/stock-page.js` | `16-charts-pro`, `17-stock-overview` | `stock_stats.py` | `013` |
 | Chart loading + saved chart settings | stock page | `charts/chart.js` | `15-charts` | – | `013` |
 | Indicators (MACD, RSI, CDC, PVO, ZigZag…) | stock page | `charts/indicators.js` | – | – | – |
