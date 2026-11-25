@@ -26,6 +26,7 @@ import re  # noqa: E402
 from datetime import date, datetime, timedelta, timezone  # noqa: E402
 import notify  # noqa: E402
 import price_alerts  # noqa: E402
+import drawing_alerts  # noqa: E402
 import world  # noqa: E402
 import developing  # noqa: E402
 import econ  # noqa: E402
@@ -33,6 +34,8 @@ import econ_actuals  # noqa: E402
 import earnings  # noqa: E402
 import follows  # noqa: E402
 import gauges  # noqa: E402
+import stock_stats  # noqa: E402
+import heatmap  # noqa: E402
 
 GEMINI_DAILY_CAP = int(os.environ.get("GEMINI_DAILY_CAP", "300"))  # safety cap; free tier limits are separate
 # 300 = ~48 merge calls + ~100 writing calls + retries. Billing is OFF on the AI Studio project, so Google can't charge.
@@ -134,7 +137,7 @@ def maybe_refresh_earnings(watchlist):
         tickers = prices.real_tickers(watchlist, watchlist)
         marks = {t: f"events:{today}:{t}" for t in tickers}
         done = db.seen_links(marks.values())
-        todo = [t for t in tickers if marks[t] not in done]
+        todo = [t for t in tickers if marks[t] not in done][:30]   # earnings_events reads at most 30 per run; the rest wait for the next run
         if not todo:
             return
         rows = [e for e in prices.earnings_events(todo) if e["day"] >= today]
@@ -267,7 +270,11 @@ def main():
         price_alerts.run()
     except Exception as e:  # a price problem must never stop the rest of the run
         print(f"Price alerts skipped: {str(e)[:150]}")
-    maybe_refresh_earnings(settings.get("watchlist") or [])
+    try:
+        drawing_alerts.run()  # bells on chart drawings (trend lines, horizontal lines, Fibonacci levels)
+    except Exception as e:
+        print(f"Drawing alerts skipped: {str(e)[:150]}")
+    maybe_refresh_earnings((settings.get("watchlist") or []) + stock_stats.big_stocks())   # + big stocks: Charts "Important dates"
     try:
         econ.run()  # Forex Factory economic calendar: at most every 3 hours
     except Exception as e:  # a calendar problem must never stop the rest of the run
@@ -277,7 +284,9 @@ def main():
     except Exception as e:
         print(f"US results (FRED) skipped: {str(e)[:150]}")
     for name, job in (("Earnings results", lambda: earnings.run(settings.get("watchlist") or [])),   # once a day per stock
-                      ("Crypto Fear & Greed", gauges.run)):                                          # once an hour
+                      ("Crypto Fear & Greed", gauges.run),                                          # once an hour
+                      ("Stock stats", lambda: stock_stats.run(settings.get("watchlist") or [])),     # Charts: once a day per stock
+                      ("Heat map members", heatmap.run)):                                            # Charts heat map: once a day                                          # once an hour
         try:
             job()
         except Exception as e:  # none of these may stop the rest of the run

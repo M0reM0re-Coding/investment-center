@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 36 · Charts page</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--soft:#555;--muted:#888;--line:#ececec;--card:#fff;--chip:#f3f3f3;--accent:#ff4500;--bg:#fafafa;--up:#16a34a;--down:#ef4444;--grid:#f0f0f0}
+.dark{--ink:#f2f2f2;--soft:#b5b5b5;--muted:#8a8a8a;--line:#2a2a2a;--card:#161616;--chip:#222;--bg:#0d0d0d;--grid:#1f1f1f}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;color:#111;background:#fafafa}
+.top{max-width:1240px;margin:0 auto;padding:36px 32px 4px}
+h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}
+.lead{color:#555;margin:0;max-width:920px}
+.sec{max-width:1240px;margin:34px auto 10px;padding:0 32px;font:900 20px 'Inter Tight'}
+.sec small{font:600 13.5px Inter;color:#555;display:block;margin-top:2px}
+.rec{display:inline-block;background:#ff4500;color:#fff;font:800 11px Inter;letter-spacing:.6px;border-radius:6px;padding:3px 8px;margin-left:8px;vertical-align:3px}
+.frame{max-width:1240px;margin:0 auto;padding:0 32px}
+.page{background:var(--bg);color:var(--ink);border:1px solid #ddd;border-radius:14px;overflow:hidden}
+.nav{display:flex;align-items:center;gap:26px;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--card)}
+.nav .logo{font:900 20px 'Inter Tight';letter-spacing:-.5px}.nav .logo i{color:var(--accent);font-style:normal}
+.nav a{font:600 14px Inter;color:var(--soft);text-decoration:none}.nav a.on{color:var(--ink);box-shadow:inset 0 -2px var(--accent);padding-bottom:4px}
+.body{padding:20px 22px 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+h2{font:800 15px 'Inter Tight';margin:0}
+.tnum{font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+/* stock header */
+.sh{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.sh .lg{width:44px;height:44px;border-radius:12px;background:#76b900;color:#fff;display:grid;place-items:center;font:900 13px Inter}
+.sh .nm b{display:block;font:900 24px 'Inter Tight';letter-spacing:-.5px;line-height:1.1}.sh .nm small{color:var(--muted);font-size:12.5px}
+.sh .px{margin-left:auto;text-align:right}.sh .px b{font:900 28px 'Inter Tight'}.sh .px span{font:700 14px Inter;margin-left:6px}
+.sh .px small{display:block;color:var(--muted);font-size:11.5px}
+.per{display:flex;gap:4px;margin-top:10px}
+.per button{border:0;background:transparent;color:var(--soft);font:700 12.5px Inter;padding:5px 10px;border-radius:7px;cursor:pointer}
+.per button.on{background:var(--chip);color:var(--ink)}
+.chart{position:relative;margin-top:8px}
+.chart svg{display:block;width:100%}
+.tvmark{position:absolute;left:10px;bottom:26px;font:800 11px Inter;color:var(--muted);opacity:.8}
+/* watchlist rows */
+.wl{padding:6px 0}
+.wl .h{display:grid;grid-template-columns:minmax(0,1fr) 62px 62px;padding:6px 14px;font:700 10.5px Inter;letter-spacing:.7px;color:var(--muted)}
+.wl .r{display:grid;grid-template-columns:minmax(0,1fr) 62px 62px;align-items:center;padding:8px 14px;font-size:13px;cursor:pointer}
+.wl .r:hover{background:var(--chip)}
+.wl .r.on{background:var(--chip);box-shadow:inset 3px 0 var(--accent)}
+.wl .r b{font-weight:800}.wl .r small{display:block;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl .r .n{text-align:right}
+.wl .sec2{padding:10px 14px 4px;font:800 10.5px Inter;letter-spacing:.8px;color:var(--muted);border-top:1px solid var(--line);margin-top:6px}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.stats div{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-size:13px}
+.stats div span{color:var(--muted)}.stats div b{font-weight:700}
+.stats.st2{grid-template-columns:repeat(2,1fr)}
+.rng{padding:12px 14px}.rng small{color:var(--muted);font-size:11.5px;display:flex;justify-content:space-between}
+.rng .bar{height:6px;border-radius:9px;background:linear-gradient(90deg,var(--down),#f59e0b,var(--up));position:relative;margin:6px 0}
+.rng .bar i{position:absolute;top:-4px;width:3px;height:14px;background:var(--ink);border-radius:2px}
+/* news */
+.nw{padding:12px 14px}
+.nw .it{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.nw .it:first-of-type{border-top:0}
+.nw .im{width:46px;height:46px;border-radius:8px;flex:none;background:linear-gradient(135deg,#334155,#0f172a)}
+.nw .it b{display:block;font:700 13.5px/1.3 Inter}.nw .it small{color:var(--muted);font-size:11.5px}
+.imp{display:inline-block;font:800 10.5px Inter;border-radius:5px;padding:1px 6px;color:#fff;background:var(--accent);margin-right:5px}
+.more{display:block;margin-top:8px;font:700 12.5px Inter;color:var(--accent);text-decoration:none}
+.kdc{display:flex;gap:12px;align-items:center;padding:12px 14px}
+.kdc .d{width:46px;text-align:center;border-radius:9px;background:var(--chip);padding:5px 0;font:900 18px 'Inter Tight';line-height:1}
+.kdc .d small{display:block;font:800 9.5px Inter;color:var(--accent);letter-spacing:.6px;margin-bottom:2px}
+.kdc b{font:700 13.5px Inter;display:block}.kdc span{color:var(--muted);font-size:12px}
+.res{margin:0 14px 12px;border-radius:10px;padding:10px 12px;background:linear-gradient(135deg,#0f2a1a,#111);color:#fff;font-size:12.5px;display:flex;align-items:center;gap:10px}
+.res em{font-style:normal;margin-left:auto;background:var(--up);border-radius:6px;padding:3px 8px;font:900 10.5px Inter;letter-spacing:.6px}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 4px}
+.mh a{font:700 12px Inter;color:var(--accent);text-decoration:none}
+/* layouts */
+.c1{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.c2{display:grid;grid-template-columns:250px minmax(0,1fr) 290px;gap:16px;align-items:start}
+.c3tabs{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+.c3tabs .t{flex:none;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 12px;font-size:12.5px;min-width:112px}
+.c3tabs .t.on{border-color:var(--ink);box-shadow:inset 0 -3px var(--accent)}
+.c3tabs .t b{display:block;font-weight:800}
+.c3low{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.pad{padding:14px 16px}
+.notes{max-width:1240px;margin:10px auto 0;padding:0 32px;color:#555;font-size:13.5px}
+.notes li{margin:3px 0}
+/* phone */
+.phones{display:flex;gap:24px;flex-wrap:wrap}
+.phone{width:390px;border:1px solid #ddd;border-radius:26px;overflow:hidden;background:var(--bg);color:var(--ink)}
+.phone .ptabs{display:flex;gap:6px;overflow:auto;padding:10px 12px;border-bottom:1px solid var(--line)}
+.phone .ptabs .t{flex:none;border-radius:99px;padding:5px 11px;background:var(--chip);font:700 12px Inter}
+.phone .ptabs .t.on{background:var(--ink);color:var(--bg)}
+.phone .tabbar{display:flex;justify-content:space-around;border-top:1px solid var(--line);padding:9px 0 14px;font:700 10.5px Inter;color:var(--muted);background:var(--card)}
+.phone .tabbar .on{color:var(--accent)}
+</style></head><body>
+<div class="top">
+  <h1>Round 36 · Charts page</h1>
+  <p class="lead">Based on what we browsed: TradingView (big chart + watchlist rail), Google Finance (list · chart · stats). All three use the free TradingView chart (the real one is interactive: zoom, candles, indicators). Stats, news, key date and result card come from our own data. Sample numbers: NVDA today.</p>
+</div>
+
+<div class="sec">C1 · TradingView rail<small>Chart first, your watchlist on the right like TradingView. Stats and news below the chart.</small></div>
+<div class="frame"><div class="page" id="c1"></div></div>
+
+<div class="sec">C2 · Three columns (Google Finance style) <span class="rec">RECOMMENDED</span><small>Watchlist on the left, chart + stats in the middle, our news and dates on the right: everything about one stock on one screen, no scrolling.</small></div>
+<div class="frame"><div class="page" id="c2"></div></div>
+
+<div class="sec">C2 · dark<small>Same layout in Dark (the TradingView chart switches theme with it).</small></div>
+<div class="frame"><div class="page dark" id="c2d"></div></div>
+
+<div class="sec">C3 · Focus<small>Full-width chart, stocks as tabs on top, stats + news in two columns underneath.</small></div>
+<div class="frame"><div class="page" id="c3"></div></div>
+
+<div class="sec">Phone (any layout)<small>Stock tabs swipe on top, chart, stats, then news. Charts joins the bottom tab bar.</small></div>
+<div class="frame phones"><div class="phone" id="ph"></div><div class="phone dark" id="phd"></div></div>
+
+<ul class="notes">
+  <li><b>Chart:</b> TradingView free widget, $0, no key. It shows a small TradingView logo (their rule). Thai stocks (SET) must be tested first; if they don't load, I'll draw our own line chart for Thai names.</li>
+  <li><b>Click a stock</b> in the list → the chart, stats and news switch in place. The link is <code>#/charts/NVDA</code>, so you can bookmark it.</li>
+  <li><b>"Chart" buttons elsewhere</b> (story page, watchlist strip) are not included unless you want them.</li>
+</ul>
+<div style="height:60px"></div>
+
+<script>
+const W=[["NVDA","NVIDIA",154.25,-6.54],["AMD","Advanced Micro Devices",414.24,-8.65],["TSM","Taiwan Semiconductor",312.40,-3.12],["PTT","PTT PCL",37.30,-0.27],["GULF","Gulf Development",59.50,0.00],["AOT","Airports of Thailand",57.50,-4.17]];
+const MK=[["S&P 500","6,512",-1.12],["SET","1,214",-0.41],["Gold","3,560",-2.04]];
+function series(n,seed){let v=100,a=[];for(let i=0;i<n;i++){seed=(seed*9301+49297)%233280;v+= (seed/233280-.46)*3.2+(i>n*.82?-1.6:0);a.push(v)}return a}
+function chart(w,h,dark){const d=series(120,7),mn=Math.min(...d),mx=Math.max(...d),x=i=>i/(d.length-1)*(w-54),y=v=>12+(mx-v)/(mx-mn)*(h-40);
+ const p=d.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+","+y(v).toFixed(1)).join("");const g=dark?"#1f1f1f":"#f0f0f0",t=dark?"#777":"#999";
+ let grid="";for(let k=0;k<5;k++){const yy=12+k*(h-40)/4;grid+=`<line x1="0" x2="${w-54}" y1="${yy}" y2="${yy}" stroke="${g}"/><text x="${w-48}" y="${yy+4}" font-size="10.5" fill="${t}" font-family="Inter">${(243-k*24).toFixed(0)}</text>`}
+ const ms=["Dec","Feb","Apr","Jun","Aug","Oct"];ms.forEach((m,i)=>grid+=`<text x="${(i+.5)*(w-54)/6}" y="${h-8}" font-size="10.5" fill="${t}" font-family="Inter">${m}</text>`);
+ const ly=y(d[d.length-1]);
+ return `<div class="chart"><svg viewBox="0 0 ${w} ${h}" height="${h}">${grid}<path d="${p}L${w-54},${h-28}L0,${h-28}Z" fill="#ef4444" opacity=".07"/><path d="${p}" fill="none" stroke="#ef4444" stroke-width="1.8"/>
+ <rect x="${w-52}" y="${ly-9}" width="50" height="18" rx="4" fill="#ef4444"/><text x="${w-46}" y="${ly+4}" font-size="11" fill="#fff" font-weight="700" font-family="Inter">154.25</text></svg><span class="tvmark">⧉ TradingView</span></div>`}
+const per=`<div class="per">${["1D","5D","1M","6M","YTD","1Y","5Y","All"].map(p=>`<button class="${p==="1Y"?"on":""}">${p}</button>`).join("")}</div>`;
+const head=`<div class="sh"><div class="lg">NV</div><div class="nm"><b>NVIDIA Corporation</b><small>NVDA · NASDAQ · Semiconductors</small></div><div class="px"><b class="tnum">154.25</b><span class="down">−10.80 (−6.54%)</span><small>Market open · Yahoo, may be delayed</small></div></div>`;
+const stats4=`<div class="stats">${[["Open","159.10"],["High","159.92"],["Low","150.50"],["Volume","256.1M"],["Market cap","3.71T"],["P/E","16.55"],["EPS","9.31"],["Dividend","0.65%"]].map(([a,b])=>`<div><span>${a}</span><b class="tnum">${b}</b></div>`).join("")}</div>`;
+const stats2=`<div class="stats st2">${[["Open","159.10"],["Market cap","3.71T"],["High","159.92"],["P/E","16.55"],["Low","150.50"],["EPS","9.31"],["Volume","256.1M"],["Dividend","0.65%"]].map(([a,b])=>`<div><span>${a}</span><b class="tnum">${b}</b></div>`).join("")}</div>`;
+const rng=`<div class="rng"><small><span>52-week low 145.71</span><span>52-week high 243.37</span></small><div class="bar"><i style="left:8.8%"></i></div><small><span>Today is 9% above the yearly low</span><span></span></small></div>`;
+const row=(s,on)=>`<div class="r${on?" on":""}"><div><b>${s[0]}</b><small>${s[1]}</small></div><span class="n tnum">${s[2].toFixed(2)}</span><span class="n tnum ${s[3]<0?"down":s[3]>0?"up":""}">${s[3]>0?"+":""}${s[3].toFixed(2)}%</span></div>`;
+const wl=`<div class="card wl"><div class="mh" style="padding-top:8px"><h2>My watchlist</h2><a href="#">Edit</a></div><div class="h"><span>SYMBOL</span><span style="text-align:right">LAST</span><span style="text-align:right">CHG%</span></div>${W.map((s,i)=>row(s,i===0)).join("")}
+ <div class="sec2">MARKETS</div>${MK.map(m=>`<div class="r"><div><b>${m[0]}</b></div><span class="n tnum">${m[1]}</span><span class="n tnum down">${m[2].toFixed(2)}%</span></div>`).join("")}</div>`;
+const news=(n)=>`<div class="card"><div class="mh"><h2>Our news on NVDA</h2><a href="#">All NVDA news →</a></div><div class="nw" style="padding-top:4px">${[
+ ["9","NVIDIA reinstates Jensen Huang as CEO; shares jump 31%","Reuters · 2 days ago · 14 outlets"],
+ ["8","Shares fall 6% as independent investigation continues","Bloomberg · 3h ago · 9 outlets"],
+ ["7","Q3 revenue up 62% to $57B on data-center demand","CNBC · Nov 18 · 22 outlets"],
+ ["6","TSMC says AI chip orders stay strong into 2027","Nikkei · yesterday · 5 outlets"]].slice(0,n).map(a=>`<div class="it"><div class="im"></div><div><b><span class="imp">${a[0]}</span>${a[1]}</b><small>${a[2]}</small></div></div>`).join("")}</div></div>`;
+const kd=`<div class="card"><div class="mh"><h2>Next date</h2><a href="#">Stock calendar →</a></div><div class="kdc"><div class="d"><small>FEB</small>25</div><div><b>Q4 earnings (estimated)</b><span>in 92 days · after US close</span></div></div>
+ <div class="res"><b>Q3 result</b>EPS 1.30 vs 1.25 expected<em>BEAT</em></div></div>`;
+const nav=(dark)=>`<div class="nav"><span class="logo">Investment<i>.</i>Center</span><a>My News</a><a>World Brief</a><a class="on">Charts</a><a>Calendar</a></div>`;
+document.getElementById("c1").innerHTML=nav()+`<div class="body c1"><div><div class="card pad">${head}${per}${chart(860,330)}</div>
+ <div class="card" style="margin-top:16px"><div class="mh"><h2>Key stats</h2></div>${stats4}${rng}</div><div style="margin-top:16px">${news(4)}</div></div>
+ <div>${wl}<div style="margin-top:16px">${kd}</div></div></div>`;
+const c2=(dark)=>nav()+`<div class="body c2"><div>${wl}</div><div><div class="card pad">${head}${per}${chart(640,300,dark)}</div><div class="card" style="margin-top:16px"><div class="mh"><h2>Key stats</h2></div>${stats2}${rng}</div></div><div>${kd}<div style="margin-top:16px">${news(3)}</div></div></div>`;
+document.getElementById("c2").innerHTML=c2(false);document.getElementById("c2d").innerHTML=c2(true);
+const tabs=`<div class="c3tabs">${W.map((s,i)=>`<div class="t${i===0?" on":""}"><b>${s[0]}</b><span class="tnum ${s[3]<0?"down":s[3]>0?"up":""}">${s[2].toFixed(2)} · ${s[3]>0?"+":""}${s[3].toFixed(2)}%</span></div>`).join("")}</div>`;
+document.getElementById("c3").innerHTML=nav()+`<div class="body">${tabs}<div class="card pad" style="margin-top:14px">${head}${per}${chart(1150,340)}</div>
+ <div class="c3low"><div><div class="card"><div class="mh"><h2>Key stats</h2></div>${stats2}${rng}</div><div style="margin-top:16px">${kd}</div></div>${news(4)}</div></div>`;
+const ph=(dark)=>`<div class="ptabs">${W.map((s,i)=>`<span class="t${i===0?" on":""}">${s[0]} <span class="${s[3]<0?"down":"up"}" style="${i===0?"color:inherit":""}">${s[3].toFixed(1)}%</span></span>`).join("")}</div>
+ <div style="padding:12px">${head.replace("font:900 28px","")}${per}${chart(366,220,dark)}<div class="card" style="margin-top:10px">${stats2}</div><div style="margin-top:10px">${news(2)}</div></div>
+ <div class="tabbar"><span>News</span><span>World</span><span class="on">Charts</span><span>Calendar</span><span>Settings</span></div>`;
+document.getElementById("ph").innerHTML=ph(false);document.getElementById("phd").innerHTML=ph(true);
+</script></body></html>

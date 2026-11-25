@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 42 · Indicator + Fibonacci settings windows (your TradingView setup)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f10;--card:#18181b;--ink:#f4f4f5;--soft:#b4b4bb;--muted:#8a8a93;--line:#2a2a2f;--line2:#34343a;--chip:#232327;--acc:#ff4500}
+.lt{--bg:#fafafa;--card:#fff;--ink:#111;--soft:#555;--muted:#888;--line:#eee;--line2:#e2e2e2;--chip:#f3f3f3}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;background:#e9e9e9;color:#111}
+.top{max-width:1500px;margin:0 auto;padding:30px 40px 6px}h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}.lead{color:#555;margin:0;max-width:1100px}
+.sec{max-width:1500px;margin:30px auto 12px;padding:0 40px;font:900 21px 'Inter Tight'}.sec small{display:block;font:600 13.5px Inter;color:#555;margin-top:2px}
+.row{max-width:1500px;margin:0 auto;padding:0 40px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.stage{background:var(--bg);color:var(--ink);border-radius:16px;padding:22px;display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.win{width:380px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.35);overflow:hidden}
+.wh{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 6px}.wh b{font:900 21px 'Inter Tight';letter-spacing:-.4px}.wh span{color:var(--muted);font-size:18px}
+.tabs{display:flex;gap:6px;padding:8px 18px 12px;border-bottom:1px solid var(--line)}
+.tabs span{border:1px solid var(--line2);border-radius:99px;padding:5px 13px;font:700 13px Inter}.tabs span.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bd{padding:6px 18px 10px;max-height:560px;overflow:hidden}
+.h{font:800 10.5px Inter;letter-spacing:.9px;color:var(--muted);margin:14px 0 6px}
+.f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font:600 13.5px Inter}
+.in{width:110px;border:1px solid var(--line2);border-radius:10px;padding:7px 10px;font:600 13.5px Inter;background:var(--bg)}
+.sel{width:110px;border:1px solid var(--line2);border-radius:10px;padding:7px 10px;font:600 13.5px Inter;background:var(--bg);display:flex;justify-content:space-between}.sel::after{content:"▾";color:var(--muted)}
+.ck{display:flex;align-items:center;gap:10px}.ck i{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line2);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:900}
+.ck i.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.sw{display:flex;gap:6px;align-items:center}.sw b{width:30px;height:24px;border-radius:7px;border:1px solid var(--line2)}.sw em{width:54px;height:24px;border:1px solid var(--line2);border-radius:7px;display:grid;place-items:center;font-style:normal}
+.sw em::before{content:"";width:34px;border-top:2px solid var(--soft)}.sw em.d::before{border-top-style:dashed}
+.ft{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.ft .dd{border:1px solid var(--line2);border-radius:99px;padding:6px 12px;font:700 12.5px Inter}.ft .dd::after{content:" ▾";color:var(--muted)}
+.ft .c{margin-left:auto;border:1px solid var(--line2);border-radius:99px;padding:7px 16px;font:700 13px Inter}.ft .ok{background:var(--acc);color:#fff;border-radius:99px;padding:7px 18px;font:800 13px Inter}
+.menu{position:absolute;bottom:52px;left:16px;width:200px;background:var(--card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.35);padding:6px 0;font:600 13px Inter}.menu div{padding:7px 14px}.menu div.on{background:var(--chip)}
+.lvls{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.lv{display:flex;align-items:center;gap:6px}.lv .in{width:78px;padding:6px 8px}.lv b{width:24px;height:24px;border-radius:7px;border:1px solid var(--line2);flex:none}
+.lv.off{opacity:.38}
+.fav{width:560px}.fav .bd{display:grid;grid-template-columns:150px 1fr;gap:0;padding:0;max-height:none}
+.fav .cats{border-right:1px solid var(--line);padding:8px 0}.fav .cats div{padding:7px 16px;font:600 13px Inter;color:var(--soft)}.fav .cats div.on{background:var(--chip);color:var(--ink);border-radius:0 99px 99px 0;margin-right:10px}
+.fav .cats small{display:block;padding:10px 16px 4px;font:800 10px Inter;letter-spacing:.9px;color:var(--muted)}
+.fav .ls div{display:flex;align-items:center;gap:10px;padding:7px 16px;font:600 13.5px Inter}.fav .ls div em{font-style:normal;color:#f5c518}.fav .ls div span{margin-left:auto;font:600 11.5px Inter;color:var(--muted)}
+.fav .ls div.no{opacity:.45}
+.srch{margin:12px 18px;border:1.5px solid var(--acc);border-radius:99px;padding:8px 14px;color:var(--muted);font:500 13.5px Inter}
+.notes{max-width:1500px;margin:16px auto 0;padding:0 40px;color:#444;font-size:13.5px}.notes li{margin:4px 0}
+.prev{width:380px}
+.prev svg{display:block;width:100%}
+</style></head><body>
+<div class="top"><h1>Round 42 · Settings windows, filled with your TradingView setup</h1>
+<p class="lead">Same tabs and options as TradingView (Inputs · Style · Visibility, Defaults, Cancel / Ok), in our site's style: rounded card, pill tabs, orange Ok and ticks. Every value below is what I read from your TradingView (or TradingView's default where you don't use it yet). These become your starting settings on our Charts page.</p></div>
+
+<div class="sec">MACD · Inputs and Style<small>Your values: close, 12 / 26 / 9, EMA / EMA. Histogram 4 colours, MACD blue, signal orange.</small></div>
+<div class="row"><div class="stage">
+ <div class="win"><div class="wh"><b>MACD</b><span>✕</span></div><div class="tabs"><span class="on">Inputs</span><span>Style</span><span>Visibility</span></div>
+  <div class="bd"><div class="f">Source<span class="sel">Close</span></div><div class="f">Fast length<span class="in">12</span></div><div class="f">Slow length<span class="in">26</span></div><div class="f">Signal length<span class="in">9</span></div>
+  <div class="f">Oscillator MA type<span class="sel">EMA</span></div><div class="f">Signal MA type<span class="sel">EMA</span></div></div>
+  <div class="ft"><span class="dd">Defaults</span><span class="c">Cancel</span><span class="ok">Ok</span></div></div>
+ <div class="win"><div class="wh"><b>MACD</b><span>✕</span></div><div class="tabs"><span>Inputs</span><span class="on">Style</span><span>Visibility</span></div>
+  <div class="bd"><div class="f"><span class="ck"><i class="on">✓</i>Histogram</span></div>
+  ${0}
+  </div><div class="ft"><span class="dd">Defaults</span><span class="c">Cancel</span><span class="ok">Ok</span></div></div>
+ <div class="win" style="position:relative"><div class="wh"><b>MACD</b><span>✕</span></div><div class="tabs"><span>Inputs</span><span>Style</span><span class="on">Visibility</span></div>
+  <div class="bd" id="vis"></div><div class="ft"><span class="dd">Defaults</span><span class="c">Cancel</span><span class="ok">Ok</span></div>
+  <div class="menu"><div>Reset to TradingView default</div><div class="on">Save as my default</div><div>Reset to my default</div></div></div>
+</div></div>
+
+<div class="sec">RSI · Inputs and Style<small>TradingView defaults (your screenshot): length 14, close, smoothing SMA 14. Purple line, 70 / 50 / 30 bands, shaded zone.</small></div>
+<div class="row"><div class="stage" id="rsi"></div></div>
+
+<div class="sec">Fibonacci retracement · your "FOR WAVE" template<small>Your levels and colours, dashed trend line, prices + percent labels. Your templates show up under Template ▾.</small></div>
+<div class="row"><div class="stage" id="fib"></div></div>
+
+<div class="sec">Indicators window · your favourites<small>The ★ list is your TradingView favourites. Greyed = not available yet (custom community scripts; see notes).</small></div>
+<div class="row"><div class="stage lt" id="favl"></div><div class="stage" id="favd"></div></div>
+
+<ul class="notes">
+  <li><b>Built in, fully adjustable:</b> MACD, RSI, Volume, MA / EMA, Bollinger Bands, Parabolic SAR, Stochastic, Fibonacci (all its levels, colours and labels), plus the other drawing tools' colour / line style.</li>
+  <li><b>CDC ActionZone V3 2020</b> is an open-source TradingView community script (EMA 12 / 26 zones that colour the candles green / red / yellow / blue). I can rebuild it from its published source. <b>Percentage Volume Oscillator</b> and <b>Zigzag</b> are simple to add. <b>RSI divergence</b> comes with the RSI "Calculate divergence" step. <b>EMASS</b>: I couldn't tell what it is; tell me or I'll check its page.</li>
+  <li>Your Fibonacci on the NVDA chart has one level typed as <b>138.2</b> (13,820%). It's probably meant to be 1.382. Your "FOR WAVE" template doesn't have it. I'll leave it out unless you want 1.382.</li>
+</ul>
+<div style="height:60px"></div>
+<script>
+const sw=(c,d)=>`<span class="sw"><b style="background:${c}"></b><em class="${d?"d":""}"></em></span>`;
+const f=(label,right,ck=true,indent=false)=>`<div class="f" style="${indent?"padding-left:28px":""}"><span class="${ck===null?"":"ck"}">${ck===null?"":`<i class="${ck?"on":""}">${ck?"✓":""}</i>`}${label}</span>${right}</div>`;
+// MACD style body
+document.querySelectorAll(".bd")[1].innerHTML=f("Histogram","",true)+["Growing above zero|#26A69A","Falling above zero|#B2DFDB","Growing below zero|#FFCDD2","Falling below zero|#FF5252"].map(x=>{const[a,c]=x.split("|");return f(a,sw(c),null,true)}).join("")
+ +f("MACD",sw("#2962FF"))+f("Signal line",sw("#FF6D00"))+f("Zero line",sw("#787B86",true)+'<span class="in" style="width:56px;margin-left:6px">0</span>')
+ +'<div class="h">OUTPUT VALUES</div>'+f("Precision",'<span class="sel">Default</span>',null)+f("Labels on price scale","")+f("Values in status line","")+f("Inputs in status line","");
+document.getElementById("vis").innerHTML=["5 minutes","15 minutes","1 hour","1 day","1 week","1 month"].map(x=>f(x,'<span style="color:var(--muted);font-size:12px">shown</span>')).join("");
+// RSI
+const win=(title,tab,body,extra="")=>`<div class="win"${extra}><div class="wh"><b>${title}</b><span>✕</span></div><div class="tabs">${["Inputs","Style","Visibility"].map(t=>`<span class="${t===tab?"on":""}">${t}</span>`).join("")}</div><div class="bd">${body}</div><div class="ft"><span class="dd">Defaults</span><span class="c">Cancel</span><span class="ok">Ok</span></div></div>`;
+const rsiPrev=()=>{let p="";for(let i=0;i<120;i++){const v=50+Math.sin(i/7)*18+Math.sin(i/2.3)*6-(i>100?(i-100)*1.4:0);p+=(i?"L":"M")+(i*3.1)+","+(10+(100-v)*1.3)}return `<svg viewBox="0 0 372 150"><rect x="0" y="${10+30*1.3}" width="372" height="${40*1.3}" fill="#7E57C2" opacity=".12"/><line x1="0" x2="372" y1="${10+30*1.3}" y2="${10+30*1.3}" stroke="#787B86" stroke-dasharray="4 4"/><line x1="0" x2="372" y1="${10+50*1.3}" y2="${10+50*1.3}" stroke="#787B86" stroke-dasharray="2 4" opacity=".6"/><line x1="0" x2="372" y1="${10+70*1.3}" y2="${10+70*1.3}" stroke="#787B86" stroke-dasharray="4 4"/><path d="${p}" fill="none" stroke="#7E57C2" stroke-width="1.6"/><text x="6" y="14" fill="#7E57C2" font-size="11" font-family="Inter" font-weight="700">RSI 14 close · 31.42</text></svg>`};
+document.getElementById("rsi").innerHTML=win("RSI","Inputs",'<div class="h">RSI SETTINGS</div>'+f("RSI length",'<span class="in">14</span>',null)+f("Source",'<span class="sel">Close</span>',null)+f("Calculate divergence <span style=\'color:var(--muted);font-size:11px\'>(step 2)</span>","",false)+'<div class="h">SMOOTHING</div>'+f("Type",'<span class="sel">SMA</span>',null)+f("Length",'<span class="in">14</span>',null)+f("BB StdDev",'<span class="in" style="opacity:.5">2</span>',null))
+ +win("RSI","Style",f("RSI",sw("#7E57C2"))+f("RSI-based MA",sw("#F7C548"))+f("Upper band",sw("#787B86",true)+'<span class="in" style="width:56px;margin-left:6px">70</span>')+f("Middle band",sw("#787B86",true)+'<span class="in" style="width:56px;margin-left:6px">50</span>')+f("Lower band",sw("#787B86",true)+'<span class="in" style="width:56px;margin-left:6px">30</span>')+f("Background fill",sw("#7E57C2"))+'<div class="h">OUTPUT VALUES</div>'+f("Labels on price scale","")+f("Values in status line",""))
+ +`<div class="win prev"><div class="wh"><b style="font-size:16px">Preview on the chart</b><span></span></div><div style="padding:8px 4px 12px">${rsiPrev()}</div></div>`;
+// FIB
+const L=[["0","#fff",1],["0.3333","#fff",1],["0.382","#fff",1],["0.5","#F23645",1],["0.618","#F23645",1],["0.786","#F23645",1],["0.887","#fff",1],["1","#fff",1],["1.618","#fff",1],["2.618","#fff",1],["1.272","#4caf50",0],["3.618","#9c27b0",0]];
+document.getElementById("fib").innerHTML=`<div class="win" style="width:420px;position:relative"><div class="wh"><b>Fib retracement</b><span>✕</span></div><div class="tabs"><span class="on">Style</span><span>Coordinates</span><span>Visibility</span></div><div class="bd" style="max-height:none">
+ ${f("Trend line",sw("#ffffff",true))}${f("Levels line",'<span class="sw"><em></em></span>',null)}${f("Extend",'<span class="sel" style="width:140px">Don\'t extend</span>',null)}
+ <div class="lvls" style="margin:8px 0">${L.map(l=>`<div class="lv${l[2]?"":" off"}"><span class="ck"><i class="${l[2]?"on":""}">${l[2]?"✓":""}</i></span><span class="in">${l[0]}</span><b style="background:${l[1]}"></b></div>`).join("")}</div>
+ ${f("Background","",false)}${f("Reverse","",false)}${f("Prices","")}${f("Levels",'<span class="sel">Percents</span>')}${f("Labels",'<span class="sel" style="width:150px">Centre · Middle</span>',null)}${f("Font size",'<span class="sel">12</span>',null)}</div>
+ <div class="ft"><span class="dd">Template</span><span class="c">Cancel</span><span class="ok">Ok</span></div><div class="menu" style="bottom:52px"><div>Save as…</div><div>Apply defaults</div><div class="on">FOR WAVE</div><div>New1</div></div></div>
+ <div class="win prev" style="width:520px"><div class="wh"><b style="font-size:16px">Preview</b><span></span></div><div style="padding:8px 10px 14px">${(()=>{let s="";const lv=[[0,"#fff"],[.3333,"#fff"],[.382,"#fff"],[.5,"#F23645"],[.618,"#F23645"],[.786,"#F23645"],[.887,"#fff"],[1,"#fff"]];lv.forEach(([v,c])=>{const y=260-v*240;s+=`<line x1="60" x2="490" y1="${y}" y2="${y}" stroke="${c}" stroke-width="1"/><text x="275" y="${y-3}" fill="${c}" font-size="11" font-family="Inter" text-anchor="middle">${(v*100).toFixed(v===.3333?2:1).replace(".0","")}% (${(91.93+v*(256.12-91.93)).toFixed(2)})</text>`});s+=`<line x1="60" y1="260" x2="490" y2="20" stroke="#fff" stroke-dasharray="5 4"/>`;return `<svg viewBox="0 0 500 280">${s}</svg>`})()}</div></div>`;
+// favourites
+const fav=`<div class="win fav"><div class="wh"><b>Indicators</b><span>✕</span></div><div class="srch">⌕ Search  e.g. RSI, MACD, Bollinger</div><div class="bd"><div class="cats"><small>PERSONAL</small><div class="on">★ Favourites</div><small>BUILT-IN</small><div>All</div><div>Trend</div><div>Momentum</div><div>Volume</div><div>Volatility</div></div>
+ <div class="ls">${[["CDC ActionZone V3 2020","Community script · to rebuild",1],["EMASS","Unknown · ask",1],["MACD","Momentum · added",0],["Parabolic SAR","Trend · on price",0],["Percentage Volume Oscillator","Volume · to add",1],["Relative Strength Index","Momentum",0],["RSI divergence","Momentum · step 2",1],["Stochastic","Momentum",0],["Volume","Volume · added",0],["Zigzag","Trend · to add",1]].map(x=>`<div class="${x[2]?"no":""}"><em>★</em>${x[0]}<span>${x[1]}</span></div>`).join("")}</div></div></div>`;
+document.getElementById("favl").innerHTML=fav;document.getElementById("favd").innerHTML=fav;
+</script></body></html>

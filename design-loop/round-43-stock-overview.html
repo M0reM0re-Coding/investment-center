@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 43 · Stock page like TradingView's symbol page (1920 wide, long page)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f10;--card:#18181b;--ink:#f4f4f5;--soft:#b4b4bb;--muted:#8a8a93;--line:#2a2a2f;--chip:#232327;--acc:#ff4500;--up:#22c55e;--dn:#f87171;--tvup:#089981;--tvdn:#F23645}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;color:#111;background:#e9e9e9}
+.top{padding:30px 40px 6px;max-width:1960px;margin:0 auto}
+h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}.lead{color:#555;margin:0;max-width:1250px}
+.lead b{color:#111}
+.screen{width:1920px;margin:20px auto 60px;background:var(--bg);color:var(--ink);border:1px solid #cfcfcf;border-radius:10px;overflow:hidden;position:relative}
+.tnum{font-variant-numeric:tabular-nums}.up{color:var(--up)}.dn{color:var(--dn)}
+.new{font:800 9.5px Inter;letter-spacing:.5px;border-radius:5px;padding:2px 6px;background:#10324a;color:#6cc4ff;margin-left:8px;vertical-align:middle}
+.have{font:800 9.5px Inter;letter-spacing:.5px;border-radius:5px;padding:2px 6px;background:#13301f;color:#4ade80;margin-left:8px;vertical-align:middle}
+.hd{height:64px;border-bottom:1px solid var(--line)}
+.hd .in{padding:0 28px;height:100%;display:flex;align-items:center;gap:28px}
+.logo{font:900 22px 'Inter Tight';letter-spacing:-.6px}.logo i{color:var(--acc);font-style:normal}
+.hd a{font:600 15px Inter;color:var(--soft)}.hd a.on{color:var(--ink);box-shadow:inset 0 -2px var(--acc);padding-bottom:6px}
+.hd .r{margin-left:auto;display:flex;gap:10px}.hd .r span{border:1px solid var(--line);border-radius:99px;padding:7px 14px;font:600 13px Inter;color:var(--muted)}
+.lay{display:grid;grid-template-columns:minmax(0,1fr) 46px}
+.main{padding:18px 28px 40px}
+.strip{border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:14px}
+.strip span{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--muted);font-size:16px}.strip span.on{background:var(--chip);color:var(--acc)}
+/* head */
+.crumb{font:600 12.5px Inter;color:var(--muted);margin-bottom:10px}
+.sh{display:flex;align-items:center;gap:16px}
+.lgx{width:64px;height:64px;border-radius:50%;background:#111;border:1px solid var(--line);display:grid;place-items:center;color:#76b900;font:900 18px Inter}
+.sh h2{font:900 30px 'Inter Tight';letter-spacing:-.6px;margin:0}.sh .sub{color:var(--muted);font:600 13px Inter}
+.sh .sub b{color:var(--soft)}
+.px{display:flex;gap:34px;margin:12px 0 0 80px}.px .big{font:900 32px 'Inter Tight'}.px .big span{font:700 16px Inter;margin-left:8px}
+.px .pm{font:800 20px 'Inter Tight';color:var(--soft)}.px .pm span{font:700 13.5px Inter;margin-left:6px}
+.px small{display:block;color:var(--muted);font:600 11.5px Inter}
+.act{margin-left:auto;display:flex;gap:8px;align-self:flex-start}.act span{border:1px solid var(--line);border-radius:9px;padding:8px 13px;font:700 13px Inter}.act span.pri{background:var(--ink);color:var(--bg)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:16px}
+.tabs span{font:700 14.5px Inter;color:var(--soft);padding:10px 15px}.tabs span.on{color:var(--ink);box-shadow:inset 0 -2px var(--acc)}
+.tabs .fc{margin-left:auto;color:var(--acc)}
+/* chart */
+.ch{height:760px;display:flex;flex-direction:column;border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;overflow:hidden}
+.tbar{display:flex;align-items:center;gap:2px;height:40px;padding:0 8px;border-bottom:1px solid var(--line);font:600 13px Inter;color:var(--soft)}
+.tbar span{padding:5px 8px;border-radius:6px;white-space:nowrap}.tbar span.on{background:var(--chip);color:var(--ink)}.tbar i{width:1px;height:20px;background:var(--line);margin:0 4px}
+.cbody{flex:1;display:grid;grid-template-columns:46px minmax(0,1fr);min-height:0}
+.dbar{border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;color:var(--soft)}
+.dbar span{width:34px;height:32px;display:grid;place-items:center;border-radius:6px;font-size:15px}
+.plot{position:relative}.plot svg{position:absolute;inset:0;width:100%;height:100%}
+.legendc{position:absolute;left:10px;top:8px;font:600 12.5px Inter;color:var(--soft)}.legendc div{padding:2px 6px}.legendc b{color:var(--ink)}
+.bbar{display:flex;align-items:center;gap:2px;height:34px;padding:0 8px;border-top:1px solid var(--line);font:600 12.5px Inter;color:var(--soft)}
+.bbar span{padding:4px 8px;border-radius:6px}.bbar span.on{background:var(--chip);color:var(--ink)}.bbar .r{margin-left:auto;display:flex;gap:10px;color:var(--muted)}
+/* sections */
+.s{margin-top:44px}.s>h3{font:900 24px 'Inter Tight';letter-spacing:-.4px;margin:0 0 14px}.s>h3 a{color:var(--muted);font-weight:700}
+.s>h3 small{display:block;font:600 13px Inter;color:var(--muted);letter-spacing:0;margin-top:3px}
+.perf{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px;margin-top:14px}
+.perf div{border-radius:10px;padding:10px 0;text-align:center;font:600 13px Inter;color:var(--soft);background:var(--card);border:1px solid var(--line)}
+.perf div b{display:block;font:800 15px Inter;margin-top:2px}.perf div.on{outline:2px solid var(--acc);color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.cards .card .t{display:flex;align-items:center;gap:10px}.cards .card .t i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:900 11px Inter;font-style:normal;color:#fff}
+.cards .card .t b{display:block;font-size:14px}.cards .card .t small{color:var(--muted);font-size:12px}
+.cards .card .p{margin-top:10px;font:800 16px Inter}.cards .card .p span{font:700 13px Inter;margin-left:6px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px}
+.three{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:40px}
+.kf{background:linear-gradient(120deg,#26150d,#18181b 45%,#141b22);border:1px solid var(--line);border-radius:14px;padding:26px 30px}
+.kf small{font:800 11px Inter;letter-spacing:1px;color:var(--acc)}.kf p{font:700 21px/1.4 'Inter Tight';margin:8px 0 12px}
+.kf .m{display:flex;gap:16px;color:var(--muted);font:600 12.5px Inter}.kf .m b{color:var(--soft)}
+.dates .d{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.dates .dt{text-align:center;border-radius:9px;background:var(--chip);padding:5px 0;font:900 18px 'Inter Tight';line-height:1.05}.dates .dt small{display:block;font:800 10px Inter;color:var(--acc)}
+.dates b{display:block}.dates span{color:var(--muted);font-size:12.5px}
+.stats{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:24px}
+.st small{display:block;color:var(--muted);font:600 13px Inter}.st b{font:800 21px Inter}.st b span{font:600 12px Inter;color:var(--muted);margin-left:3px}
+.chipx{font:800 9.5px Inter;border-radius:5px;padding:2px 6px;background:#2a1a4a;color:#c4a5ff;margin-left:6px;vertical-align:middle}
+.about{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 24px;margin-bottom:16px}
+.desc{color:var(--soft);max-width:1100px}.desc a{color:var(--acc);font-weight:700}
+.fin{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.fin .card h4{display:flex;align-items:center;margin:0 0 10px;font:800 15px Inter}.fin .card h4 .tg{margin-left:auto;display:flex;gap:2px}
+.tg span{font:700 12px Inter;color:var(--muted);padding:4px 9px;border-radius:7px}.tg span.on{background:var(--chip);color:var(--ink)}
+.fin svg{width:100%;height:220px;display:block}
+.leg{display:flex;gap:14px;justify-content:center;font:600 12px Inter;color:var(--muted);margin-top:6px}.leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.news{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 30px}
+.news div small{color:var(--muted);font:600 12px Inter}.news div b{display:block;font:700 15px/1.35 Inter;margin-top:4px}
+.gg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px;text-align:center}
+.gg svg{width:300px;height:170px}.gg b{display:block;font:900 22px 'Inter Tight'}.gg small{color:var(--muted)}
+.funds .r{display:grid;grid-template-columns:minmax(0,1fr) 120px 140px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}.funds .r.h{color:var(--muted);font:700 11px Inter;letter-spacing:.7px;border:0}
+.n{text-align:right}
+.sticky{position:sticky;top:0}
+.note{background:#fff7d6;border:1px solid #e8d47a;color:#5a4a00;border-radius:10px;padding:12px 16px;font-size:14px;margin:14px 0 0;max-width:1250px}
+.mini{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 28px;background:#141416}
+.mini b{font:800 15px Inter}.mini .tb{display:flex;gap:2px;margin-left:24px}.mini .tb span{font:700 13px Inter;color:var(--soft);padding:6px 11px;border-radius:7px}.mini .tb span.on{background:var(--chip);color:var(--ink)}
+.mini .r{margin-left:auto;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font:700 12.5px Inter}
+</style></head><body>
+<div class="top">
+  <h1>Round 43 · Stock page = TradingView's symbol page, at full 1920 width</h1>
+  <p class="lead">One long page you scroll, in the same order as TradingView's NVDA page (checked today): <b>big chart with all tools on top</b> → performance tiles → similar stocks → key facts → key stats → earnings → company → financial charts → news → technicals / analysts → seasonals → funds holding it.
+  The tabs at the top jump to each section (like TradingView), and a slim bar with the price stays at the top while you scroll. <b>Full chart</b> opens today's full-screen chart mode.
+  <span class="have">HAVE</span> = data we already store · <span class="new">NEW</span> = one more free Yahoo call in the robot (tested today for NVDA and PTT: all returned data).</p>
+  <p class="note"><b>Left out on purpose:</b> TradingView's Community forum, Ideas, Bonds, Options and FAQ. They need TradingView's own users or paid data. The sidebar starts folded on this page (icon strip on the right) so the page uses the whole 1920 px; one click opens your watchlist like today.</p>
+</div>
+
+<div class="screen">
+  <div class="hd"><div class="in"><span class="logo">Investment<i>.</i>Center</span><a>My News</a><a>World Brief</a><a>Calendar</a><a class="on">Charts</a><a>Settings</a><div class="r"><span>⌕ Search</span><span>Sign out</span></div></div></div>
+  <div class="lay"><div class="main">
+    <div class="crumb">Charts › US stocks › Semiconductors › NVDA</div>
+    <div class="sh"><div class="lgx">NV</div><div><h2>NVIDIA Corporation</h2><div class="sub"><b>NVDA</b> · NASDAQ · USD · Electronic Technology · <span style="color:var(--up)">● Post-market</span></div></div>
+      <div class="act"><span>★ In watchlist</span><span>🔔 Price alert</span><span>✎ Note</span><span class="pri">⛶ Full chart</span></div></div>
+    <div class="px"><div class="big tnum">155.38 <span class="dn">−9.67 −5.86%</span><small>At close · 25 Nov 04:00 Bangkok</small></div><div class="pm tnum">153.38 <span class="dn">−2.00 −1.29%</span><small>Post-market · live</small></div></div>
+    <div class="tabs"><span class="on">Overview</span><span>Financials</span><span>News</span><span>Technicals</span><span>Forecasts</span><span>Seasonals</span><span>Dates</span><span>Funds</span><span class="fc">⛶ Full chart ›</span></div>
+
+    <div class="ch">
+      <div class="tbar"><span style="font:800 14px Inter;color:var(--ink)">⌕ NVDA</span><i></i><span>5m</span><span>15m</span><span>1h</span><span class="on">D</span><span>W</span><span>M</span><i></i><span>🕯 Candles ▾</span><i></i><span>ƒx Indicators</span><i></i><span>↶</span><span>↷</span><span style="margin-left:auto">📷</span><span>⛶</span></div>
+      <div class="cbody"><div class="dbar"><span>✛</span><span>╱</span><span>☰</span><span>≋</span><span>⌇</span><span>T</span><span>📏</span><span>🗑</span></div>
+        <div class="plot"><svg id="cv" viewBox="0 0 1700 640" preserveAspectRatio="none"></svg>
+          <div class="legendc"><div><b>NVIDIA · 1D · NASDAQ</b> O 161.2 H 162.0 L 153.9 C 155.38</div><div>Vol 412.6M</div><div style="margin-top:430px">MACD 12 26 close 9 <b style="color:#2962FF">−2.41</b> <b style="color:#FF6D00">−1.08</b></div></div></div></div>
+      <div class="bbar"><span>1D</span><span>5D</span><span>1M</span><span>3M</span><span class="on">6M</span><span>YTD</span><span>1Y</span><span>5Y</span><span>All</span><div class="r"><span>04:12 (UTC+7)</span><span>%</span><span>log</span></div></div>
+    </div>
+    <div class="perf tnum" id="perf"></div>
+
+    <div class="s"><h3>Similar stocks <span class="new">NEW</span><small>Yahoo's "people also watch" list for this stock · click to open</small></h3><div class="cards" id="sim"></div></div>
+
+    <div class="s three">
+      <div><h3 style="font:900 24px 'Inter Tight';margin:0 0 14px">Key facts today <span class="have">HAVE</span></h3>
+        <div class="kf"><small>FROM YOUR NEWS · 2 HOURS AGO · IMPACT 8</small><p>US widens its antitrust review of Nvidia's deals, while lawmakers question the chip-sales rules. Shares fell 5.9% with the chip sector.</p><div class="m"><span>‹ 1 / 3 ›</span><b>Read the story →</b><span>All NVDA news (24)</span></div></div></div>
+      <div class="dates"><h3 style="font:900 24px 'Inter Tight';margin:0 0 14px">Coming up <span class="have">HAVE</span></h3>
+        <div class="d"><div class="dt">24<small>FEB</small></div><div><b>Q4 earnings</b><span>Estimate EPS 2.95 · after close</span></div><span>in 91 days</span></div>
+        <div class="d"><div class="dt">04<small>DEC</small></div><div><b>Ex-dividend</b><span>0.01 USD per share</span></div><span>in 9 days</span></div>
+        <div class="d"><div class="dt">10<small>DEC</small></div><div><b>US CPI (market-wide)</b><span>From your Economic calendar</span></div><span>in 15 days</span></div></div>
+      <div class="dates"><h3 style="font:900 24px 'Inter Tight';margin:0 0 14px">Your alerts &amp; notes <span class="have">HAVE</span></h3>
+        <div class="d"><div class="dt" style="font-size:13px">🔔</div><div><b>Below 150.00</b><span>Telegram alert · set 3 days ago</span></div><span>3.4% away</span></div>
+        <div class="d"><div class="dt" style="font-size:13px">✎</div><div><b>"Wait for wave 4 near 148"</b><span>Your note · 20 Nov</span></div><span></span></div>
+        <div class="d"><div class="dt" style="font-size:13px">╱</div><div><b>4 drawings saved on this chart</b><span>Fibonacci FOR WAVE, 3 trend lines</span></div><span></span></div></div>
+    </div>
+
+    <div class="s"><h3>Key stats <span class="have">HAVE</span></h3><div class="stats tnum">
+      <div class="st"><small>Market cap</small><b>3.74T<span>USD</span></b><span class="chipx">MEGA CAP</span></div><div class="st"><small>Dividend yield</small><b>0.03%</b></div><div class="st"><small>P/E (TTM)</small><b>38.4</b></div><div class="st"><small>Basic EPS (TTM)</small><b>4.05<span>USD</span></b></div>
+      <div class="st"><small>Net income (FY)</small><b>120.07B<span>USD</span></b></div><div class="st"><small>Revenue (FY)</small><b>215.94B<span>USD</span></b></div><div class="st"><small>Shares float <span class="new">NEW</span></small><b>23.19B</b></div><div class="st"><small>Beta (1Y)</small><b>1.86</b></div></div></div>
+
+    <div class="s two">
+      <div><h3 style="font:900 24px 'Inter Tight';margin:0 0 14px">Latest earnings <span class="have">HAVE</span></h3>
+        <div class="stats tnum" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div class="st"><small>Report date</small><b>18 Nov 2026</b></div><div class="st"><small>Period</small><b>Q3 2026</b></div><div class="st"><small>EPS</small><b>2.68</b> <span class="up" style="font:700 12.5px Inter">beat +8.4%</span></div><div class="st"><small>Revenue</small><b>57.0B</b> <span class="up" style="font:700 12.5px Inter">+62% y/y</span></div></div>
+        <p class="desc" style="margin-top:14px">Your earnings card: record data-centre sales; next quarter guided to about 65B with gross margin in the mid-70s. <a>Open earnings card →</a></p></div>
+      <div><h3 style="font:900 24px 'Inter Tight';margin:0 0 14px">Employees <span class="have">HAVE</span></h3>
+        <div class="stats tnum" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="st"><small>Employees (FY)</small><b>42K</b></div><div class="st"><small>Revenue / employee</small><b>5.14M<span>USD</span></b></div><div class="st"><small>Net income / employee</small><b>2.86M<span>USD</span></b></div></div></div>
+    </div>
+
+    <div class="s"><h3>About NVIDIA</h3><div class="about"><div class="st"><small>Sector</small><b style="font-size:16px">Technology ›</b></div><div class="st"><small>Industry</small><b style="font-size:16px">Semiconductors ›</b></div><div class="st"><small>CEO <span class="new">NEW</span></small><b style="font-size:16px">Jen-Hsun Huang</b></div><div class="st"><small>Website</small><b style="font-size:16px">nvidia.com ↗</b></div>
+      <div class="st"><small>Headquarters</small><b style="font-size:16px">Santa Clara, US</b></div><div class="st"><small>First trade on Yahoo</small><b style="font-size:16px">22 Jan 1999</b></div><div class="st"><small>Exchange</small><b style="font-size:16px">NASDAQ</b></div><div class="st"><small>Currency</small><b style="font-size:16px">USD</b></div></div>
+      <p class="desc">NVIDIA designs graphics processors, chipsets and related software. It reports two segments: Compute &amp; Networking (data-centre chips, AI systems) and Graphics (GeForce gaming chips, workstation)… <a>Show more</a></p></div>
+
+    <div class="s"><h3>Financials <a>›</a><small>Each chart switches Annual / Quarterly, like TradingView</small></h3><div class="fin">
+      <div class="card"><h4>Performance <span class="have">HAVE</span><span class="tg"><span class="on">Annual</span><span>Quarterly</span></span></h4><svg id="f1" viewBox="0 0 400 220"></svg><div class="leg"><span><i style="background:#3b82f6"></i>Revenue</span><span><i style="background:#22d3ee"></i>Net income</span><span><i style="background:#f97316"></i>Net margin %</span></div></div>
+      <div class="card"><h4>Revenue to profit <span class="new">NEW</span><span class="tg"><span class="on">Annual</span><span>Quarterly</span></span></h4><svg id="f2" viewBox="0 0 400 220"></svg><div class="leg"><span>Revenue → cost → gross → opex → operating → tax → net</span></div></div>
+      <div class="card"><h4>Debt &amp; coverage <span class="new">NEW</span><span class="tg"><span class="on">Annual</span><span>Quarterly</span></span></h4><svg id="f3" viewBox="0 0 400 220"></svg><div class="leg"><span><i style="background:#f472b6"></i>Debt</span><span><i style="background:#06b6d4"></i>Free cash flow</span><span><i style="background:#818cf8"></i>Cash</span></div></div>
+      <div class="card"><h4>EPS <span class="new">NEW</span><span style="font:600 12px Inter;color:var(--muted);margin-left:8px">Next: 24 Feb</span></h4><svg id="f4" viewBox="0 0 400 220"></svg><div class="leg"><span><i style="background:#14b8a6"></i>Actual</span><span><i style="border:1.5px solid #8a8a93"></i>Estimate</span></div></div>
+    </div></div>
+
+    <div class="s"><h3>News on NVDA <a>›</a><small>From your own feeds (My News + World Brief), newest first</small></h3><div class="news" id="news"></div></div>
+
+    <div class="s"><h3>Technicals &amp; analysts <span class="have">HAVE</span></h3><div class="gg">
+      <div><svg viewBox="0 0 300 170" id="g1"></svg><b>Sell</b><small>Technicals · 1 day · from 26 indicators</small></div>
+      <div><svg viewBox="0 0 300 170" id="g2"></svg><b>Buy</b><small>Analyst rating · 64 analysts</small></div>
+      <div style="text-align:left;padding-top:20px"><div class="st"><small>1-year price target (average)</small><b>232.40</b> <span class="up" style="font:700 14px Inter">+49.6%</span></div>
+        <svg viewBox="0 0 360 60" style="width:100%;height:60px;margin-top:14px"><line x1="10" y1="30" x2="350" y2="30" stroke="#2a2a2f" stroke-width="6" stroke-linecap="round"/><line x1="70" y1="30" x2="350" y2="30" stroke="#22c55e" stroke-width="6" stroke-linecap="round" opacity=".5"/><circle cx="70" cy="30" r="7" fill="#f4f4f5"/><circle cx="240" cy="30" r="7" fill="#22c55e"/><text x="10" y="56" fill="#8a8a93" font-size="11">Low 140</text><text x="300" y="56" fill="#8a8a93" font-size="11">High 352</text><text x="58" y="14" fill="#f4f4f5" font-size="11">Now</text></svg></div></div></div>
+
+    <div class="s"><h3>Seasonals <span class="have">HAVE</span><small>Each year's path from 1 January, so you can compare years (TradingView style) · months table stays on the Seasonals tab</small></h3>
+      <div class="card" style="padding:10px 14px"><svg id="sea" viewBox="0 0 1800 320" style="width:100%;height:320px"></svg><div class="leg"><span><i style="background:#f59e0b"></i>2024</span><span><i style="background:#22c55e"></i>2025</span><span><i style="background:#3b82f6"></i>2026</span></div></div></div>
+
+    <div class="s two">
+      <div class="funds"><h3 style="font:900 24px 'Inter Tight';margin:0 0 10px">Funds holding NVDA <span class="new">NEW</span></h3><div class="r h"><span>FUND</span><span class="n">% OF NVDA</span><span class="n">VALUE</span></div>
+        <div class="r"><span>Vanguard Total Stock Market Index</span><span class="n">3.03%</span><span class="n">113.3B</span></div><div class="r"><span>Vanguard 500 Index</span><span class="n">2.60%</span><span class="n">97.2B</span></div><div class="r"><span>iShares Core S&amp;P 500 ETF</span><span class="n">1.34%</span><span class="n">50.1B</span></div><div class="r"><span>Fidelity 500 Index</span><span class="n">1.30%</span><span class="n">48.6B</span></div></div>
+      <div class="funds"><h3 style="font:900 24px 'Inter Tight';margin:0 0 10px">Analyst actions <span class="have">HAVE</span></h3><div class="r h"><span>RATINGS</span><span class="n">COUNT</span><span class="n">SHARE</span></div>
+        <div class="r"><span>Strong buy</span><span class="n">24</span><span class="n">37%</span></div><div class="r"><span>Buy</span><span class="n">34</span><span class="n">53%</span></div><div class="r"><span>Hold</span><span class="n">5</span><span class="n">8%</span></div><div class="r"><span>Sell / Strong sell</span><span class="n">1</span><span class="n">2%</span></div></div>
+    </div>
+  </div>
+  <div class="strip"><span class="on">☆</span><span>▦</span><span>🔔</span><span style="margin-top:6px">›</span></div></div>
+</div>
+
+<div class="top"><h1 style="font-size:22px">When you scroll down: the slim price bar stays on top</h1><p class="lead">Same as TradingView's sticky bar. The tabs inside it jump to each section; "↑ Chart" goes back to the top.</p></div>
+<div class="screen"><div class="mini"><span class="lgx" style="width:28px;height:28px;font-size:10px">NV</span><b>NVDA</b><span class="tnum" style="font:800 15px Inter">155.38</span><span class="dn tnum" style="font:700 13px Inter">−9.67 −5.86%</span>
+  <div class="tb"><span>Overview</span><span class="on">Financials</span><span>News</span><span>Technicals</span><span>Forecasts</span><span>Seasonals</span><span>Dates</span><span>Funds</span></div><span class="r">↑ Chart</span><span class="r" style="margin-left:6px;background:var(--ink);color:var(--bg)">⛶ Full chart</span></div></div>
+
+<script>
+// fake data for the drawing only
+let s=42;const R=()=>(s=(s*9301+49297)%233280)/233280;
+const N=130;let p=190,d=[];for(let i=0;i<N;i++){const o=p;p=Math.max(120,p+(R()-.52)*7);const h=Math.max(o,p)+R()*3,l=Math.min(o,p)-R()*3;d.push({o,c:p,h,l,v:.4+R()})}
+const cv=document.getElementById('cv'),W=1620,mn=Math.min(...d.map(x=>x.l)),mx=Math.max(...d.map(x=>x.h)),Y=v=>20+(mx-v)/(mx-mn)*360,bw=W/N;
+let g='';for(let k=0;k<6;k++)g+=`<line x1="0" x2="1700" y1="${20+k*72}" y2="${20+k*72}" stroke="#1d1d21"/>`;
+d.forEach((x,i)=>{const X=i*bw+bw/2,c=x.c>=x.o?'#089981':'#F23645';g+=`<line x1="${X}" x2="${X}" y1="${Y(x.h)}" y2="${Y(x.l)}" stroke="${c}"/><rect x="${X-bw*.35}" width="${bw*.7}" y="${Y(Math.max(x.o,x.c))}" height="${Math.max(1,Math.abs(Y(x.o)-Y(x.c)))}" fill="${c}"/><rect x="${X-bw*.35}" width="${bw*.7}" y="${470-x.v*50}" height="${x.v*50}" fill="${c}" opacity=".35"/>`;
+ const m=Math.sin(i/9)*20+(R()-.5)*6;g+=`<rect x="${X-bw*.3}" width="${bw*.6}" y="${m>0?560-m:560}" height="${Math.abs(m)}" fill="${m>0?(m>8?'#26A69A':'#B2DFDB'):(m<-8?'#FF5252':'#FFCDD2')}"/>`});
+g+=`<line x1="0" x2="1700" y1="490" y2="490" stroke="#2a2a2f"/><line x1="0" x2="1700" y1="560" y2="560" stroke="#2a2a2f" stroke-dasharray="3 3"/>`;
+g+=`<line x1="${bw*40}" y1="${Y(mn+5)}" x2="${bw*112}" y2="${Y(mx-6)}" stroke="#2962FF" stroke-width="1.5"/>`;
+[[0,'#787b86'],[.236,'#f23645'],[.382,'#ff9800'],[.5,'#4caf50'],[.618,'#089981'],[1,'#787b86']].forEach(([f,c])=>{const yy=Y(mx-(mx-mn)*f);g+=`<line x1="${bw*70}" x2="1620" y1="${yy}" y2="${yy}" stroke="${c}" stroke-dasharray="4 3"/><text x="${bw*70+4}" y="${yy-3}" fill="${c}" font-size="11">${f}</text>`});
+g+=`<rect x="1622" y="${Y(p)-10}" width="70" height="20" fill="#F23645"/><text x="1630" y="${Y(p)+4}" fill="#fff" font-size="12" font-weight="700">155.38</text>`;
+cv.innerHTML=g;
+document.getElementById('perf').innerHTML=[["1 day","-5.86"],["5 days","1.61"],["1 month","-26.36"],["3 months","-26.93"],["6 months","-26.46"],["YTD","-18.15"],["1 year","-13.43"],["5 years","393.88"],["10 years","6533"],["All time","355,615"]].map(([a,b],i)=>`<div class="${i==4?'on':''}">${a}<b class="${b<0?'dn':'up'}">${b>0?'+':''}${b}%</b></div>`).join('');
+document.getElementById('sim').innerHTML=[["AMD","Advanced Micro Devices","413.27","-8.86","#111"],["AVGO","Broadcom","301.08","-3.98","#c00"],["TSM","Taiwan Semiconductor","261.40","-4.12","#c22"],["MU","Micron Technology","629.79","-11.01","#1a4"],["AAPL","Apple","238.10","-0.82","#555"],["META","Meta Platforms","612.55","-2.31","#06f"]].map(([t,n,p2,c,col])=>`<div class="card"><div class="t"><i style="background:${col}">${t.slice(0,2)}</i><div><b>${t}</b><small>${n}</small></div></div><div class="p tnum">${p2}<span class="dn">${c}%</span></div></div>`).join('');
+document.getElementById('news').innerHTML=["Lawmakers question Nvidia's chip-sales rules as review widens|Reuters · 6 min","US stocks mixed as chip rally fades|CNBC · 36 min","US adds Megaspeed to entity list in Nvidia chip probe|Bloomberg · 37 min","Nvidia, AMD and Micron lead AI sell-off|MarketWatch · 4 h","What the record quarter means for 2027 guidance|THE STANDARD WEALTH · 6 h","Asia chip names fall after US session|Nikkei Asia · 8 h","Data-centre spending: who still buys GPUs?|FT · 12 h","Options traders bet on bigger swings in Nvidia|Barron's · 1 day"].map(x=>{const[a,b]=x.split('|');return `<div><small>${b}</small><b>${a}</b></div>`}).join('');
+// financial charts
+const bar=(id,ser,cols,line)=>{const el=document.getElementById(id);let h='';const yrs=['2022','2023','2024','2025','2026'],mxv=Math.max(...ser.flat());
+ for(let k=0;k<5;k++)h+=`<line x1="20" x2="360" y1="${20+k*42}" y2="${20+k*42}" stroke="#222226"/>`;
+ yrs.forEach((y,i)=>{const gx=30+i*66;ser.forEach((sr,j)=>{const hh=sr[i]/mxv*160;h+=`<rect x="${gx+j*16}" y="${188-hh}" width="14" height="${hh}" rx="2" fill="${cols[j]}"/>`});h+=`<text x="${gx+4}" y="208" fill="#8a8a93" font-size="11">${y}</text>`});
+ if(line){h+=`<polyline fill="none" stroke="#f97316" stroke-width="2" points="${line.map((v,i)=>`${44+i*66},${188-v*2.6}`).join(' ')}"/>`;line.forEach((v,i)=>h+=`<circle cx="${44+i*66}" cy="${188-v*2.6}" r="3" fill="#f97316"/>`)}el.innerHTML=h};
+bar('f1',[[27,27,61,130,216],[4.4,4.4,30,73,120]],['#3b82f6','#22d3ee'],[16,16,49,56,56]);
+bar('f3',[[11,10,9.7,8.5,9],[3.8,3.8,27,61,97],[2,3.4,7.3,8.6,11]],['#f472b6','#06b6d4','#818cf8']);
+(()=>{const el=document.getElementById('f2'),st=[["Rev",216,0,'#22a35a'],["Cost",-62,216,'#F23645'],["Gross",154,0,'#3b82f6'],["Opex",-24,154,'#F23645'],["Op inc",130,0,'#3b82f6'],["Tax",-21,130,'#F23645'],["Other",11,109,'#22a35a'],["Net",120,0,'#3b82f6']];let h='';
+ st.forEach(([n,v,b,c],i)=>{const x=22+i*46,top=v>0?b+v:b,hh=Math.abs(v)*.75;h+=`<rect x="${x}" y="${188-top*.75}" width="34" height="${hh}" rx="2" fill="${c}"/><text x="${x}" y="208" fill="#8a8a93" font-size="10">${n}</text>`});el.innerHTML=h})();
+(()=>{const el=document.getElementById('f4'),a=[1.62,1.87,2.22,2.68],e=[1.54,1.77,2.09,2.47,2.95],q=['Q4 25','Q1 26','Q2 26','Q3 26','Q4 26'];let h='';
+ q.forEach((t,i)=>{const x=50+i*72;h+=`<circle cx="${x}" cy="${188-e[i]*55}" r="8" fill="none" stroke="#8a8a93" stroke-width="1.5"/>`;if(a[i])h+=`<circle cx="${x}" cy="${188-a[i]*55}" r="8" fill="#14b8a6"/>`;h+=`<text x="${x-18}" y="208" fill="#8a8a93" font-size="11">${t}</text>`});el.innerHTML=h})();
+// gauges
+const gauge=(id,val,cols)=>{const el=document.getElementById(id);let h='';const cx=150,cy=150,r=110;cols.forEach((c,i)=>{const a0=Math.PI*(1-i/5)-.06,a1=Math.PI*(1-(i+1)/5)+.06;h+=`<path d="M${cx+r*Math.cos(a0)} ${cy-r*Math.sin(a0)} A${r} ${r} 0 0 1 ${cx+r*Math.cos(a1)} ${cy-r*Math.sin(a1)}" stroke="${c}" stroke-width="12" fill="none" stroke-linecap="round"/>`});
+ const a=Math.PI*(1-val);h+=`<line x1="${cx}" y1="${cy}" x2="${cx+85*Math.cos(a)}" y2="${cy-85*Math.sin(a)}" stroke="#d4d4d8" stroke-width="6" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="#d4d4d8"/>`;el.innerHTML=h};
+gauge('g1',.3,['#F23645','#b3263a','#6b6b73','#3b82f6','#2962FF']);gauge('g2',.68,['#f97316','#f59e0b','#6b6b73','#14b8a6','#0d9488']);
+// seasonals
+(()=>{const el=document.getElementById('sea');let h='';const yy=v=>200-v*.9;[-40,0,40,80,120,160].forEach(v=>h+=`<line x1="0" x2="1700" y1="${yy(v)}" y2="${yy(v)}" stroke="#222226"/><text x="1710" y="${yy(v)+4}" fill="#8a8a93" font-size="11">${v}%</text>`);
+ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i)=>h+=`<text x="${i*141+10}" y="316" fill="#8a8a93" font-size="11">${m}</text>`);
+ [[1.0,'#f59e0b',250],[.4,'#22c55e',250],[-.1,'#3b82f6',228]].forEach(([tr,c,n])=>{let v=0,pts=[];for(let i=0;i<n;i++){v+=tr*.7+(R()-.5)*5;pts.push(`${i*6.75},${yy(v)}`)}h+=`<polyline fill="none" stroke="${c}" stroke-width="${c=='#3b82f6'?2.2:1.4}" points="${pts.join(' ')}"/>`});el.innerHTML=h})();
+</script>
+</body></html>

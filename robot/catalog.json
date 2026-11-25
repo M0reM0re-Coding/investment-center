@@ -370,5 +370,36 @@
     "อินโฟเควสท์": "InfoQuest",
     "The Standard": "THE STANDARD",
     "THE STANDARD WEALTH": "THE STANDARD"
+  },
+  "big_stocks": {
+    "_note": "Charts page: the heat map + 'Big stocks' table + important dates (whole market). Plain tickers; Thai ones map through yahoo_symbols.",
+    "US": [
+      "NVDA",
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "META",
+      "AVGO",
+      "TSLA",
+      "AMD",
+      "TSM",
+      "JPM",
+      "XOM",
+      "JNJ",
+      "LLY",
+      "V",
+      "WMT"
+    ],
+    "Thailand": [
+      "PTT",
+      "AOT",
+      "DELTA",
+      "ADVANC",
+      "GULF",
+      "CPALL",
+      "SCB",
+      "KBANK"
+    ]
   }
 }

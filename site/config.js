@@ -207,5 +207,35 @@ window.IC_CONFIG = {
     "GULF": "GULF.BK",
     "CPN": "CPN.BK",
     "BDMS": "BDMS.BK"
+  },
+  "big": {
+    "US": [
+      "NVDA",
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "META",
+      "AVGO",
+      "TSLA",
+      "AMD",
+      "TSM",
+      "JPM",
+      "XOM",
+      "JNJ",
+      "LLY",
+      "V",
+      "WMT"
+    ],
+    "Thailand": [
+      "PTT",
+      "AOT",
+      "DELTA",
+      "ADVANC",
+      "GULF",
+      "CPALL",
+      "SCB",
+      "KBANK"
+    ]
   }
 };

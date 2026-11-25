@@ -185,8 +185,15 @@ const NSORT = { rec: ["Recommended", "Impact + outlets + freshness"], impact: ["
   covered: ["Most covered", "Most outlets"], growing: ["Fastest growing", "Outlets added in the last 6 h"], price: ["Biggest price move", "Since the story was posted"],
   watch: ["My watchlist first", "Your stocks on top"], unread: ["Oldest unread first", "What has waited longest"] };
 const WSORT = { rec: ["Recommended", "Outlets + freshness + your votes"], latest: NSORT.latest, covered: NSORT.covered, growing: NSORT.growing, unread: NSORT.unread };
-const nSort = () => { const v = safe(() => localStorage.getItem("ic_nsort")); return NSORT[v] ? v : "rec"; };
-const wSort = () => { const v = safe(() => localStorage.getItem("ic_wsort")); return WSORT[v] ? v : "rec"; };
+// Round 47: sorts can be combined: a list, used in the order picked (1st, then 2nd for ties, ...). Old single values still read.
+const sortList = (key, opts) => { const v = safe(() => localStorage.getItem(key)) || "", l = (v.startsWith("[") ? safe(() => JSON.parse(v), []) : [v]).filter((k) => opts[k]); return l.length ? l : ["rec"]; };
+const nSorts = () => sortList("ic_nsort", NSORT), wSorts = () => sortList("ic_wsort", WSORT);
+const nSort = () => nSorts()[0], wSort = () => wSorts()[0];
+const sortToggle = (key, opts, k) => { const l = sortList(key, opts).filter((x) => x !== "rec" || k === "rec"); const i = l.indexOf(k); if (i >= 0) l.splice(i, 1); else l.push(k);
+  lsSet(key, JSON.stringify(k === "rec" || !l.length ? ["rec"] : l.filter((x) => x !== "rec"))); };
+function chainSort(list, keys, cmp, newest) {   // keys in order; each cmp[k](a, b) < 0 puts a first
+  return list.sort((a, b) => { for (const k of keys) { const r = cmp[k]?.(a, b) || 0; if (r) return r; } return newest(b) - newest(a); });
+}
 const tNew = (s) => new Date(when(s)).getTime() || 0;
 // Outlets gained in the last 6 hours (from the Developing history the robot saves)
 function grow6(s) {
@@ -200,19 +207,19 @@ const priceMove = (s) => Math.max(-1, ...Object.keys(s.prices_at || {}).map((t) 
 // key(s): bigger first; ties: newest first
 function sortBy(list, key) { const k = new Map(list.map((x) => [x, key(x)])); return list.sort((a, b) => k.get(b) - k.get(a) || tNew(b) - tNew(a)); }
 function sortNews(list) {
-  const unread = (s) => !["seen", "done"].includes(stOf(s));
-  const f = { rec: () => sortBy(list, rank), impact: () => sortBy(list, (s) => s.impact_score), latest: () => sortBy(list, () => 0),
-    covered: () => sortBy(list, (s) => s.n_sources), growing: () => sortBy(list, grow6), price: () => sortBy(list, priceMove),
-    watch: () => sortBy(list, (s) => (inWatch(s) ? 1000 + s.impact_score * 10 : 0) + rank(s) / 100),
-    unread: () => list.sort((a, b) => unread(b) - unread(a) || (unread(a) ? tNew(a) - tNew(b) : tNew(b) - tNew(a))) }[nSort()];
-  return (f || (() => sortBy(list, rank)))();
+  const unread = (s) => !["seen", "done"].includes(stOf(s)), keys = nSorts(), memo = new Map(), val = (k, f) => (s) => { const m = k + s.id; if (!memo.has(m)) memo.set(m, f(s)); return memo.get(m); };
+  const desc = (f) => (a, b) => f(b) - f(a);
+  const cmp = { rec: desc(val("r", rank)), impact: desc((s) => s.impact_score), latest: desc(tNew), covered: desc((s) => s.n_sources), growing: desc(val("g", grow6)),
+    price: desc(val("p", priceMove)), watch: desc((s) => (inWatch(s) ? 1 : 0)), unread: (a, b) => unread(b) - unread(a) || (unread(a) && unread(b) ? tNew(a) - tNew(b) : 0) };
+  return chainSort(list, keys, cmp, tNew);
 }
 // The dropdown: a <details> element (opens and closes by itself; a click elsewhere closes it, see the end of this file)
-function sortDD(kind) {
-  const opts = kind === "w" ? WSORT : NSORT, cur = kind === "w" ? wSort() : nSort();
-  return `<details class="sortdd"><summary title="Sort stories"><span class="si">⇅</span><span class="sl">Sort:</span> ${esc(opts[cur][0])}<span class="sc">▾</span></summary>
-    <div class="smenu" role="menu">${Object.entries(opts).map(([k, [t, d]]) => `<button role="menuitemradio" aria-checked="${k === cur}" class="${k === cur ? "on" : ""}" data-${kind}sort="${k}">
-      <i>${k === cur ? "✓" : ""}</i><span><b>${esc(t)}</b><small>${esc(d)}</small></span></button>`).join("")}</div></details>`;
+function sortDD(kind) {   // tick several: 1 = first sort, 2 = used when 1 is a tie, ...
+  const opts = kind === "w" ? WSORT : NSORT, cur = kind === "w" ? wSorts() : nSorts();
+  return `<details class="sortdd"><summary title="Sort stories (pick several to combine)"><span class="si">⇅</span><span class="sl">Sort:</span> ${cur.map((k) => esc(opts[k][0])).join(" → ")}<span class="sc">▾</span></summary>
+    <div class="smenu" role="menu"><p class="shint">Pick several to combine. Numbers show the order.</p>${Object.entries(opts).map(([k, [t, d]]) => { const i = cur.indexOf(k); return `<button role="menuitemcheckbox" aria-checked="${i >= 0}" class="${i >= 0 ? "on" : ""}" data-${kind}sort="${k}">
+      <i>${i >= 0 ? (cur.length > 1 ? i + 1 : "✓") : ""}</i><span><b>${esc(t)}</b><small>${esc(d)}</small></span></button>`; }).join("")}
+      ${cur.length > 1 || cur[0] !== "rec" ? `<button class="sreset" data-${kind}sort="rec"><span><b>Reset to Recommended</b></span></button>` : ""}</div></details>`;
 }
 
 // Stories for one filter (also used for the counts on the filter chips)
@@ -285,9 +292,9 @@ function heroChart(s) {
 function wantedSymbols() {
   const s = new Set(MARKETS.map((m) => m[0]));
   (state.settings.watchlist || []).forEach((t) => s.add(yahoo(t)));
-  if (nSort() === "price") storiesFor(state.filter).forEach((st) => Object.keys(st.prices_at || {}).forEach((t) => s.add(yahoo(t))));   // to rank by price move
+  if (nSorts().includes("price")) storiesFor(state.filter).forEach((st) => Object.keys(st.prices_at || {}).forEach((t) => s.add(yahoo(t))));   // to rank by price move
   visibleStories().slice(0, 30).forEach((st) => (st.tickers || []).filter(followed).forEach((t) => s.add(yahoo(t))));
-  return [...s].slice(0, nSort() === "price" ? 80 : 40);
+  return [...s].slice(0, nSorts().includes("price") ? 80 : 40);
 }
 async function loadQuotes() {
   if (!state.user || document.hidden) return;
@@ -387,7 +394,7 @@ async function loadReading() {
   const [st, nt, ev, ec, fo, er, ga, md] = await Promise.all([
     sb.from("story_status").select("story_id,status").limit(3000),
     sb.from("story_notes").select("story_id,note").limit(2000),
-    sb.from("events").select("*").gte("day", todayISO()).order("day").limit(60),
+    sb.from("events").select("*").gte("day", todayISO()).order("day").limit(250),
     sb.from("econ_events").select("*").gte("at", new Date(Date.now() - 36 * 36e5).toISOString()).order("at").limit(300),
     sb.from("follows").select("kind,key,label"),
     sb.from("earnings_results").select("*").gte("seen_at", new Date(Date.now() - 8 * 864e5).toISOString()).limit(100),
@@ -639,8 +646,10 @@ const earnAsEvents = () => (state.earn || []).filter((r) => r.price_then !== nul
   const [v] = earnVerdict(r);
   return { day: isoDay(new Date(r.seen_at)), title: `${r.ticker} results${v ? `: ${v}` : ""}${r.surprise_pct !== null ? ` ${r.surprise_pct >= 0 ? "+" : ""}${Number(r.surprise_pct).toFixed(1)}%` : ""}`, kind: "result", ticker: r.ticker, res: r };
 });
+// Big-company dates the robot adds for the Charts page ("Important dates") stay off the Stock calendar unless the stock is yours
+const chartsOnly = (e) => e.ticker && (e.kind === "earnings" || e.kind === "dividend") && !(state.settings.watchlist || []).includes(e.ticker) && bigAll().includes(e.ticker);
 const calEvents = () => { const t = isoDay(today0()), wk = isoDay(monday());
-  return [...state.events, ...earnAsEvents()].filter((e) => e.day >= (e.kind === "result" ? wk : t)).map((e) => ({ ...e, i: evInfo(e) })); };
+  return [...state.events.filter((e) => !chartsOnly(e)), ...earnAsEvents()].filter((e) => e.day >= (e.kind === "result" ? wk : t)).map((e) => ({ ...e, i: evInfo(e) })); };
 // Economic calendar (Forex Factory) has its own box + page; this week's past days stay visible so released results show
 const econEvents = () => { const wk = isoDay(monday()); return econAsEvents().filter((e) => e.day >= wk).map((e) => ({ ...e, i: evInfo(e) })); };
 const fpTxt = (e, long) => [e.forecast && `${long ? "Forecast" : "F"} ${e.forecast}`, e.previous && `${long ? "Previous" : "P"} ${e.previous}`].filter(Boolean).join(" · ");
@@ -1099,6 +1108,2071 @@ async function searchStories(q) {
   return [...found.values()];
 }
 
+// ---------- Charts page (design rounds 36-42; style A = our site's look) ----------
+// Home (#/charts): TradingView "Markets" style: categories with symbol chips + one big chart + top movers, big-stock heat map.
+// Stock page (#/charts/NVDA): the chart fills the screen; Key facts, Financials, Technicals, Forecasts, Seasonals, News, Dates are tabs.
+// Chart = KLineChart Pro 0.1.1 (open source) drawing our Yahoo candles (supabase/013_charts.sql). Its own top bar is hidden: we draw a
+// TradingView-style bar, bottom range bar, indicators window + settings windows (Inputs / Style / Visibility), right-click menu, shortcuts.
+// The right sidebar (watchlist + important dates) folds into an icon strip; the choice is kept on this device (ic_chside).
+const CH_NAMES = { "^GSPC": "S&P 500", "^NDX": "Nasdaq 100", "^DJI": "Dow Jones", "^RUT": "Russell 2000", "^SET.BK": "SET", "^SET50.BK": "SET50", "THB=X": "USD/THB",
+  "^N225": "Nikkei 225", "^HSI": "Hang Seng", "000001.SS": "Shanghai", "^KS11": "KOSPI", "^GDAXI": "DAX", "^FTSE": "FTSE 100", "^FCHI": "CAC 40", "^STOXX50E": "Euro Stoxx 50",
+  "GC=F": "Gold", "CL=F": "Oil (WTI)", "SI=F": "Silver", "HG=F": "Copper", "NG=F": "Natural gas", "BTC-USD": "Bitcoin", "ETH-USD": "Ethereum", "SOL-USD": "Solana",
+  "BNB-USD": "BNB", "XRP-USD": "XRP", "DX-Y.NYB": "Dollar index", "EURUSD=X": "EUR/USD", "JPY=X": "USD/JPY", "GBPUSD=X": "GBP/USD" };
+const CH_BADGE = { "^GSPC": "SPX", "^NDX": "NDX", "^DJI": "DJI", "^RUT": "RUT", "^SET.BK": "SET", "^SET50.BK": "S50", "^N225": "N225", "^HSI": "HSI", "^GDAXI": "DAX", "^FTSE": "UKX",
+  "000001.SS": "SSE", "^KS11": "KOS", "^FCHI": "CAC", "^STOXX50E": "SX5E", "GC=F": "Au", "CL=F": "OIL", "SI=F": "Ag", "HG=F": "Cu", "NG=F": "GAS", "BTC-USD": "₿", "ETH-USD": "Ξ",
+  "SOL-USD": "SOL", "BNB-USD": "BNB", "XRP-USD": "XRP", "THB=X": "฿", "EURUSD=X": "€", "JPY=X": "¥", "GBPUSD=X": "£", "DX-Y.NYB": "DXY" };
+const BIG = () => CFG.big || { US: [], Thailand: [] };
+const bigAll = () => Object.values(BIG()).flat();
+const CH_CATS = () => [
+  ["Indices", ["^GSPC", "^NDX", "^DJI", "^RUT", "^SET.BK", "^SET50.BK", "^N225", "^HSI", "^GDAXI", "^FTSE"]],
+  ["Thai stocks", BIG().Thailand || []], ["US stocks", BIG().US || []],
+  ["Crypto", ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD"]],
+  ["Commodities", ["GC=F", "CL=F", "SI=F", "HG=F", "NG=F"]],
+  ["Forex", ["THB=X", "EURUSD=X", "JPY=X", "GBPUSD=X", "DX-Y.NYB"]]];
+const CH_MKTS = Object.keys(CH_NAMES).map((y) => ["", y, CH_NAMES[y]]);   // every market symbol we price
+// NYSE full-day closures (official rules; checked 2026-11-25). Thai holidays are not listed (no reliable free source yet).
+const US_HOLIDAYS = [["2026-11-26", "Thanksgiving"], ["2026-12-25", "Christmas"], ["2027-01-01", "New Year's Day"], ["2027-01-18", "Martin Luther King Jr. Day"],
+  ["2027-02-15", "Presidents' Day"], ["2027-03-26", "Good Friday"], ["2027-05-31", "Memorial Day"], ["2027-06-18", "Juneteenth (observed)"],
+  ["2027-07-05", "Independence Day (observed)"], ["2027-09-06", "Labor Day"], ["2027-11-25", "Thanksgiving"], ["2027-12-24", "Christmas (observed)"]];
+const chOf = () => state.ch || (state.ch = { sort: "move", stats: {}, draw: {}, statsAt: 0, sel: {}, rng: {}, mv: {}, cand: {}, pane: "chart", fin: "q", tf: "1D" });
+const chName = (y) => CH_NAMES[y] || null;
+const plainOf = (y) => cleanSym(String(y || "").toUpperCase());           // PTT.BK -> PTT (when the site knows it)
+const chHref = (t) => `#/charts/${encodeURIComponent(t)}`;
+const statsOf = (y) => chOf().stats[y]?.data || null;
+const bigNum = (v, cur) => { if (v === null || v === undefined || !Number.isFinite(Number(v))) return "—"; const a = Math.abs(v), s = cur === "THB" ? " ฿" : "";
+  return (a >= 1e12 ? (v / 1e12).toFixed(2) + "T" : a >= 1e9 ? (v / 1e9).toFixed(1) + "B" : a >= 1e6 ? (v / 1e6).toFixed(1) + "M" : a >= 1e3 ? (v / 1e3).toFixed(1) + "K" : Number(v).toFixed(2)) + s; };
+const pctN = (v, d = 1) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? "—" : `${(v * 100).toFixed(d)}%`);
+const CHI = {   // thin line icons (same stroke style as the rest of the site)
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>', bell: '<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  fold: '<path d="m9 6 6 6-6 6"/>', open: '<path d="m15 6-6 6 6 6"/>', search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  cand: '<path d="M8 3v18M16 3v18"/><rect x="6" y="7" width="4" height="8"/><rect x="14" y="9" width="4" height="7"/>', fx: '<path d="m3 20 5-7 4 3 8-11"/><path d="M15 5h5v5"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>', redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>',
+  cam: '<rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="4"/><path d="m8 7 2-3h4l2 3"/>', full: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
+  grid: '<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="10" width="8" height="11" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/>' };
+const chI = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${CHI[k]}</svg>`;
+const isStockSym = (y) => /^[A-Z0-9.\-]{1,15}$/.test(y) && !/=|-USD$/.test(y);
+const chLogo = (t, s = 30) => (isStockSym(yahoo(t)) ? evLogo({ sym: t }, s) : `<span class="lg txt chlg" style="--s:${s}px">${esc(CH_BADGE[t] || t.replace(/^\^/, "").slice(0, 3))}</span>`);
+
+async function loadChartData(extra = []) {
+  const ch = chOf(), w = (state.settings.watchlist || []).map(yahoo);
+  const syms = [...new Set([...Object.keys(CH_NAMES), ...bigAll().map(yahoo), ...w, ...extra])];
+  const parts = [];
+  for (let i = 0; i < syms.length; i += 40) parts.push(syms.slice(i, i + 40));
+  const res = await Promise.all(parts.map((p) => sb.rpc("get_quotes", { syms: p })));
+  res.forEach(({ data }) => Object.assign(quotes, data || {}));
+  if (Date.now() - ch.statsAt > 10 * 60e3 || extra.some((y) => !ch.stats[y])) {   // key stats change once a day
+    const { data, error } = await sb.from("stock_stats").select("symbol,data,updated_at").in("symbol", [...new Set([...bigAll().map(yahoo), ...w, ...extra])]);
+    ch.ready013 = !error;
+    if (!error) { (data || []).forEach((r) => { ch.stats[r.symbol] = r; }); ch.statsAt = Date.now(); }
+  }
+  if ((location.hash || "").startsWith("#/charts")) render("soft");
+}
+// Candles for the small charts and the Technicals / Seasonals tabs (cached in the database 2 min - 6 h, here 2 min)
+async function chCandles(y, rng, itv) {
+  const ch = chOf(), k = `${y}|${rng}|${itv}`, c = ch.cand[k];
+  if (c && (c.loading || Date.now() - c.at < 120e3)) return c.data;
+  ch.cand[k] = { loading: true, data: c?.data || null, at: 0 };
+  const { data } = await sb.rpc("get_candles", { sym: y, rng, itv });
+  ch.cand[k] = { data: data || null, at: Date.now() };
+  if ((location.hash || "").startsWith("#/charts")) render("soft");
+  return data;
+}
+const candOf = (y, rng, itv) => { const c = chOf().cand[`${y}|${rng}|${itv}`]; if (!c) chCandles(y, rng, itv); return c?.data || null; };
+const closes = (d) => (d?.c || []).map(Number).filter(Number.isFinite);
+
+function chSearchBox(small) {
+  return `<form class="chsearch${small ? " sm" : ""}" id="chsearch" role="search" autocomplete="off"><span>${chI("search", 16)}</span><input id="chq" type="search" maxlength="40"
+    placeholder="${small ? esc(small) : "Search any stock, index, crypto or currency…  e.g. NVDA, PTT, gold, bitcoin"}" aria-label="Search a chart">${small ? "" : "<kbd>/</kbd>"}<div class="chres" id="chres" hidden></div></form>`;
+}
+let chSeq = 0, chTimer = null;
+async function chSearch(q) {
+  const seq = ++chSeq, box = document.getElementById("chres");
+  if (!box) return;
+  if (!q.trim()) { box.hidden = true; return; }
+  box.hidden = false; box.innerHTML = `<div class="chr dim">Searching…</div>`;
+  const { data } = await sb.rpc("search_symbols", { q: q.trim() });
+  if (seq !== chSeq || !document.getElementById("chres")) return;
+  const list = Array.isArray(data) ? data : [];
+  document.getElementById("chres").innerHTML = list.length
+    ? list.map((r, i) => `<a class="chr${i ? "" : " on"}" href="${chHref(plainOf(r.symbol))}">${evLogo({ sym: plainOf(r.symbol) }, 24)}<b>${esc(plainOf(r.symbol))}</b><small>${esc(cleanName(r.name))}</small><em>${esc(r.exchange)} · ${esc(typeName(r.type))}</em></a>`).join("")
+    : `<div class="chr dim">No match. Try the company name or its ticker.</div>`;
+}
+const chPct = (y) => { const q = quotes[y]; return q && q.prev ? pctOf(q) : null; };
+
+// ----- right sidebar: watchlist + important dates, folds into an icon strip -----
+const sideKey = () => ((location.hash || "").startsWith("#/charts/") ? "ic_chside_st" : "ic_chside");   // stock pages start folded (round 43)
+const sideOpen = () => { const v = safe(() => localStorage.getItem(sideKey()), null); return sideKey() === "ic_chside_st" ? v === "open" : v !== "closed"; };
+function chWatch(cur) {
+  const w = state.settings.watchlist || [];
+  return `<div class="chc chwl"><div class="mh"><h2>My watchlist</h2><a href="#/settings">Edit</a></div>
+    ${w.length ? `<div class="h"><span>SYMBOL</span><span class="n">LAST</span><span class="n">CHG%</span></div>${w.map((t) => `<a class="r${t === cur ? " on" : ""}" href="${chHref(t)}"><span class="wn">${evLogo({ sym: t }, 22)}<span><b>${esc(t)}</b><small>${esc(cleanName(state.settings.watch_names?.[t] || quotes[yahoo(t)]?.name || ""))}</small></span></span><span class="n">${pxSpan(yahoo(t))}</span><span class="n">${chSpan(yahoo(t))}</span></a>`).join("")}`
+      : `<p class="note" style="margin:4px 14px 12px">Empty. Open any stock and press ☆ Watch.</p>`}</div>`;
+}
+// Important dates for the whole market: big-company results, your stocks, and US market holidays (next 30 days)
+function chDates() {
+  const t0 = isoDay(today0()), end = isoDay(addDays(today0(), 30)), w = state.settings.watchlist || [], big = bigAll(), mega = (BIG().US || []).slice(0, 8);
+  const ev = (state.events || []).filter((e) => e.day >= t0 && e.day <= end && e.ticker && (big.includes(e.ticker) || w.includes(e.ticker)) && e.kind === "earnings")
+    .map((e) => ({ day: e.day, title: e.title.replace(/ earnings$/, " results"), sub: `${e.estimate ? "Date estimated" : "Confirmed"}${w.includes(e.ticker) ? " · in your watchlist" : ""}`, key: mega.includes(e.ticker) || w.includes(e.ticker), href: chHref(e.ticker) }));
+  const hol = US_HOLIDAYS.filter(([d]) => d >= t0 && d <= end).map(([d, n]) => ({ day: d, title: `US market closed · ${n}`, sub: "NYSE and Nasdaq shut", closed: true }));
+  const list = [...ev, ...hol].sort((a, b) => (a.day < b.day ? -1 : 1)).slice(0, 8);
+  const row = (e) => { const x = dayOf(e.day); return `<${e.href ? `a href="${e.href}"` : "div"} class="d"><span class="dt"><small>${monTxt(x).toUpperCase()}</small>${x.getDate()}</span><span><b>${esc(e.title)}</b><span>${esc(e.sub)}</span></span>${e.closed ? `<span class="chtag cl">CLOSED</span>` : e.key ? `<span class="chtag">KEY</span>` : ""}</${e.href ? "a" : "div"}>`; };
+  return `<div class="chc chcal" id="chdates"><div class="mh"><h2>Important dates</h2><a href="#/calendar">Stock calendar →</a></div>
+    ${list.length ? list.map(row).join("") : `<p class="note" style="margin:4px 14px 12px">Nothing in the next 30 days yet. Big-company dates arrive with the robot's daily check.</p>`}
+    <p class="note chfoot">Biggest US and Thai companies + your stocks, next 30 days.</p></div>`;
+}
+function chSide(cur) {
+  const open = sideOpen();
+  return `<aside class="chside${open ? "" : " folded"}">${open ? `<div class="chpanel">${chWatch(cur)}${chDates()}</div>` : ""}
+    <div class="chstrip"><button class="${open ? "on" : ""}" data-chside="wl" title="My watchlist">${chI("list", 20)}</button><button data-chside="cal" title="Important dates">${chI("cal", 20)}</button>
+      <a href="#/settings" data-tab-alerts="1" title="Price alerts">${chI("bell", 20)}</a><hr><button data-chside="toggle" title="${open ? "Fold the sidebar" : "Open the sidebar"}">${chI(open ? "fold" : "open", 20)}</button></div></aside>`;
+}
+function chSideClick(k) {
+  const open = sideOpen();
+  if (k === "toggle" || !open) safe(() => localStorage.setItem(sideKey(), k === "toggle" && open ? "closed" : "open"));
+  render(false);
+  requestAnimationFrame(() => { kc.chart?.resize(); if (k === "cal") document.getElementById("chdates")?.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "nearest" }); });
+}
+
+// ----- home: TradingView "Markets" style -----
+const CH_RANGES = { "1D": ["1d", "5m"], "1M": ["1mo", "60m"], "3M": ["3mo", "1d"], "1Y": ["1y", "1d"], "5Y": ["5y", "1wk"], All: ["max", "1mo"] };
+function areaSvg(d, w, h, rng) {
+  const pts = (d?.t || []).map((t, i) => [t, d.c?.[i]]).filter((p) => typeof p[1] === "number");
+  if (pts.length < 2) return "";
+  const v = pts.map((p) => p[1]), mn = Math.min(...v), mx = Math.max(...v), pad = (mx - mn) * 0.08 || 1;
+  const X = (i) => (i / (pts.length - 1)) * w, Y = (p) => 8 + ((mx + pad - p) / (mx - mn + 2 * pad)) * (h - 16);
+  const up = v.at(-1) >= v[0], col = up ? "var(--up)" : "var(--down)";
+  const path = pts.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+  const id = "ga" + Math.random().toString(36).slice(2, 7);
+  const ticks = [mx, (mx + mn) / 2, mn].map((p) => `<span style="top:${Y(p) - 7}px">${fmtPx(p)}</span>`).join("");
+  return `<div class="charea"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".22"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+    <g style="color:${col}"><path d="${path}L${w},${h}L0,${h}Z" fill="url(#${id})"/><path d="${path}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></g></svg><div class="chax">${ticks}</div></div>`;
+}
+function chCat([k, list], idx) {
+  const ch = chOf(), sel = ch.sel[k] && list.includes(ch.sel[k]) ? ch.sel[k] : list[0], rng = ch.rng[k] || "1D", y = yahoo(sel);
+  if (!sel) return "";
+  const [r, i] = CH_RANGES[rng], d = candOf(y, r, i);
+  const nm = (t) => cleanName(chName(yahoo(t)) || statsOf(yahoo(t))?.name || quotes[yahoo(t)]?.name || t);
+  const chip = (t) => `<button class="chchip${t === sel ? " on" : ""}" data-chsel="${esc(k)}|${esc(t)}">${chLogo(t, 30)}<span><b>${esc(isStockSym(yahoo(t)) ? t : nm(t))}</b><small>${pxSpan(yahoo(t))} ${chSpan(yahoo(t))}</small></span></button>`;
+  const mvk = ch.mv[k] || "up", rows = list.map((t) => ({ t, p: chPct(yahoo(t)) })).filter((x) => x.p !== null).sort((a, b) => (mvk === "up" ? b.p - a.p : a.p - b.p)).slice(0, 5);
+  const big = d ? (areaSvg(d, 1000, 270, rng) || `<div class="chempty">Yahoo has no chart history for ${esc(nm(sel))}. <a href="${esc(tvUrl(sel, y))}" target="_blank" rel="noopener">Open in TradingView ↗</a></div>`) : `<div class="chempty">Loading…</div>`;
+  return `<section class="chcat a" id="cat-${idx}"><h3>${esc(k)} <a href="${chHref(sel)}">›</a></h3>
+    <div class="chchips">${list.map(chip).join("")}</div>
+    <div class="chcatb"><div class="chc chbig"><div class="chbh"><b>${esc(nm(sel))}</b><span>${pxSpan(y)} ${chSpan(y)}</span><a href="${chHref(sel)}">Open full chart →</a></div>${big}
+      <div class="chrng">${Object.keys(CH_RANGES).map((x) => `<button class="${x === rng ? "on" : ""}" data-chrng="${esc(k)}|${x}">${x}</button>`).join("")}</div></div>
+      <div class="chc chmov"><div class="mh"><h2>Top movers</h2></div><div class="chsort" style="padding:0 10px 8px">${[["up", "Gainers"], ["down", "Losers"]].map(([v, l]) => `<button class="${v === mvk ? "on" : ""}" data-chmv="${esc(k)}|${v}">${l}</button>`).join("")}</div>
+        ${rows.map((x) => `<a class="r" href="${chHref(x.t)}"><span class="wn">${chLogo(x.t, 22)}<span><b>${esc(isStockSym(yahoo(x.t)) ? x.t : nm(x.t))}</b><small>${esc(isStockSym(yahoo(x.t)) ? nm(x.t) : "")}</small></span></span><span class="n">${pxSpan(yahoo(x.t))}</span><span class="n">${chSpan(yahoo(x.t))}</span></a>`).join("") || `<p class="note" style="margin:4px 14px 12px">Prices loading…</p>`}</div></div></section>`;
+}
+const HEAT_RGB = (v) => v === null ? "var(--chip)" : v >= 2 ? "#15803d" : v >= 0.5 ? "#22a35a" : v > 0.05 ? "#6cbf8a" : v >= -0.05 ? "#9ca3af" : v > -1 ? "#f08b8b" : v > -3 ? "#e05252" : "#b91c1c";
+function chHeat() {
+  const grp = Object.entries(BIG()).map(([label, list]) => {
+    const rows = list.map((t) => ({ t, y: yahoo(t), cap: statsOf(yahoo(t))?.marketCap || 0 })).sort((a, b) => b.cap - a.cap);
+    const big = label === "US" ? 4 : 2;
+    return `<div class="g">${esc(label === "Thailand" ? "THAILAND · SET" : label.toUpperCase())}</div>` + rows.map((r, i) => {
+      const v = chPct(r.y);
+      return `<a class="${i < big ? "b2" : "s"}" href="${chHref(r.t)}" style="background:${HEAT_RGB(v)}" title="${esc(r.t)} ${v === null ? "" : v.toFixed(2) + "%"}">${esc(r.t)}<small>${v === null ? "…" : `${v > 0 ? "+" : ""}${v.toFixed(1)}%`}</small></a>`;
+    }).join("");
+  }).join("");
+  return `<section class="chcat a" id="cat-heat"><h3>Heat map <a href="#/heatmap">›</a></h3><div class="chc chheat"><div class="mh"><h2>Big stocks · bigger tile = bigger company</h2><a href="#/heatmap">Full heat map →</a></div><div class="chhm">${grp}</div></div></section>`;
+}
+// ----- Charts home: "Stocks by market & industry" (round 47). Members of the S&P 500 + SET50 (from the heat map lists),
+// filters you can combine (several markets x several industries) and sorts you can combine (1st, then 2nd for ties...) -----
+const SCR_MK = [["@SP500", "US · S&P 500"], ["@SET50", "Thailand · SET50"]];
+const SCR_SORT = { mkt: "Market", sec: "Industry", chg: "Biggest gain", chgdn: "Biggest loss", cap: "Company size", name: "Name A→Z" };
+const scrOf = () => { const ch = chOf(); return ch.scr || (ch.scr = safe(() => JSON.parse(localStorage.getItem("ic_scr") || "null"), null) || { mk: [], sec: [], sort: ["sec", "chg"], lim: 30 }); };
+const scrSave = () => { const { lim: _, ...x } = scrOf(); safe(() => localStorage.setItem("ic_scr", JSON.stringify(x))); };
+async function loadScr() {   // member lists (once) + prices of the chosen markets (every 2 minutes while you look)
+  const ch = chOf(); if (ch.scrLoading) return;
+  ch.scrLoading = true;
+  try {
+    if (!ch.hm) { const { data, error } = await sb.from("stock_stats").select("symbol,data,updated_at").in("symbol", HM_IDX.map((x) => x[0])); ch.hm = {}; (data || []).forEach((r) => { ch.hm[r.symbol] = r.data; }); ch.hmErr = error?.message || null; }
+    const f = scrOf(), keys = f.mk.length ? f.mk : SCR_MK.map((x) => x[0]), syms = [...new Set(keys.flatMap((k) => (ch.hm[k]?.members || []).map((m) => m.s)))];
+    const parts = []; for (let i = 0; i < syms.length; i += 40) parts.push(syms.slice(i, i + 40));
+    for (let i = 0; i < parts.length; i += 4) { const res = await Promise.all(parts.slice(i, i + 4).map((p) => sb.rpc("get_quotes", { syms: p }))); res.forEach(({ data }) => Object.assign(quotes, data || {})); }
+    ch.scrAt = Date.now();
+  } finally { ch.scrLoading = false; }
+  if ((location.hash || "#/charts") === "#/charts") render("soft");
+}
+function chScreen() {
+  const ch = chOf(), f = scrOf();
+  if (!ch.scrLoading && Date.now() - (ch.scrAt || 0) > 120e3) setTimeout(loadScr, 0);
+  const keys = f.mk.length ? f.mk : SCR_MK.map((x) => x[0]), mkName = Object.fromEntries(SCR_MK.map(([k, l]) => [k, l.split(" · ")[0]]));
+  const all = keys.flatMap((k) => (ch.hm?.[k]?.members || []).map((m) => ({ ...m, mk: k })));
+  const secs = [...new Set(all.map((m) => m.sec).filter(Boolean))].sort();
+  const sel = f.sec.filter((x) => secs.includes(x)), rows = sel.length ? all.filter((m) => sel.includes(m.sec)) : all;
+  const chg = (m) => chPct(m.s), num = (v, dflt) => (v === null || v === undefined || !Number.isFinite(v) ? dflt : v);
+  const cmp = { mkt: (a, b) => mkName[a.mk].localeCompare(mkName[b.mk]), sec: (a, b) => String(a.sec).localeCompare(String(b.sec)), chg: (a, b) => num(chg(b), -1e9) - num(chg(a), -1e9),
+    chgdn: (a, b) => num(chg(a), 1e9) - num(chg(b), 1e9), cap: (a, b) => (b.cap || 0) - (a.cap || 0), name: (a, b) => String(a.t).localeCompare(String(b.t)) };
+  rows.sort((a, b) => { for (const k of f.sort) { const r = cmp[k]?.(a, b) || 0; if (r) return r; } return (b.cap || 0) - (a.cap || 0); });
+  const shown = rows.slice(0, f.lim || 30), grp = f.sort[0] === "sec" || f.sort[0] === "mkt";
+  const pill = (attr, v, on, label, n) => `<button class="scp${on ? " on" : ""}" data-${attr}="${esc(v)}">${n ? `<em>${n}</em>` : ""}${esc(label)}</button>`;
+  let last = null;
+  const body = !ch.hm ? `<div class="chempty">Loading the member lists…</div>` : !all.length ? `<div class="chempty">The member lists arrive with the robot's next daily run.</div>`
+    : shown.map((m) => { const p = plainOf(m.s), v = chg(m), head = grp ? (f.sort[0] === "sec" ? m.sec : mkName[m.mk]) : null, hd = head && head !== last ? `<div class="g">${esc(head)}</div>` : ""; last = head;
+      return `${hd}<a class="r" href="${chHref(p)}"><span class="nm">${evLogo({ sym: p }, 24)}<span><b>${esc(m.t)}</b><small>${esc(m.n || "")}</small></span></span><span>${esc(mkName[m.mk])}</span><span class="sec">${esc(m.sec || "—")}</span>
+        <span class="n tnum">${quotes[m.s] ? fmtPx(quotes[m.s].price) : "…"}</span><span class="n tnum ${v === null ? "" : v >= 0 ? "up" : "down"}">${v === null ? "…" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`}</span><span class="n tnum">${m.cap ? bigNum(m.cap) : "—"}</span></a>`; }).join("");
+  return `<section class="chcat a" id="cat-scr"><h3>Stocks by market &amp; industry</h3><div class="chc scr">
+    <div class="scrf"><span class="lab">Market</span>${pill("scrmk", "*", !f.mk.length, "All")}${SCR_MK.map(([k, l]) => pill("scrmk", k, f.mk.includes(k), l)).join("")}</div>
+    <div class="scrf"><span class="lab">Industry</span>${pill("scrsec", "*", !sel.length, "All")}${secs.map((x) => pill("scrsec", x, sel.includes(x), x)).join("")}</div>
+    <div class="scrf"><span class="lab">Sort</span>${Object.entries(SCR_SORT).map(([k, l]) => { const i = f.sort.indexOf(k); return pill("scrsort", k, i >= 0, l, i >= 0 && f.sort.length > 1 ? i + 1 : ""); }).join("")}<span class="note" style="margin:0 0 0 6px">pick several: 1 first, then 2 for ties</span></div>
+    <div class="scrt"><div class="h"><span>COMPANY</span><span>MARKET</span><span>INDUSTRY</span><span class="n">PRICE</span><span class="n">CHG %</span><span class="n">MKT CAP</span></div>${body}</div>
+    <div class="scrb"><span class="note" style="margin:0">${shown.length} of ${rows.length} stocks${sel.length || f.mk.length ? " match" : ""} · prices refresh every 2 minutes</span>${rows.length > shown.length ? `<button class="scp" data-scrmore="1">Show 30 more</button>` : ""}</div></div></section>`;
+}
+function scrClick(el) {
+  const f = scrOf();
+  const tog = (arr, v) => { const i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); };
+  if (el.dataset.scrmk) { if (el.dataset.scrmk === "*") f.mk = []; else tog(f.mk, el.dataset.scrmk); if (f.mk.length === SCR_MK.length) f.mk = []; chOf().scrAt = 0; }
+  else if (el.dataset.scrsec) { if (el.dataset.scrsec === "*") f.sec = []; else tog(f.sec, el.dataset.scrsec); }
+  else if (el.dataset.scrsort) { if (el.dataset.scrsort === "chg") f.sort = f.sort.filter((x) => x !== "chgdn"); if (el.dataset.scrsort === "chgdn") f.sort = f.sort.filter((x) => x !== "chg"); tog(f.sort, el.dataset.scrsort); if (!f.sort.length) f.sort = ["cap"]; }
+  else if (el.dataset.scrmore) { f.lim = (f.lim || 30) + 30; }
+  if (!el.dataset.scrmore) f.lim = 30;
+  scrSave(); render(false);
+}
+function viewCharts() {
+  const cats = CH_CATS();
+  return `${header("charts")}<div class="wrap chp">
+    ${chSearchBox()}
+    <div class="chlay"><div class="chmain">
+      <nav class="chcnav">${cats.map(([k], i) => `<a href="#/charts" data-chjump="cat-${i}">${esc(k)}</a>`).join("")}<a href="#/charts" data-chjump="cat-scr">Stocks by industry</a><a href="#/charts" data-chjump="cat-heat">Heat map</a><a class="hm" href="#/heatmap">${chI("grid", 16)} Stock heat map</a></nav>
+      ${cats.map(chCat).join("")}${chScreen()}${chHeat()}
+      <p class="note">Prices: Yahoo Finance, may be delayed (Thai stocks ~15 min). Click anything to open its chart.</p>
+    </div>${chSide()}</div></div>`;
+}
+
+// ----- stock page -----
+const TV_SYM = { "^GSPC": "SP:SPX", "^NDX": "NASDAQ:NDX", "^DJI": "DJ:DJI", "^RUT": "TVC:RUT", "^SET.BK": "SET:SET", "^SET50.BK": "SET:SET50", "^N225": "TVC:NI225",
+  "^HSI": "TVC:HSI", "^GDAXI": "XETR:DAX", "^FTSE": "TVC:UKX", "GC=F": "COMEX:GC1!", "CL=F": "NYMEX:CL1!", "SI=F": "COMEX:SI1!", "BTC-USD": "BITSTAMP:BTCUSD", "ETH-USD": "BITSTAMP:ETHUSD", "THB=X": "FX_IDC:USDTHB", "EURUSD=X": "FX:EURUSD" };
+const tvUrl = (t, y) => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(TV_SYM[y] || (/\.BK$/.test(y) ? "SET:" + y.replace(/\.BK$/, "") : t))}`;
+const CH_PANES = [["chart", "Overview"], ["facts", "Key facts"], ["fin", "Financials"], ["tech", "Technicals"], ["fc", "Forecasts"], ["seas", "Seasonals"], ["news", "News"], ["dates", "Dates"]];
+const KC_TYPES = [["candle_solid", "Candles"], ["candle_stroke", "Hollow candles"], ["ohlc", "Bars"], ["area", "Line"]];
+const KC_RNG = [["1D", 0, 80], ["5D", 1, 130], ["1M", 2, 165], ["3M", 3, 63], ["6M", 3, 126], ["YTD", 3, 0], ["1Y", 3, 252], ["5Y", 4, 260], ["All", 5, 9999]];
+function kcBars() {
+  const p = kc.period ?? 3, ty = kc.ctype || "candle_solid";
+  return `<div class="kcbar">${chSearchBox(kc.sym || "Symbol")}<button class="${cmpList().length ? "on" : ""}" data-kcact="cmp" title="Compare or add symbol">＋ Compare${cmpList().length ? ` (${cmpList().length})` : ""}</button><i></i>${(() => { const fav = kcFavTf(), quick = KC_TF_GROUPS.flatMap(([, l]) => l).filter((i) => fav.includes(i) || i === p);
+      return quick.map((i) => `<button class="${i === p ? "on" : ""}" data-kcp="${i}" title="${KC_TF_NAME(i)}">${KC_PERIODS[i].text}</button>`).join("")
+        + `<details class="kcdd kctf"><summary title="Choose the timeframe">▾</summary><div>${KC_TF_GROUPS.map(([g, l]) => `<small>${g}</small>${l.map((i) => `<span class="tfr${i === p ? " on" : ""}"><button data-kcp="${i}">${KC_TF_NAME(i)}</button><button class="st${fav.includes(i) ? " on" : ""}" data-kctfav="${i}" title="${fav.includes(i) ? "Remove from" : "Add to"} favourites">${fav.includes(i) ? "★" : "☆"}</button></span>`).join("")}`).join("")}</div></details>`; })()}<i></i>
+    <details class="kcdd"><summary>${chI("cand")} ${esc(KC_TYPES.find((x) => x[0] === ty)?.[1] || "Candles")} ▾</summary><div>${KC_TYPES.map(([v, l]) => `<button class="${v === ty ? "on" : ""}" data-kct="${v}">${l}</button>`).join("")}</div></details><i></i>
+    <button data-kcact="ind" title="Indicators (Alt+I)">${chI("fx")} Indicators</button><button data-kcact="alertw" title="Create a price alert (Telegram)">${chI("bell", 16)} Alert</button><i></i><button data-kcact="undo" title="Undo (Ctrl+Z)">${chI("undo")}</button><button data-kcact="redo" title="Redo (Ctrl+Y)">${chI("redo")}</button>
+    <span class="sp"></span><button class="${kc.treeOpen ? "on" : ""}" data-kcact="tree" title="Object tree: all drawings and indicators">${ti("gannBox", 17)} Object tree</button><button data-kcact="shot" title="Save a picture of the chart">${chI("cam")}</button><button data-kcact="full" title="Full screen">${chI("full")}</button></div>`;
+}
+function kcBottom() {
+  return `<div class="kcbot">${KC_RNG.map(([l]) => `<button class="${kc.range === l ? "on" : ""}" data-kcr="${l}">${l}</button>`).join("")}<span class="sp"></span><span class="kctz">Bangkok time (UTC+7)</span>
+    <button class="${kc.pct ? "on" : ""}" data-kcact="pct" title="Percent scale">%</button><button class="${kcIsAuto() ? "on" : ""}" data-kcact="auto" title="Auto: fit the price scale to the visible candles (or double-click the price scale)">auto</button><button class="${kc.log ? "on" : ""}" data-kcact="log" title="Log scale">log</button></div>`;
+}
+function stPane(p, t, y, s, m, q) {
+  const cur = s.currency || m.currency || "";
+  const card = (title, body, link = "") => `<div class="chc chpane"><div class="mh"><h2>${title}</h2>${link}</div>${body}</div>`;
+  const stat = (a, b) => `<div><span>${a}</span><b class="tnum">${b}</b></div>`;
+  const noStats = `<p class="note" style="margin:10px 14px 14px">${chOf().ready013 === false ? "Key stats need supabase/013_charts.sql." : "Financials are collected once a day for your watchlist and the big stocks. Add this one to your watchlist (☆ Watch) to get them."}</p>`;
+  if (p === "facts") {
+    const r52 = m.lo52 && m.hi52 ? Math.max(0, Math.min(100, ((q?.price ?? m.price) - m.lo52) / (m.hi52 - m.lo52) * 100)) : null;
+    return `<div class="stgrid">${card("Key facts", `<div class="kf">${[["Market cap", bigNum(s.marketCap, cur)], ["P/E (TTM)", s.pe ? Number(s.pe).toFixed(2) : "—"], ["Forward P/E", s.fpe ? Number(s.fpe).toFixed(2) : "—"], ["EPS (TTM)", s.eps !== undefined ? Number(s.eps).toFixed(2) : "—"],
+      ["Day range", m.dayLow ? `${fmtPx(m.dayLow)} – ${fmtPx(m.dayHigh)}` : "—"], ["Volume", m.volume ? bigNum(m.volume) : "—"], ["Avg volume", bigNum(s.avgVolume)], ["Beta", s.beta ? Number(s.beta).toFixed(2) : "—"],
+      ["Dividend yield", pctN(s.divYield, 2)], ["MA 50 / 200", s.ma50 ? `${fmtPx(s.ma50)} / ${fmtPx(s.ma200)}` : "—"], ["Sector", esc(s.sector || "—")], ["Industry", esc(s.industry || "—")]].map(([a, b]) => `<div><small>${a}</small><b class="tnum">${b}</b></div>`).join("")}</div>
+      ${r52 !== null ? `<div class="rng"><small><span>52-week low ${fmtPx(m.lo52)}</span><span>52-week high ${fmtPx(m.hi52)}</span></small><div class="bar"><i style="left:${r52.toFixed(1)}%"></i></div></div>` : ""}`)}
+      ${card("About", s.about ? `<p class="about">${esc(s.about)}</p><div class="kf k3">${[["Website", s.website ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">${esc(s.website.replace(/^https?:\/\/(www\.)?/, ""))} ↗</a>` : "—"], ["Employees", s.employees ? Number(s.employees).toLocaleString("en-US") : "—"], ["Headquarters", esc(s.hq || "—")]].map(([a, b]) => `<div><small>${a}</small><b>${b}</b></div>`).join("")}</div>` : noStats)}</div>`;
+  }
+  if (p === "fin") {
+    if (!s.revenue && !(s.quarters || []).length) return card("Financials", noStats);
+    const mode = chOf().fin, rows = (mode === "y" ? s.years : s.quarters) || [], mx = Math.max(1, ...rows.flatMap((r) => [Math.abs(r.revenue || 0), Math.abs(r.earnings || 0)]));
+    const bars = rows.length ? `<div class="fbars">${rows.map((r) => `<div><span class="b"><i class="rv" style="height:${Math.max(2, (r.revenue || 0) / mx * 100)}%" title="Revenue ${bigNum(r.revenue, cur)}"></i><i class="ni${(r.earnings || 0) < 0 ? " neg" : ""}" style="height:${Math.max(2, Math.abs(r.earnings || 0) / mx * 100)}%" title="Net income ${bigNum(r.earnings, cur)}"></i></span><small>${esc(r.q || r.y)}</small><em>${bigNum(r.revenue)} · ${bigNum(r.earnings)}</em></div>`).join("")}</div>
+      <div class="flg"><span><i class="rv"></i>Revenue</span><span><i class="ni"></i>Net income</span></div>` : "";
+    return `<div class="stgrid">${card("Revenue &amp; net income", `<div class="chsort" style="padding:0 14px 6px">${[["q", "Quarterly"], ["y", "Yearly"]].map(([v, l]) => `<button class="${v === mode ? "on" : ""}" data-chfin="${v}">${l}</button>`).join("")}</div>${bars}`)}
+      ${card("Profitability &amp; health", `<div class="kf">${[["Revenue (TTM)", bigNum(s.revenue, cur) + (s.revenueGrowth !== undefined ? ` <em class="${s.revenueGrowth >= 0 ? "up" : "down"}">${s.revenueGrowth >= 0 ? "+" : ""}${pctN(s.revenueGrowth, 0)}</em>` : "")], ["Net income (TTM)", bigNum(s.netIncome, cur)],
+        ["Gross margin", pctN(s.grossMargin)], ["Operating margin", pctN(s.opMargin)], ["Profit margin", pctN(s.margin)], ["Return on equity", pctN(s.roe)], ["Debt / equity", s.debtToEquity ? (s.debtToEquity / 100).toFixed(2) : "—"], ["Free cash flow", bigNum(s.fcf, cur)],
+        ["Dividend / share", s.divRate ? Number(s.divRate).toFixed(2) : "—"], ["Dividend yield", pctN(s.divYield, 2)], ["Payout ratio", pctN(s.payout)], ["Ex-dividend", s.exDiv ? new Date(s.exDiv * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"]].map(([a, b]) => `<div><small>${a}</small><b class="tnum">${b}</b></div>`).join("")}</div>`)}</div>`;
+  }
+  if (p === "tech") return techPane(y);
+  if (p === "fc") {
+    if (!s.target) return card("Forecasts", `<p class="note" style="margin:10px 14px 14px">No analyst targets for ${esc(t)} (or not collected yet: only for your watchlist and the big stocks).</p>`);
+    const now = q?.price ?? m.price, lo = Math.min(s.targetLow ?? s.target, now), hi = Math.max(s.targetHigh ?? s.target, now), P = (v) => ((v - lo) / (hi - lo || 1)) * 100;
+    const r = s.ratings || {}, tot = ["strongBuy", "buy", "hold", "sell", "strongSell"].reduce((a, k) => a + (r[k] || 0), 0) || 1;
+    const RT = [["strongBuy", "Strong buy", "#15803d"], ["buy", "Buy", "#4ade80"], ["hold", "Hold", "#a1a1aa"], ["sell", "Sell", "#f87171"], ["strongSell", "Strong sell", "#b91c1c"]];
+    const up = now ? (s.target / now - 1) * 100 : null;
+    return `<div class="stgrid">${card("Analysts' 1-year price target", `<div class="tgt"><p class="note" style="margin:0">${s.analysts ? `${s.analysts} analysts · ` : ""}Yahoo Finance consensus</p>
+      <div class="tline"><i class="nw" style="left:${P(now)}%"></i><em style="left:${P(now)}%">Now ${fmtPx(now)}</em><i class="av" style="left:${P(s.target)}%"></i><em class="av" style="left:${P(s.target)}%;top:auto;bottom:-24px">Average ${fmtPx(s.target)}${up !== null ? ` (${up >= 0 ? "+" : ""}${up.toFixed(1)}%)` : ""}</em></div>
+      <div class="tlh"><span>Low ${fmtPx(s.targetLow ?? s.target)}</span><span>High ${fmtPx(s.targetHigh ?? s.target)}</span></div></div>`)}
+      ${card("Analyst rating", `<div class="tgt"><b class="rtg">${esc(String(s.rating || "—").replace("_", " "))}</b>${s.ratingMean ? `<span class="note" style="margin-left:8px">score ${Number(s.ratingMean).toFixed(2)} (1 = strong buy, 5 = strong sell)</span>` : ""}
+      ${s.ratings ? `<div class="rbar">${RT.map(([k, , c]) => `<i style="width:${(r[k] || 0) / tot * 100}%;background:${c}"></i>`).join("")}</div><div class="rleg">${RT.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l} ${r[k] || 0}</span>`).join("")}</div>` : ""}</div>`)}</div>`;
+  }
+  if (p === "seas") return seasPane(y);
+  if (p === "news") {
+    const news = (state.stories || []).filter((x) => (x.tickers || []).includes(t)).sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 15);
+    return card(`Our news on ${esc(t)}`, news.length ? `<div class="chnews">${news.map((x) => `<a class="it" href="#/story/${esc(x.id)}">${/^https:\/\//.test(x.image_url || "") ? `<img src="${esc(x.image_url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="qi ${impClass(x.impact_score)}">${x.impact_score}</span>`}<span><b><em class="${impClass(x.impact_score)}">${x.impact_score}</em>${esc(x.headline)}</b><small>${esc((x.outlets || [])[0] || "")} · ${ago(x.created_at)}${x.n_sources > 1 ? ` · ${x.n_sources} outlets` : ""}</small></span></a>`).join("")}</div>`
+      : `<p class="note" style="margin:4px 14px 12px">No stories about ${esc(t)} in the last 3 days.</p>`, news.length ? `<a href="#/" data-stock="${esc(t)}">All in My News →</a>` : "");
+  }
+  if (p === "dates") {
+    const t0 = isoDay(today0());
+    const dates = [...(state.events || []).filter((e) => e.ticker === t && e.day >= t0).map((e) => ({ day: e.day, title: e.kind === "earnings" ? "Earnings" + (e.estimate ? " (estimated)" : "") : "Ex-dividend", key: e.kind === "earnings" })),
+      ...(state.earn || []).filter((r) => r.ticker === t).map((r) => { const [v, c] = earnVerdict(r); return { day: isoDay(new Date(r.seen_at)), title: `Result: EPS ${eps(r.eps_actual)} vs ${eps(r.eps_estimate)} expected`, verdict: v, cls: c }; })];
+    const dRow = (e) => { const x = dayOf(e.day), d = Math.round((x - today0()) / 864e5); return `<div class="d"><span class="dt"><small>${monTxt(x).toUpperCase()}</small>${x.getDate()}</span><span><b>${esc(e.title)}</b><span>${d > 0 ? `in ${d} day${d === 1 ? "" : "s"}` : d === 0 ? "today" : `${-d} day${d === -1 ? "" : "s"} ago`}</span></span>${e.verdict ? `<span class="chtag v ${e.cls}">${esc(e.verdict)}</span>` : e.key ? `<span class="chtag">KEY</span>` : ""}</div>`; };
+    return `<div class="chc chcal chpane"><div class="mh"><h2>${esc(t)} dates</h2><a href="#/calendar">Stock calendar →</a></div>${dates.length ? dates.map(dRow).join("") : `<p class="note" style="margin:4px 14px 12px">No dates yet. Earnings dates are checked daily for your watchlist and the big stocks.</p>`}</div>`;
+  }
+  return "";
+}
+function viewChartStock(t) {
+  const y = yahoo(t), q = quotes[y], s = statsOf(y) || {}, m = kc.meta && kc.metaFor === y ? kc.meta : {};
+  const name = cleanName(chName(y) || s.name || m.name || state.settings.watch_names?.[t] || q?.name || t);
+  const inW = (state.settings.watchlist || []).includes(t), cur = s.currency || m.currency || "", pane = chOf().pane || "chart";
+  requestAnimationFrame(stMiniScroll);
+  return `${header("charts")}<div class="wrap chp chs">
+    <div class="chlay"><div class="chmain">
+      <div class="sthd"><a class="chback" href="#/charts" title="All markets">‹</a>${chLogo(t, 48)}<div class="nm"><b>${esc(name)}</b><small>${esc(t)}${m.exchange ? ` · ${esc(m.exchange)}` : ""}${s.sector ? ` · ${esc(s.industry || s.sector)}` : ""}</small></div>
+        <div class="chpx"><b>${pxSpan(y)}</b>${chSpan(y)}<small>${q?.time ? `${new Date(q.time * 1000).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · ` : ""}Yahoo, may be delayed${cur ? ` · ${esc(cur)}` : ""}</small></div>
+        <div class="act"><button class="${inW ? "pri" : ""}" data-chwatch="${esc(t)}">${inW ? "★ In watchlist" : "☆ Watch"}</button><a href="#/settings" data-tab-alerts="1">${chI("bell", 14)} Alert</a><a href="${esc(tvUrl(t, y))}" target="_blank" rel="noopener">TradingView ↗</a></div></div>
+      <div class="sttabs">${CH_PANES.map(([k, l]) => `<button class="${k === pane ? "on" : ""}" data-chpane="${k}">${l}</button>`).join("")}</div>
+      <div class="chc chbox"${pane === "chart" ? "" : " hidden"}>${kcBars()}<div id="kchost" class="kchost"></div>${kcBottom()}</div>
+      ${pane === "chart" ? stOverview(t, y, s, m, q) : stPane(pane, t, y, s, m, q)}
+    </div>${chSide(t)}</div>${stMini(t, y)}</div>`;
+}
+
+// ----- Overview tab (design round 43): TradingView's symbol-page order, drawn in our own card style -----
+// chart -> performance tiles -> key facts / coming up / your alerts -> key stats + earnings -> similar stocks -> about
+// -> 4 financial charts -> news -> technicals / analysts / target -> seasonals by year -> funds holding it
+const PERF = [["1D", "1 day"], ["5D", "5 days"], ["1M", "1 month"], ["3M", "3 months"], ["6M", "6 months"], ["YTD", "Year to date"], ["1Y", "1 year"], ["5Y", "5 years"], ["10Y", "10 years"], ["All", "All time"]];
+function perfOf(y, q) {
+  const d = candOf(y, "5y", "1d"), mo = candOf(y, "max", "1mo"), out = {};
+  const pts = (x) => (x?.t || []).map((t, i) => [t * 1000, Number(x.c?.[i])]).filter((p) => Number.isFinite(p[1]));
+  const dd = pts(d), mm = pts(mo), now = q?.price ?? dd.at(-1)?.[1] ?? mm.at(-1)?.[1];
+  if (!now) return out;
+  const at = (list, ms) => { let v = null; for (const p of list) { if (p[0] <= ms) v = p[1]; else break; } return v; };
+  const ret = (base) => (base ? (now / base - 1) * 100 : null);
+  const back = (days) => Date.now() - days * 864e5;
+  out["1D"] = chPct(y);
+  if (dd.length) {
+    const n = dd.length, last = dd[n - 1][0] > Date.now() - 864e5 * 0.6 ? n - 1 : n;   // 5 trading days back
+    out["5D"] = ret(dd[Math.max(0, last - 5)][1]);
+    [["1M", 30.4], ["3M", 91.3], ["6M", 182.6], ["1Y", 365.2]].forEach(([k, days]) => { out[k] = ret(at(dd, back(days))); });
+    out.YTD = ret(at(dd, new Date(new Date().getFullYear(), 0, 1).getTime() - 1));
+  }
+  if (mm.length) { out["5Y"] = ret(at(mm, back(1826))); out["10Y"] = ret(at(mm, back(3652))); out.All = ret(mm[0][1]); }
+  return out;
+}
+const shortN = (v) => bigNum(v).replace(/\.0(?=[TBMK])/, "");
+const perLabel = (d, mode) => { const x = new Date(d); return mode === "a" ? String(x.getUTCFullYear()) : `Q${Math.ceil((x.getUTCMonth() + 1) / 3)} '${String(x.getUTCFullYear()).slice(2)}`; };
+const svgWrap = (inner, h = 190) => `<svg class="ovsvg" viewBox="0 0 320 ${h}" role="img">${inner}</svg>`;
+function axis(max, min = 0, h = 150, top = 12) {   // light grid lines + right-side labels; returns y() mapper
+  const Y = (v) => top + (max - v) / (max - min || 1) * h;
+  let g = "";
+  for (let k = 0; k <= 4; k++) { const v = min + (max - min) * k / 4; g += `<line x1="0" x2="282" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="gl"/><text x="318" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${shortN(v)}</text>`; }
+  return [Y, g];
+}
+function finPerf(s, mode) {
+  const rows = (s.fin?.[mode] || []).filter((r) => r.rev !== undefined);
+  const list = rows.length ? rows.map((r) => ({ l: perLabel(r.d, mode), rev: r.rev, net: r.net })) : ((mode === "a" ? s.years : s.quarters) || []).map((r) => ({ l: r.y || r.q, rev: r.revenue, net: r.earnings }));
+  if (!list.length) return "";
+  const mx = Math.max(1, ...list.map((r) => Math.max(r.rev || 0, r.net || 0))), mn = Math.min(0, ...list.map((r) => r.net || 0)), [Y, g] = axis(mx, mn), w = 282 / list.length;
+  const mg = list.map((r) => (r.rev ? (r.net || 0) / r.rev : null)), mgMax = Math.max(0.01, ...mg.filter((v) => v !== null).map(Math.abs));
+  let b = "";
+  list.forEach((r, i) => {
+    const x = i * w + w * 0.18, bw = w * 0.3;
+    b += `<rect x="${x.toFixed(1)}" y="${Y(Math.max(0, r.rev || 0)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Y(0) - Y(Math.max(0, r.rev || 0))).toFixed(1)}" rx="2" class="rv"><title>Revenue ${bigNum(r.rev)}</title></rect>`;
+    const n = r.net || 0;
+    b += `<rect x="${(x + bw + 2).toFixed(1)}" y="${Y(Math.max(0, n)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(Y(n) - Y(0))).toFixed(1)}" rx="2" class="${n < 0 ? "neg" : "ni"}"><title>Net income ${bigNum(n)}</title></rect>`;
+    b += `<text x="${(i * w + w / 2).toFixed(1)}" y="182" text-anchor="middle">${esc(r.l)}</text>`;
+  });
+  const pts = mg.map((v, i) => (v === null ? null : `${(i * w + w / 2).toFixed(1)},${(12 + (1 - (v / mgMax + 1) / 2) * 150).toFixed(1)}`)).filter(Boolean);
+  b += `<polyline points="${pts.join(" ")}" class="ml"/>${mg.map((v, i) => (v === null ? "" : `<circle cx="${(i * w + w / 2).toFixed(1)}" cy="${(12 + (1 - (v / mgMax + 1) / 2) * 150).toFixed(1)}" r="3" class="mld"><title>Net margin ${(v * 100).toFixed(1)}%</title></circle>`)).join("")}`;
+  return svgWrap(g + b) + `<div class="ovleg"><span><i class="rv"></i>Revenue</span><span><i class="ni"></i>Net income</span><span><i class="ml"></i>Net margin</span></div>`;
+}
+function finSteps(s, mode) {
+  const r = (s.fin?.[mode] || []).filter((x) => x.rev !== undefined && x.net !== undefined).at(-1);
+  if (!r) return "";
+  const cost = r.cost ?? (r.gross !== undefined ? r.rev - r.gross : null), gross = r.gross ?? (cost !== null ? r.rev - cost : null);
+  const opinc = r.opinc ?? (gross !== null && r.opex !== undefined ? gross - r.opex : null), opex = r.opex ?? (gross !== null && opinc !== null ? gross - opinc : null);
+  if (gross === null || opinc === null) return "";
+  const tax = r.tax || 0, other = r.net - (opinc - tax);
+  const st = [["Revenue", r.rev, 0, "tot"], ["Cost", -cost, r.rev, "dn"], ["Gross", gross, 0, "tot"], ["Opex", -opex, gross, "dn"], ["Op. inc", opinc, 0, "tot"], ["Tax", -tax, opinc, "dn"], ["Other", other, opinc - tax, other >= 0 ? "upx" : "dn"], ["Net", r.net, 0, "net"]];
+  const mx = Math.max(1, r.rev), [Y, g] = axis(mx, Math.min(0, r.net)), w = 282 / st.length;
+  let b = "";
+  st.forEach(([l, v, base, c], i) => {
+    const a = base, z = base + v, y1 = Y(Math.max(a, z)), y2 = Y(Math.min(a, z));
+    b += `<rect x="${(i * w + w * 0.15).toFixed(1)}" y="${y1.toFixed(1)}" width="${(w * 0.7).toFixed(1)}" height="${Math.max(1, y2 - y1).toFixed(1)}" rx="2" class="${c}"><title>${l} ${bigNum(Math.abs(v))}</title></rect><text x="${(i * w + w / 2).toFixed(1)}" y="182" text-anchor="middle">${l}</text>`;
+  });
+  return svgWrap(g + b) + `<div class="ovleg"><span>${esc(perLabel(r.d, mode))} · from sales down to profit</span></div>`;
+}
+function finDebt(s, mode) {
+  const rows = (s.fin?.[mode] || []).filter((x) => x.debt !== undefined || x.fcf !== undefined || x.cash !== undefined);
+  if (!rows.length) return "";
+  const K = [["debt", "Debt", "dn"], ["fcf", "Free cash flow", "upx"], ["cash", "Cash", "rv"]];
+  const mx = Math.max(1, ...rows.flatMap((r) => K.map(([k]) => r[k] || 0))), mn = Math.min(0, ...rows.map((r) => r.fcf || 0)), [Y, g] = axis(mx, mn), w = 282 / rows.length;
+  let b = "";
+  rows.forEach((r, i) => {
+    K.forEach(([k, l, c], j) => { const v = r[k]; if (v === undefined) return; const bw = w * 0.22; b += `<rect x="${(i * w + w * 0.14 + j * (bw + 1)).toFixed(1)}" y="${Y(Math.max(0, v)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(Y(v) - Y(0))).toFixed(1)}" rx="2" class="${v < 0 && k === "fcf" ? "dn" : c}"><title>${l} ${bigNum(v)}</title></rect>`; });
+    b += `<text x="${(i * w + w / 2).toFixed(1)}" y="182" text-anchor="middle">${esc(perLabel(r.d, mode))}</text>`;
+  });
+  return svgWrap(g + b) + `<div class="ovleg">${K.map(([, l, c]) => `<span><i class="${c}"></i>${l}</span>`).join("")}</div>`;
+}
+function finEps(s) {
+  const q = (s.epsQ || []).slice(-4), nx = s.epsNext?.e !== undefined ? [{ q: s.epsNext.q, e: s.epsNext.e, next: true }] : [], list = [...q, ...nx];
+  if (!list.length) return "";
+  const vals = list.flatMap((r) => [r.a, r.e]).filter((v) => typeof v === "number"), mx = Math.max(0.01, ...vals), mn = Math.min(0, ...vals);
+  const Y = (v) => 16 + (mx - v) / (mx - mn || 1) * 146, w = 282 / list.length;
+  let g = "";
+  for (let k = 0; k <= 4; k++) { const v = mn + (mx - mn) * k / 4; g += `<line x1="0" x2="282" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="gl"/><text x="318" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`; }
+  list.forEach((r, i) => {
+    const x = i * w + w / 2, lab = String(r.q || "").replace(/^(\d)Q(\d{2})(\d{2})$/, "Q$1 '$3");
+    if (typeof r.e === "number") g += `<circle cx="${x.toFixed(1)}" cy="${Y(r.e).toFixed(1)}" r="7" class="est"><title>Estimate ${r.e.toFixed(2)}</title></circle>`;
+    if (typeof r.a === "number") g += `<circle cx="${x.toFixed(1)}" cy="${Y(r.a).toFixed(1)}" r="7" class="${typeof r.e === "number" && r.a < r.e ? "miss" : "beat"}"><title>Actual ${r.a.toFixed(2)}${typeof r.e === "number" ? ` vs ${r.e.toFixed(2)} expected` : ""}</title></circle>`;
+    g += `<text x="${x.toFixed(1)}" y="182" text-anchor="middle">${esc(lab)}${r.next ? " ·next" : ""}</text>`;
+  });
+  return svgWrap(g) + `<div class="ovleg"><span><i class="beat"></i>Beat</span><span><i class="miss"></i>Missed</span><span><i class="est"></i>Estimate</span></div>`;
+}
+function seasLines(y) {
+  const d = candOf(y, "5y", "1d");
+  if (!d) return `<p class="note" style="margin:10px 14px 14px">Calculating…</p>`;
+  const by = {};
+  (d.t || []).forEach((ts, i) => { const c = Number(d.c?.[i]); if (!Number.isFinite(c)) return; const x = new Date(ts * 1000); (by[x.getUTCFullYear()] ||= []).push([(x - Date.UTC(x.getUTCFullYear(), 0, 1)) / 864e5, c]); });
+  const yrs = Object.keys(by).map(Number).sort((a, b) => b - a).slice(0, 3).reverse();
+  if (!yrs.length) return `<p class="note" style="margin:10px 14px 14px">Not enough history.</p>`;
+  const lines = yrs.map((yr) => { const base = by[yr - 1]?.at(-1)?.[1] ?? by[yr][0][1]; return [yr, by[yr].map(([dd, c]) => [dd, (c / base - 1) * 100])]; });
+  const all = lines.flatMap(([, l]) => l.map((p) => p[1])), mx = Math.max(5, ...all), mn = Math.min(-5, ...all);
+  const Y = (v) => (mx - v) / (mx - mn) * 100, cls = ["s1", "s2", "s3"].slice(-lines.length);
+  const ticks = []; const step = Math.pow(10, Math.floor(Math.log10((mx - mn) / 4))) * ([1, 2, 5].find((m) => (mx - mn) / 4 <= m * Math.pow(10, Math.floor(Math.log10((mx - mn) / 4)))) || 10);
+  for (let v = Math.ceil(mn / step) * step; v <= mx; v += step) ticks.push(v);
+  return `<div class="seasl"><div class="sgplot"><svg viewBox="0 0 366 100" preserveAspectRatio="none">${ticks.map((v) => `<line x1="0" x2="366" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}" class="${v === 0 ? "z" : "gl"}"/>`).join("")}
+      ${lines.map(([yr, l], i) => `<polyline class="${cls[i]}" points="${l.map(([dd, v]) => `${dd.toFixed(1)},${Y(v).toFixed(2)}`).join(" ")}"><title>${yr}</title></polyline>`).join("")}</svg>
+      <div class="yl">${ticks.map((v) => `<span style="top:${Y(v).toFixed(2)}%">${v > 0 ? "+" : ""}${Math.round(v)}%</span>`).join("")}</div>
+      <div class="tags">${lines.map(([yr, l], i) => { const v = l.at(-1)[1]; return `<span class="${cls[i]}" style="top:${Y(v).toFixed(2)}%">${yr} ${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>`; }).join("")}</div></div>
+    <div class="mx">${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((m) => `<span>${m}</span>`).join("")}</div></div>`;
+}
+function stOverview(t, y, s, m, q) {
+  const ch = chOf(), cur = s.currency || m.currency || "", fm = ch.fm || (ch.fm = { perf: "a", wf: "a", debt: "a" });
+  const card = (title, body, link = "", cls = "") => `<section class="chc ovc ${cls}"><div class="mh"><h2>${title}</h2>${link}</div>${body}</section>`;
+  const more = (pane, label = "More") => `<a href="javascript:void 0" data-chpane="${pane}" data-chtop="1">${label} ›</a>`;
+  const kv = (list, n = 4) => `<div class="kf ovkf" style="--n:${n}">${list.map(([a, b, x = ""]) => `<div><small>${a}</small><b class="tnum">${b}</b>${x}</div>`).join("")}</div>`;
+  const noStats = `<p class="note" style="margin:4px 14px 14px">Collected once a day for your watchlist and the big stocks. Press ☆ Watch to add this one.</p>`;
+  const P = perfOf(y, q);
+  const perf = `<div class="ovperf">${PERF.map(([k, l]) => { const v = P[k]; return `<button class="${kc.range === k ? "on" : ""}" data-chperf="${k}" title="Show ${l.toLowerCase()} on the chart"><small>${l}</small><b class="tnum ${v === null || v === undefined ? "" : v >= 0 ? "up" : "down"}">${v === null || v === undefined ? "—" : `${v > 0 ? "+" : ""}${Math.abs(v) >= 1000 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2)}%`}</b></button>`; }).join("")}</div>`;
+
+  // key facts today (our own stories about this stock), coming up, your alerts + notes
+  const news = (state.stories || []).filter((x) => (x.tickers || []).includes(t)).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  const top = [...news].sort((a, b) => b.impact_score - a.impact_score || (a.created_at < b.created_at ? 1 : -1)).slice(0, 3), ki = Math.min(ch.kfi || 0, Math.max(0, top.length - 1)), k0 = top[ki];
+  const facts = card("Key facts today", k0 ? `<div class="ovkfact"><small><em class="${impClass(k0.impact_score)}">${k0.impact_score}</em>${esc((k0.outlets || [])[0] || "")} · ${ago(k0.created_at)}</small>
+      <p>${esc(k0.headline)}</p>${(k0.summary || [])[0] ? `<span>${esc(k0.summary[0])}</span>` : ""}
+      <div class="nav">${top.length > 1 ? `<button data-chkf="${(ki + top.length - 1) % top.length}" aria-label="Previous">‹</button><b>${ki + 1} / ${top.length}</b><button data-chkf="${(ki + 1) % top.length}" aria-label="Next">›</button>` : ""}<a href="#/story/${esc(k0.id)}">Read the story →</a></div></div>`
+    : `<p class="note" style="margin:4px 14px 14px">No stories about ${esc(t)} in the last 3 days.</p>`, news.length ? `<a href="#/" data-stock="${esc(t)}">All ${esc(t)} news (${news.length}) →</a>` : "");
+  const t0 = isoDay(today0());
+  const dl = [...(state.events || []).filter((e) => e.ticker === t && e.day >= t0).map((e) => ({ day: e.day, title: e.kind === "earnings" ? "Earnings" : "Ex-dividend", sub: e.kind === "earnings" ? `${e.estimate ? "Date estimated" : "Confirmed"}${s.epsNext?.e !== undefined ? ` · EPS estimate ${Number(s.epsNext.e).toFixed(2)}` : ""}` : "Own the stock the day before to get it" }))];
+  if (!dl.some((e) => e.title === "Earnings") && s.nextEarn && s.nextEarn * 1000 > Date.now()) dl.push({ day: isoDay(new Date(s.nextEarn * 1000)), title: "Earnings", sub: `From Yahoo${s.epsNext?.e !== undefined ? ` · EPS estimate ${Number(s.epsNext.e).toFixed(2)}` : ""}` });
+  if (!dl.some((e) => e.title === "Ex-dividend") && s.exDiv && s.exDiv * 1000 > Date.now()) dl.push({ day: isoDay(new Date(s.exDiv * 1000)), title: "Ex-dividend", sub: s.divRate ? `${Number(s.divRate).toFixed(2)} a year per share` : "" });
+  dl.sort((a, b) => (a.day < b.day ? -1 : 1));
+  const dRow = (e) => { const x = dayOf(e.day), d = Math.round((x - today0()) / 864e5); return `<div class="d"><span class="dt"><small>${monTxt(x).toUpperCase()}</small>${x.getDate()}</span><span><b>${esc(e.title)}</b><span>${esc(e.sub || "")}</span></span><span class="ovin">${d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}</span></div>`; };
+  const coming = card("Coming up", dl.length ? dl.slice(0, 4).map(dRow).join("") : `<p class="note" style="margin:4px 14px 14px">No dates yet for ${esc(t)}.</p>`, more("dates", "All dates"), "chcal");
+  if (state.alerts === undefined && !state.alertsLoading) { state.alertsLoading = true; loadAlerts().finally(() => { state.alertsLoading = false; render("soft"); }); }
+  const al = Array.isArray(state.alerts) ? state.alerts.filter((a) => a.ticker === t) : [], px = q?.price;
+  const nt = [...(state.notes || new Map())].map(([id, n]) => [news.find((x) => x.id === id), n]).filter(([x]) => x);
+  const dr = (ch.draw[t] || ch.draw[y] || []).length;
+  const icon = (k) => `<span class="dt ic">${chI(k, 16)}</span>`;
+  const mine = card("Your alerts &amp; notes", [...al.map((a) => `<div class="d">${icon("bell")}<span><b>${a.kind === "move" ? `Moves ±${esc(a.value)}% in a day` : `${a.kind === "above" ? "Above" : "Below"} ${fmtPx(Number(a.value))}`}</b><span>${a.active ? "On · Telegram" : "Sent, now off"}</span></span><span class="ovin">${a.kind !== "move" && px ? `${Math.abs((Number(a.value) / px - 1) * 100).toFixed(1)}% away` : ""}</span></div>`),
+    ...nt.slice(0, 2).map(([x, n]) => `<a class="d" href="#/story/${esc(x.id)}">${icon("fx")}<span><b>“${esc(n)}”</b><span>Your note on: ${esc(x.headline)}</span></span><span></span></a>`),
+    dr ? `<div class="d">${icon("cand")}<span><b>${dr} drawing${dr === 1 ? "" : "s"} saved on this chart</b><span>They come back every time you open ${esc(t)}</span></span><span></span></div>` : ""].join("")
+    || `<p class="note" style="margin:4px 14px 14px">No alerts or drawings yet. Right-click the chart → “Add price alert at this price”.</p>`, `<a href="#/settings" data-tab-alerts="1">Manage alerts →</a>`, "chcal");
+
+  // key stats + latest earnings + employees
+  const lastQ = (s.fin?.q || []).filter((r) => r.rev !== undefined), qn = lastQ.at(-1), qy = lastQ.length >= 5 ? lastQ.at(-5) : null, e0 = (s.epsQ || []).at(-1);
+  const stats = card("Key stats", s.marketCap || s.pe ? kv([["Market cap", bigNum(s.marketCap, cur)], ["Dividend yield", pctN(s.divYield, 2)], ["P/E (TTM)", s.pe ? Number(s.pe).toFixed(2) : "—"], ["EPS (TTM)", s.eps !== undefined ? Number(s.eps).toFixed(2) : "—"],
+    ["Net income (TTM)", bigNum(s.netIncome, cur)], ["Revenue (TTM)", bigNum(s.revenue, cur)], ["Shares float", bigNum(s.float)], ["Beta", s.beta ? Number(s.beta).toFixed(2) : "—"]]) : noStats, more("facts", "Key facts"));
+  const earn = card("Latest earnings", e0 || qn ? kv([["Period", esc(String(e0?.q || "").replace(/^(\d)Q(\d{4})$/, "Q$1 $2") || (qn ? perLabel(qn.d, "q") : "—"))],
+    ["EPS", e0?.a !== undefined ? Number(e0.a).toFixed(2) : "—", e0?.a !== undefined && e0?.e ? `<em class="${e0.a >= e0.e ? "up" : "down"}">${e0.a >= e0.e ? "beat" : "missed"} ${((e0.a / e0.e - 1) * 100).toFixed(1)}%</em>` : ""],
+    ["Revenue", qn ? bigNum(qn.rev, cur) : "—", qn && qy?.rev ? `<em class="${qn.rev >= qy.rev ? "up" : "down"}">${qn.rev >= qy.rev ? "+" : ""}${((qn.rev / qy.rev - 1) * 100).toFixed(0)}% y/y</em>` : ""],
+    ["Employees", s.employees ? shortN(s.employees) : "—", s.employees && s.revenue ? `<em class="muted">${bigNum(s.revenue / s.employees)} revenue each</em>` : ""]]) : noStats, more("fin", "Financials"));
+
+  // similar stocks (Yahoo's "people also watch")
+  const rel = (s.related || []).slice(0, 6);
+  if (rel.some((r) => !quotes[r]) && !(ch.relAt ||= {})[y]) { ch.relAt[y] = 1; sb.rpc("get_quotes", { syms: rel }).then(({ data }) => { Object.assign(quotes, data || {}); render("soft"); }); }
+  const sim = rel.length ? card("Similar stocks", `<div class="ovsim" style="--c:${rel.length}">${rel.map((r) => { const p = plainOf(r), qq = quotes[r]; return `<a href="${chHref(p)}">${chLogo(p, 30)}<span><b>${esc(p)}</b><small>${esc(cleanName(qq?.name || chName(r) || ""))}</small></span><em class="tnum">${pxSpan(r)}${chSpan(r)}</em></a>`; }).join("")}</div>`, `<span class="note">Yahoo's “people also watch”</span>`) : "";
+
+  // about
+  const about = card(`About ${esc(cleanName(s.name || t))}`, s.about || s.sector ? `${kv([["Sector", esc(s.sector || "—")], ["Industry", esc(s.industry || "—")], ["CEO", esc(s.ceo || "—")], ["Website", s.website ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">${esc(s.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""))} ↗</a>` : "—"],
+    ["Headquarters", esc(s.hq || "—")], ["Employees", s.employees ? Number(s.employees).toLocaleString("en-US") : "—"], ["Shares outstanding", bigNum(s.shares)], ["Exchange · currency", `${esc(m.exchange || "—")} · ${esc(cur || "—")}`]])}
+    ${s.about ? `<details class="ovabout"><summary><span>${esc(s.about.slice(0, 260))}${s.about.length > 260 ? "…" : ""}</span>${s.about.length > 260 ? "<b>Show more</b>" : ""}</summary><p>${esc(s.about)}</p></details>` : ""}` : noStats);
+
+  // financials: 4 charts, each with its own Annual / Quarterly switch (like TradingView)
+  const sw = (k) => `<span class="chsort">${[["a", "Annual"], ["q", "Quarterly"]].map(([v, l]) => `<button class="${fm[k] === v ? "on" : ""}" data-chfm="${k}:${v}">${l}</button>`).join("")}</span>`;
+  const empty = `<p class="note" style="margin:4px 14px 14px">Not collected yet for ${esc(t)}.</p>`;
+  const fins = `<div class="ovfin">${card("Revenue &amp; profit", finPerf(s, fm.perf) || empty, sw("perf"))}${card("Revenue to profit", finSteps(s, fm.wf) || empty, sw("wf"))}${card("Debt, cash flow &amp; cash", finDebt(s, fm.debt) || empty, sw("debt"))}${card("Earnings per share", finEps(s) || empty, s.nextEarn && s.nextEarn * 1000 > Date.now() ? `<span class="note">Next ${new Date(s.nextEarn * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>` : "")}</div>`;
+
+  // news grid
+  const newsC = card(`News on ${esc(t)}`, news.length ? `<div class="ovnews">${news.slice(0, 8).map((x) => `<a href="#/story/${esc(x.id)}"><small><em class="${impClass(x.impact_score)}">${x.impact_score}</em>${esc((x.outlets || [])[0] || "")} · ${ago(x.created_at)}</small><b>${esc(x.headline)}</b></a>`).join("")}</div>`
+    : `<p class="note" style="margin:4px 14px 14px">No stories about ${esc(t)} in the last 3 days.</p>`, news.length ? more("news", "All news") : "");
+
+  // technicals + analysts + price target
+  const T = (() => { const d = candOf(y, "5y", "1d"); return d ? techOf(d) : null; })();
+  const tech = card("Technicals", T ? `<div class="ovg">${gauge("Summary · 1 day", T.s.all, T.count([...T.osc, ...T.ma]))}</div>` : `<p class="note" style="margin:4px 14px 14px">Calculating…</p>`, more("tech", "Details"));
+  const r = s.ratings || {}, tot = ["strongBuy", "buy", "hold", "sell", "strongSell"].reduce((a, k) => a + (r[k] || 0), 0);
+  const RT = [["strongBuy", "Strong buy", "#15803d"], ["buy", "Buy", "#4ade80"], ["hold", "Hold", "#a1a1aa"], ["sell", "Sell", "#f87171"], ["strongSell", "Strong sell", "#b91c1c"]];
+  const anl = card("Analyst rating", tot ? `<div class="tgt" style="padding-bottom:16px"><b class="rtg">${esc(String(s.rating || "—").replace("_", " "))}</b><span class="note" style="margin-left:8px">${tot} analysts</span>
+      <div class="rbar">${RT.map(([k, , c]) => `<i style="width:${(r[k] || 0) / tot * 100}%;background:${c}"></i>`).join("")}</div><div class="rleg">${RT.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l} ${r[k] || 0}</span>`).join("")}</div></div>` : `<p class="note" style="margin:4px 14px 14px">No analyst ratings for ${esc(t)}.</p>`, more("fc", "Forecasts"));
+  const now = q?.price ?? m.price, up = s.target && now ? (s.target / now - 1) * 100 : null;
+  const lo = Math.min(s.targetLow ?? s.target, now), hi = Math.max(s.targetHigh ?? s.target, now), PP = (v) => ((v - lo) / (hi - lo || 1)) * 100;
+  const tgt = card("1-year price target", s.target && now ? `<div class="tgt"><b class="rtg tnum">${fmtPx(s.target)}</b> <em class="${up >= 0 ? "up" : "down"}" style="font:800 14px Inter;font-style:normal">${up >= 0 ? "+" : ""}${up.toFixed(1)}%</em><span class="note" style="display:block;margin:2px 0 0">Average of analysts' targets</span>
+      <div class="tline"><i class="nw" style="left:${PP(now)}%"></i><em style="left:${PP(now)}%">Now</em><i class="av" style="left:${PP(s.target)}%"></i></div><div class="tlh"><span>Low ${fmtPx(s.targetLow ?? s.target)}</span><span>High ${fmtPx(s.targetHigh ?? s.target)}</span></div></div>` : `<p class="note" style="margin:4px 14px 14px">No price target for ${esc(t)}.</p>`);
+
+  const seas = card("Seasonals", seasLines(y), `<span class="note">each year from 1 January</span>${more("seas", "Month table")}`);
+  const fundsOk = (s.funds || []).length && !/\.BK$/.test(y);
+  const funds = fundsOk ? card(`Funds holding ${esc(t)}`, `<div class="ovtb"><div class="h"><span>FUND</span><span class="n">SHARE OF ${esc(t)}</span><span class="n">VALUE</span></div>${s.funds.map((f) => `<div><span>${esc(String(f.n || "").replace(/^[A-Z &.,'-]+-(?=[A-Z][a-z])/, ""))}</span><span class="n tnum">${f.pct ? (f.pct * 100).toFixed(2) + "%" : "—"}</span><span class="n tnum">${bigNum(f.val)}</span></div>`).join("")}</div>`, `<span class="note">Yahoo, latest filings</span>`) : "";
+
+  return `${perf}
+    <div class="ovrow r3">${facts}${coming}${mine}</div>
+    <div class="ovrow r2">${stats}${earn}</div>
+    ${sim}${about}
+    <h3 class="ovh">Financials ${more("fin", "")}</h3>${fins}
+    ${newsC}
+    <div class="ovrow r3">${tech}${anl}${tgt}</div>
+    ${seas}${funds}`;
+}
+// slim price bar that stays on top while you scroll the stock page (like TradingView)
+function stMini(t, y) {
+  return `<div class="stmini" id="stmini" aria-hidden="true"><div class="in">${chLogo(t, 26)}<b>${esc(t)}</b><span class="tnum">${pxSpan(y)}${chSpan(y)}</span>
+    <span class="tb">${CH_PANES.map(([k, l]) => `<button class="${k === (chOf().pane || "chart") ? "on" : ""}" data-chpane="${k}" data-chtop="1">${l}</button>`).join("")}</span>
+    <span class="sp"></span><button data-chtop="1" data-chpane="chart">↑ Chart</button><button class="pri" data-kcact="full">${chI("full", 14)} Full chart</button></div></div>`;
+}
+function stMiniScroll() {
+  const el = document.getElementById("stmini"), hd = document.querySelector(".sttabs");
+  if (!el || !hd) return;
+  const show = hd.getBoundingClientRect().bottom < (document.querySelector("header")?.offsetHeight || 0);
+  el.style.top = `${document.querySelector("header")?.offsetHeight || 0}px`;
+  el.classList.toggle("on", show);
+}
+addEventListener("scroll", stMiniScroll, { passive: true });
+
+// ----- Technicals (TradingView-style rating, calculated here from the candles) -----
+const sma = (a, n) => a.map((_, i) => (i < n - 1 ? null : a.slice(i - n + 1, i + 1).reduce((x, y) => x + y, 0) / n));
+const ema = (a, n) => { const k = 2 / (n + 1), o = []; let e = null; a.forEach((v, i) => { if (v === null || v === undefined) { o.push(e); return; } e = e === null ? (i >= n - 1 ? a.slice(i - n + 1, i + 1).reduce((x, y) => x + y, 0) / n : null) : v * k + e * (1 - k); o.push(e); }); return o; };
+const rma = (a, n) => { const o = []; let r = null; a.forEach((v, i) => { if (v === null) { o.push(r); return; } r = r === null ? (i >= n - 1 ? a.slice(i - n + 1, i + 1).reduce((x, y) => x + y, 0) / n : null) : (r * (n - 1) + v) / n; o.push(r); }); return o; };
+const wma = (a, n) => a.map((_, i) => { if (i < n - 1) return null; let s = 0, w = 0; for (let k = 0; k < n; k++) { s += a[i - k] * (n - k); w += n - k; } return s / w; });
+function rsiOf(c, n) {
+  const g = c.map((v, i) => (i ? Math.max(0, v - c[i - 1]) : null)), l = c.map((v, i) => (i ? Math.max(0, c[i - 1] - v) : null));
+  const ag = rma(g.map((x) => x ?? null).slice(1), n), al = rma(l.slice(1), n);
+  return [null, ...ag.map((x, i) => (x === null || al[i] === null ? null : al[i] === 0 ? 100 : 100 - 100 / (1 + x / al[i])))];
+}
+function techOf(d) {
+  const c = closes(d), h = (d?.h || []).map(Number), l = (d?.l || []).map(Number);
+  if (c.length < 60) return null;
+  const n = c.length - 1, px = c[n], out = { osc: [], ma: [] };
+  const act = (b, s) => (b ? 1 : s ? -1 : 0);
+  const r = rsiOf(c, 14); out.osc.push(["RSI (14)", r[n], act(r[n] < 30 && r[n] > r[n - 1], r[n] > 70 && r[n] < r[n - 1])]);
+  const hh = (i, k) => Math.max(...h.slice(i - k + 1, i + 1)), ll = (i, k) => Math.min(...l.slice(i - k + 1, i + 1));
+  const kRaw = c.map((v, i) => (i < 13 ? null : ((v - ll(i, 14)) / (hh(i, 14) - ll(i, 14) || 1)) * 100)), K = sma(kRaw.map((x) => x ?? 0), 3), D = sma(K.map((x) => x ?? 0), 3);
+  out.osc.push(["Stochastic %K (14, 3, 3)", K[n], act(K[n] < 20 && K[n] > D[n], K[n] > 80 && K[n] < D[n])]);
+  const tp = c.map((v, i) => (v + h[i] + l[i]) / 3), tps = sma(tp, 20), md = tp.map((_, i) => (i < 19 ? null : tp.slice(i - 19, i + 1).reduce((a, x) => a + Math.abs(x - tps[i]), 0) / 20));
+  const cci = tp.map((v, i) => (md[i] ? (v - tps[i]) / (0.015 * md[i]) : null)); out.osc.push(["CCI (20)", cci[n], act(cci[n] < -100 && cci[n] > cci[n - 1], cci[n] > 100 && cci[n] < cci[n - 1])]);
+  const hl2 = h.map((v, i) => (v + l[i]) / 2), ao = sma(hl2, 5).map((v, i) => (v === null || sma(hl2, 34)[i] === null ? null : v - sma(hl2, 34)[i]));
+  out.osc.push(["Awesome oscillator", ao[n], act(ao[n] > 0 && ao[n] > ao[n - 1], ao[n] < 0 && ao[n] < ao[n - 1])]);
+  const mom = c[n] - c[n - 10], mom1 = c[n - 1] - c[n - 11]; out.osc.push(["Momentum (10)", mom, act(mom > mom1, mom < mom1)]);
+  const e12 = ema(c, 12), e26 = ema(c, 26), mac = e12.map((v, i) => (v === null || e26[i] === null ? null : v - e26[i])), sig = ema(mac, 9);
+  out.osc.push(["MACD level (12, 26)", mac[n], act(mac[n] > sig[n], mac[n] < sig[n])]);
+  const wr = ((hh(n, 14) - px) / (hh(n, 14) - ll(n, 14) || 1)) * -100, wr1 = ((hh(n - 1, 14) - c[n - 1]) / (hh(n - 1, 14) - ll(n - 1, 14) || 1)) * -100;
+  out.osc.push(["Williams %R (14)", wr, act(wr < -80 && wr > wr1, wr > -20 && wr < wr1)]);
+  [10, 20, 30, 50, 100, 200].forEach((k) => {
+    if (c.length > k) { const e = ema(c, k)[n], s2 = sma(c, k)[n]; out.ma.push([`EMA (${k})`, e, act(e !== null && px > e, e !== null && px < e)]); out.ma.push([`SMA (${k})`, s2, act(s2 !== null && px > s2, s2 !== null && px < s2)]); }
+  });
+  const score = (list) => { const v = list.filter((x) => x[1] !== null && Number.isFinite(x[1])); return v.length ? v.reduce((a, x) => a + x[2], 0) / v.length : 0; };
+  out.s = { osc: score(out.osc), ma: score(out.ma) }; out.s.all = (out.s.osc + out.s.ma) / 2;
+  out.count = (list) => ({ b: list.filter((x) => x[2] === 1).length, n: list.filter((x) => x[2] === 0).length, s: list.filter((x) => x[2] === -1).length });
+  return out;
+}
+const RATE = (v) => (v > 0.5 ? ["Strong buy", "sb"] : v > 0.1 ? ["Buy", "b"] : v >= -0.1 ? ["Neutral", "n"] : v >= -0.5 ? ["Sell", "s"] : ["Strong sell", "ss"]);
+function gauge(title, v, cnt) {
+  const [lab, cls] = RATE(v), a = Math.PI * (1 - (v + 1) / 2), x = 90 + 64 * Math.cos(a), y2 = 86 - 64 * Math.sin(a);
+  return `<div class="gauge"><svg viewBox="0 0 180 96" width="180" height="96"><path d="M16 86 A74 74 0 0 1 164 86" fill="none" stroke="var(--chip)" stroke-width="12"/>
+    <path d="M16 86 A74 74 0 0 1 46 27" fill="none" stroke="#ef4444" stroke-width="12"/><path d="M134 27 A74 74 0 0 1 164 86" fill="none" stroke="#2563eb" stroke-width="12"/>
+    <line x1="90" y1="86" x2="${x.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/><circle cx="90" cy="86" r="6" fill="var(--ink)"/></svg>
+    <small>${title}</small><b class="rt ${cls}">${lab}</b><span class="cnt">Sell ${cnt.s} · Neutral ${cnt.n} · Buy ${cnt.b}</span></div>`;
+}
+const TECH_TF = { "1H": ["3mo", "60m"], "1D": ["2y", "1d"], "1W": ["5y", "1wk"] };
+function techPane(y) {
+  const ch = chOf(), tf = ch.tf || "1D", [r, i] = TECH_TF[tf], d = candOf(y, r, i), T = d ? techOf(d) : null;
+  const tfs = `<div class="chsort" style="padding:0 14px 6px">${Object.keys(TECH_TF).map((k) => `<button class="${k === tf ? "on" : ""}" data-chtf="${k}">${k === "1H" ? "1 hour" : k === "1D" ? "1 day" : "1 week"}</button>`).join("")}</div>`;
+  if (!T) return `<div class="chc chpane"><div class="mh"><h2>Technicals</h2></div>${tfs}<p class="note" style="margin:10px 14px 14px">${d ? "Not enough price history for a rating." : "Calculating…"}</p></div>`;
+  const row = ([n, v, a]) => `<div class="tr"><span>${esc(n)}</span><b class="tnum">${v === null || !Number.isFinite(v) ? "—" : Math.abs(v) >= 1000 ? fmtPx(v) : Number(v).toFixed(2)}</b><em class="rt ${a === 1 ? "b" : a === -1 ? "s" : "n"}">${a === 1 ? "Buy" : a === -1 ? "Sell" : "Neutral"}</em></div>`;
+  return `<div class="chc chpane"><div class="mh"><h2>Technicals</h2><span class="note">TradingView-style rating, calculated from Yahoo candles</span></div>${tfs}
+    <div class="gauges">${gauge("Oscillators", T.s.osc, T.count(T.osc))}${gauge("Summary", T.s.all, T.count([...T.osc, ...T.ma]))}${gauge("Moving averages", T.s.ma, T.count(T.ma))}</div>
+    <div class="ttabs"><div><h4>Oscillators</h4>${T.osc.map(row).join("")}</div><div><h4>Moving averages</h4>${T.ma.map(row).join("")}</div></div>
+    <p class="note" style="margin:6px 14px 14px">Not advice: a summary of what common indicators say right now.</p></div>`;
+}
+function seasPane(y) {
+  const d = candOf(y, "10y", "1mo");
+  if (!d) return `<div class="chc chpane"><div class="mh"><h2>Seasonals</h2></div><p class="note" style="margin:10px 14px 14px">Calculating…</p></div>`;
+  const by = {};
+  (d.t || []).forEach((ts, i) => { const c = d.c?.[i], p = d.c?.[i - 1]; if (typeof c !== "number" || typeof p !== "number") return; const x = new Date(ts * 1000), yr = x.getUTCFullYear(), mo = x.getUTCMonth(); (by[yr] ||= {})[mo] = (c / p - 1) * 100; });
+  const years = Object.keys(by).map(Number).sort((a, b) => b - a).slice(0, 8);
+  if (!years.length) return `<div class="chc chpane"><div class="mh"><h2>Seasonals</h2></div><p class="note" style="margin:10px 14px 14px">Not enough monthly history.</p></div>`;
+  const col = (v) => (v === undefined ? "transparent" : v > 4 ? "#15803d" : v > 1 ? "#4ade80" : v > -1 ? "var(--chip)" : v > -4 ? "#f87171" : "#b91c1c");
+  const fg = (v) => (v !== undefined && Math.abs(v) > 4 ? "#fff" : "var(--ink)");
+  const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const avg = M.map((_, m) => { const v = years.map((yy) => by[yy][m]).filter((x) => x !== undefined); return v.length ? [v.reduce((a, x) => a + x, 0) / v.length, v.filter((x) => x > 0).length / v.length] : [undefined, 0]; });
+  const cell = (v) => `<div style="background:${col(v)};color:${fg(v)}">${v === undefined ? "" : `${v > 0 ? "+" : ""}${v.toFixed(1)}`}</div>`;
+  return `<div class="chc chpane"><div class="mh"><h2>Seasonals · return by month (%)</h2><span class="note">last ${years.length} years, monthly closes</span></div>
+    <div class="seas"><div></div>${M.map((m) => `<div class="hd">${m}</div>`).join("")}
+      ${years.map((yy) => `<div class="yr">${yy}</div>${M.map((_, m) => cell(by[yy][m])).join("")}`).join("")}
+      <div class="yr b">Average</div>${avg.map(([v]) => cell(v)).join("")}<div class="yr b">Up years</div>${avg.map(([, p]) => `<div class="pp">${Math.round(p * 100)}%</div>`).join("")}</div></div>`;
+}
+
+// ----- the chart itself (loaded only when a stock page opens) -----
+const KC_FILES = {
+  css: ["https://cdn.jsdelivr.net/npm/@klinecharts/pro@0.1.1/dist/klinecharts-pro.css", "sha384-RoRVmKzlNPK7OcKOA5IAMaoUB0pO3CxZCULDD5ajKf6FEzDzXj0NN/AC18waF7I1"],
+  core: ["https://cdn.jsdelivr.net/npm/klinecharts@9.8.12/dist/umd/klinecharts.min.js", "sha384-N0+OYSoH0p5B+LMHkqKVHtLag55VxhTNJBcpNtG3q7tLMfe7sRBr4z614UxQZOg8"],
+  pro: ["https://cdn.jsdelivr.net/npm/@klinecharts/pro@0.1.1/dist/klinecharts-pro.umd.js", "sha384-Dvko2GFxD+nsobomJF4F6xR9HI0LF9zoIp7ZYZwiyuikBsZOISSdwR2sQ1/YJRqD"],
+};
+const kc = { pro: null, chart: null, box: null, sym: null, ov: new Map(), restoring: false, restoredFor: null, meta: null, metaFor: null, loaded: "", sub: null, saveT: null,
+  period: 3, ctype: "candle_solid", range: null, pct: false, log: false, active: [], indFor: null, hist: [], redo: [], sel: null, lastPrice: null, pendingBars: 0 };
+let kcLoading = null;
+function kcLoad() {
+  if (kcLoading) return kcLoading;
+  const tag = (kind, [url, sri]) => new Promise((ok, bad) => {
+    const el = document.createElement(kind === "css" ? "link" : "script");
+    if (kind === "css") { el.rel = "stylesheet"; el.href = url; } else { el.src = url; el.async = false; }
+    el.integrity = sri; el.crossOrigin = "anonymous"; el.referrerPolicy = "no-referrer";
+    el.onload = ok; el.onerror = () => bad(new Error("Could not load the chart library"));
+    document.head.appendChild(el);
+  });
+  kcLoading = Promise.all([tag("css", KC_FILES.css), tag("js", KC_FILES.core).then(() => {
+    const k = window.klinecharts, init = k.init;   // catch the chart the Pro layer creates (drawings, indicators, events)
+    k.init = (...a) => { const c = init(...a); kcHook(c); return c; };
+    return tag("js", KC_FILES.pro);
+  })]).then(() => { kcRegister(); kcRegisterTV(window.klinecharts); }).catch((e) => { kcLoading = null; throw e; });
+  return kcLoading;
+}
+const KC_PERIODS = [{ multiplier: 5, timespan: "minute", text: "5m" }, { multiplier: 15, timespan: "minute", text: "15m" }, { multiplier: 1, timespan: "hour", text: "1H" },
+  { multiplier: 1, timespan: "day", text: "D" }, { multiplier: 1, timespan: "week", text: "W" }, { multiplier: 1, timespan: "month", text: "M" },
+  // round 44: TradingView's other timeframes (made by joining our 5m / 15m / 1h / 1-month candles)
+  { multiplier: 10, timespan: "minute", text: "10m" }, { multiplier: 30, timespan: "minute", text: "30m" }, { multiplier: 45, timespan: "minute", text: "45m" },
+  { multiplier: 2, timespan: "hour", text: "2H" }, { multiplier: 3, timespan: "hour", text: "3H" }, { multiplier: 4, timespan: "hour", text: "4H" },
+  { multiplier: 3, timespan: "month", text: "3M" }, { multiplier: 6, timespan: "month", text: "6M" }, { multiplier: 12, timespan: "month", text: "12M" }];
+// [Yahoo range, Yahoo interval, candles joined into one]. Daily + weekly = 10 years: Yahoo silently sends MONTHLY candles for range "max" (checked 2026-11-25)
+const KC_RANGE = { minute5: ["1mo", "5m", 1], minute10: ["1mo", "5m", 2], minute15: ["1mo", "15m", 1], minute30: ["1mo", "15m", 2], minute45: ["1mo", "15m", 3],
+  hour1: ["2y", "60m", 1], hour2: ["2y", "60m", 2], hour3: ["2y", "60m", 3], hour4: ["2y", "60m", 4], day1: ["10y", "1d", 1], week1: ["10y", "1wk", 1],
+  month1: ["max", "1mo", 1], month3: ["max", "1mo", 3], month6: ["max", "1mo", 6], month12: ["max", "1mo", 12] };
+const KC_TF_GROUPS = [["MINUTES", [0, 6, 1, 7, 8]], ["HOURS", [2, 9, 10, 11]], ["DAYS", [3]], ["WEEKS", [4]], ["MONTHS", [5, 12, 13, 14]]];
+const KC_TF_NAME = (i) => { const p = KC_PERIODS[i]; return `${p.multiplier} ${p.timespan}${p.multiplier > 1 ? "s" : ""}`; };
+const kcFavTf = () => safe(() => JSON.parse(localStorage.getItem("ic_kctf") || "null"), null) || [0, 1, 2, 11, 3, 4, 5];
+function kcJoin(out, n, monthly, gmt) {   // join n candles into one: intraday within the same trading day, months by calendar
+  if (n <= 1) return out;
+  const res = []; let cur = null, key = null, cnt = 0;
+  out.forEach((b) => {
+    const d = new Date(b.timestamp + (gmt || 0) * 1000), k = monthly ? Math.floor((d.getUTCFullYear() * 12 + d.getUTCMonth()) / n) : `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+    if (k !== key || (!monthly && cnt >= n)) { if (cur) res.push(cur); cur = { ...b }; key = k; cnt = 1; return; }
+    cur.high = Math.max(cur.high, b.high); cur.low = Math.min(cur.low, b.low); cur.close = b.close; cur.volume += b.volume || 0; cnt++;
+  });
+  if (cur) res.push(cur);
+  return res;
+}
+const kcDatafeed = {
+  async searchSymbols(q) {
+    const { data } = await sb.rpc("search_symbols", { q: String(q || "").trim() || "a" });
+    return (Array.isArray(data) ? data : []).map((r) => ({ ticker: r.symbol, shortName: plainOf(r.symbol), name: cleanName(r.name), exchange: r.exchange, pricePrecision: 2, volumePrecision: 0 }));
+  },
+  async getHistoryKLineData(symbol, period) {
+    const key = symbol.ticker + "|" + period.timespan + period.multiplier;
+    if (kc.loaded === key) return [];           // asked for older bars: we already sent everything Yahoo has
+    const [rng, itv, join] = KC_RANGE[period.timespan + period.multiplier] || ["max", "1d", 1];
+    const [{ data, error }] = await Promise.all([sb.rpc("get_candles", { sym: symbol.ticker, rng, itv }), kc.drawP]);
+    kc.loaded = key;
+    if (error || !data) { kcNote(error && /get_candles/.test(error.message) ? "The chart needs supabase/013_charts.sql (run it once in Supabase)." : "Yahoo didn't send chart data. Try again in a minute."); return []; }
+    if (data.meta) { kc.meta = data.meta; kc.metaFor = symbol.ticker; }
+    const out = [];
+    (data.t || []).forEach((ts, i) => { const o = data.o?.[i], h = data.h?.[i], l = data.l?.[i], c = data.c?.[i];
+      if ([o, h, l, c].every((v) => typeof v === "number")) out.push({ timestamp: ts * 1000, open: o, high: h, low: l, close: c, volume: data.v?.[i] || 0 }); });
+    if (join > 1) out.splice(0, out.length, ...kcJoin(out, join, period.timespan === "month", data.meta?.gmtoffset));
+    kcNote(out.length < 2 ? `Yahoo has no chart history for ${esc(kc.sym)}. <a href="${esc(tvUrl(kc.sym, symbol.ticker))}" target="_blank" rel="noopener">Open it in TradingView ↗</a>` : "");
+    if ((location.hash || "").startsWith("#/charts/")) setTimeout(() => render(false), 0);   // stats from the chart data (day range, 52 weeks)
+    return out;
+  },
+  subscribe(symbol, period, cb) {   // keep the last candle live: our cached price, once a minute
+    clearInterval(kc.sub);
+    kc.sub = setInterval(async () => {
+      if (document.hidden || !kc.chart || !(location.hash || "").startsWith("#/charts/")) return;
+      const { data } = await sb.rpc("get_quotes", { syms: [symbol.ticker] });
+      const p = Number(data?.[symbol.ticker]?.price), last = kc.chart.getDataList().at(-1);
+      if (Number.isFinite(p) && last) cb({ ...last, close: p, high: Math.max(last.high, p), low: Math.min(last.low, p) });
+    }, 60000);
+  },
+  unsubscribe() { clearInterval(kc.sub); },
+};
+function kcNote(html) {
+  if (!kc.box) return;
+  let n = kc.box.querySelector(".kcnote");
+  if (!html) { n?.remove(); return; }
+  if (!n) { n = document.createElement("div"); n.className = "kcnote"; kc.box.appendChild(n); }
+  n.innerHTML = html;
+}
+
+// ----- your settings (one row "*" in chart_drawings): indicators, favourites, own defaults, Fibonacci + templates -----
+// Starting values = what the user's TradingView uses (read 2026-11-25, see FEATURES.md).
+const FIB_FOR_WAVE = { levels: [[0, "#ffffff", 1], [0.3333, "#ffffff", 1], [0.382, "#ffffff", 1], [0.5, "#F23645", 1], [0.618, "#F23645", 1], [0.786, "#F23645", 1], [0.887, "#ffffff", 1], [1, "#ffffff", 1],
+  [1.618, "#ffffff", 1], [2.618, "#ffffff", 1], [0.236, "#F7525F", 0], [1.272, "#81C784", 0], [1.382, "#F23645", 0], [3.618, "#9C27B0", 0]],
+  trend: { on: 1, color: "#ffffff", dash: 1 }, prices: 1, pct: 1, size: 12, bg: 0 };
+const IND_DEF = {
+  TV_MACD: { params: [12, 26, 9], ext: { src: "close", osc: "EMA", sig: "EMA", show: { hist: 1, macd: 1, signal: 1, zero: 1 }, col: { h0: "#26A69A", h1: "#B2DFDB", h2: "#FFCDD2", h3: "#FF5252", macd: "#2962FF", signal: "#FF6D00", zero: "#787B86" }, w: { macd: 1, signal: 1 } } },
+  TV_RSI: { params: [14, 14, 2], ext: { src: "close", smooth: "SMA", bands: [70, 50, 30], show: { rsi: 1, ma: 1, bands: 1, fill: 1 }, col: { rsi: "#7E57C2", ma: "#F7C548", bands: "#787B86", fill: "#7E57C2" }, w: { rsi: 1, ma: 1 } } },
+  TV_VOL: { params: [20], ext: { prev: 0, showMA: 0, col: { up: "#26A69A", dn: "#EF5350", ma: "#2962FF" } } },
+  TV_CDC: { params: [12, 26], ext: { bars: 1, sig: 1 } }, TV_PVO: { params: [12, 26, 9], ext: {} }, TV_ZZ: { params: [5], ext: { labels: 1, color: "#2962FF", w: 2 } },
+  TV_RSIDIV: { params: [14, 5, 5], ext: { hidden: 0 } },
+  MA: { params: [20, 50, 200] }, EMA: { params: [9, 21] }, SMA: { params: [12, 2] }, BOLL: { params: [20, 2] }, SAR: { params: [2, 2, 20] }, KDJ: { params: [14, 3, 3] },
+  CCI: { params: [20] }, WR: { params: [14] }, OBV: { params: [30] }, DMI: { params: [14, 6] }, ROC: { params: [12, 6] }, MTM: { params: [10, 10] }, AO: { params: [5, 34] }, BIAS: { params: [6, 12, 24] },
+  TRIX: { params: [12, 9] }, PSY: { params: [12, 6] }, VR: { params: [26, 6] }, PVT: { params: [] }, AVP: { params: [] }, BBI: { params: [3, 6, 12, 24] }, BRAR: { params: [26] }, EMV: { params: [14, 9] }, CR: { params: [26, 10, 20, 40, 60] }, DMA: { params: [10, 50, 10] } };
+const IND_NAME = { TV_MACD: "MACD", TV_RSI: "Relative Strength Index", TV_VOL: "Volume", TV_CDC: "CDC ActionZone V3 2020", TV_PVO: "Percentage Volume Oscillator", TV_ZZ: "Zig Zag", TV_RSIDIV: "RSI divergence", MA: "Moving Average", EMA: "Exponential Moving Average", SMA: "Smoothed Moving Average", BOLL: "Bollinger Bands",
+  SAR: "Parabolic SAR", KDJ: "Stochastic (KDJ)", CCI: "Commodity Channel Index", WR: "Williams %R", OBV: "On Balance Volume", DMI: "Directional Movement (DMI)", ROC: "Rate of Change", MTM: "Momentum",
+  AO: "Awesome Oscillator", BIAS: "Bias", TRIX: "TRIX", PSY: "Psychological Line", VR: "Volume Ratio", PVT: "Price Volume Trend", AVP: "Average Price", BBI: "Bull and Bear Index", BRAR: "BRAR", EMV: "Ease of Movement", CR: "Energy (CR)", DMA: "Different of Moving Average" };
+const IND_CAT = { Trend: ["TV_CDC", "TV_ZZ", "MA", "EMA", "SMA", "BBI", "SAR", "DMI", "TRIX", "DMA", "AVP"], Momentum: ["TV_RSI", "TV_RSIDIV", "TV_MACD", "KDJ", "CCI", "WR", "MTM", "ROC", "AO", "BIAS", "PSY", "BRAR", "CR"], Volume: ["TV_VOL", "TV_PVO", "OBV", "PVT", "VR", "EMV"], Volatility: ["BOLL"] };
+const IND_MAIN = ["MA", "EMA", "SMA", "BOLL", "SAR", "BBI", "AVP", "TV_CDC", "TV_ZZ"];
+// labels for the Inputs tab, and on/off switches kept in ext
+const IND_INPUTS = { TV_CDC: ["Fast EMA", "Slow EMA"], TV_PVO: ["Fast length", "Slow length", "Signal length"], TV_ZZ: ["Deviation (%): smallest move that counts as a new swing"], TV_RSIDIV: ["RSI length", "Pivot lookback left", "Pivot lookback right"] };
+const IND_FLAGS = { TV_CDC: [["bars", "Colour the candles by zone"], ["sig", "Buy / Sell labels"]], TV_ZZ: [["labels", "Price and % labels"]], TV_RSIDIV: [["hidden", "Also hidden divergence"]] };
+const IND_SOON = [["EMASS", "Tell me what it is"]];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+function prefs() {
+  const ch = chOf();
+  let p = ch.prefs;
+  if (!p || !Array.isArray(p.list)) p = ch.prefs = { list: [{ name: "TV_VOL", ...clone(IND_DEF.TV_VOL) }, { name: "TV_MACD", ...clone(IND_DEF.TV_MACD) }],
+    fav: ["TV_MACD", "SAR", "TV_RSI", "KDJ", "TV_VOL"], def: {}, fib: clone(FIB_FOR_WAVE), fibT: { "FOR WAVE": clone(FIB_FOR_WAVE) }, hide: {} };
+  p.def ||= {}; p.fav ||= [];
+  if (!p.fav47) { p.fav47 = 1; ["TV_CDC", "TV_PVO", "TV_ZZ", "TV_RSIDIV"].forEach((n) => { if (!p.fav.includes(n)) p.fav.push(n); }); }   // your TradingView favourites, now built p.fib ||= clone(FIB_FOR_WAVE); p.fibT ||= { "FOR WAVE": clone(FIB_FOR_WAVE) }; p.hide ||= {};
+  return p;
+}
+let kcPrefT = null;
+function kcSavePrefs() {
+  setTimeout(ktTree, 0);
+  clearTimeout(kcPrefT);
+  kcPrefT = setTimeout(() => sb.from("chart_drawings").upsert({ user_id: state.user.id, symbol: "*", indicators: prefs(), updated_at: new Date().toISOString() }, { onConflict: "user_id,symbol" })
+    .then(({ error }) => { if (error) toast(`Chart settings not saved: ${esc(error.message)}`); }), 600);
+}
+
+// ----- custom indicators that work like TradingView's (registered once) -----
+const srcOf = (k, s) => (s === "open" ? k.open : s === "high" ? k.high : s === "low" ? k.low : s === "hl2" ? (k.high + k.low) / 2 : s === "hlc3" ? (k.high + k.low + k.close) / 3 : s === "ohlc4" ? (k.open + k.high + k.low + k.close) / 4 : k.close);
+const maBy = (t, a, n) => (t === "SMA" ? sma(a, n) : t === "RMA" ? rma(a, n) : t === "WMA" ? wma(a, n) : ema(a, n));
+// price tag on the right price scale, filled with the drawing's colour (text dark or white, whichever reads better)
+const ktInk = (hex) => { const h = String(hex || "").replace("#", ""); if (h.length < 6) return "#fff"; const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#131722" : "#fff"; };
+const ktAxisTag = (y, price, color, precision) => ({ type: "text", ignoreEvent: true, attrs: { x: 0, y, text: Number(price).toFixed(precision?.price ?? 2), align: "left", baseline: "middle" },
+  styles: { style: "fill", color: ktInk(color), size: 11.5, family: "Inter, sans-serif", weight: 700, backgroundColor: color, borderColor: color, borderSize: 1, borderRadius: 2, paddingLeft: 4, paddingRight: 4, paddingTop: 3, paddingBottom: 3 } });
+function kcRegister() {
+  const K = window.klinecharts;
+  const tip = ({ indicator, defaultStyles }) => {   // name + inputs, then hide · settings · remove (our ids, so Pro's own handler ignores them)
+    const ic = defaultStyles.tooltip.icons || [], mk = (i, id) => (ic[i] ? { ...ic[i], id } : null);
+    const icons = [indicator.visible ? mk(1, "ic_hide") : mk(0, "ic_show"), mk(2, "ic_set"), mk(3, "ic_del")].filter(Boolean);
+    return { name: indicator.shortName, calcParamsText: indicator.calcParams.length ? ` ${indicator.calcParams.join(" ")}` : "", icons, values: null };
+  };
+  K.registerIndicator({
+    name: "TV_MACD", shortName: "MACD", calcParams: [12, 26, 9], precision: 2, extendData: clone(IND_DEF.TV_MACD.ext),
+    figures: [
+      { key: "hist", title: "Hist: ", type: "bar", baseValue: 0, styles: (d, ind) => { const c = ind.extendData.col, v = d.current?.indicatorData?.hist, p = d.prev?.indicatorData?.hist; if (v === undefined) return {};
+        const col = v >= 0 ? (p === undefined || v >= p ? c.h0 : c.h1) : (p === undefined || v > p ? c.h2 : c.h3); return { style: "fill", color: col, borderColor: col }; } },
+      { key: "macd", title: "MACD: ", type: "line" }, { key: "signal", title: "Signal: ", type: "line" }],
+    calc: (list, ind) => {
+      const [f, s, g] = ind.calcParams, x = ind.extendData, a = list.map((k) => srcOf(k, x.src));
+      const fa = maBy(x.osc, a, f), sa = maBy(x.osc, a, s), m = fa.map((v, i) => (v === null || sa[i] === null ? null : v - sa[i]));
+      const sg0 = maBy(x.sig, m.map((v) => v ?? 0), g), first = m.findIndex((v) => v !== null), sg = sg0.map((v, i) => (i < first + g - 1 ? null : v));
+      return m.map((v, i) => { const o = {}; if (v === null) return o; if (x.show.macd) o.macd = v; if (sg[i] !== null) { if (x.show.signal) o.signal = sg[i]; if (x.show.hist) o.hist = v - sg[i]; } return o; });
+    },
+    draw: ({ ctx, indicator, bounding, yAxis }) => { const x = indicator.extendData; if (x.show.zero) { const y = yAxis.convertToPixel(0); ctx.save(); ctx.strokeStyle = x.col.zero; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(bounding.width, y); ctx.stroke(); ctx.restore(); } return false; },
+    createTooltipDataSource: tip,
+  });
+  K.registerIndicator({
+    name: "TV_RSI", shortName: "RSI", calcParams: [14, 14, 2], precision: 2, minValue: 0, maxValue: 100, extendData: clone(IND_DEF.TV_RSI.ext),
+    figures: [{ key: "rsi", title: "RSI: ", type: "line" }, { key: "ma", title: "MA: ", type: "line" }, { key: "bbu", title: "BB+: ", type: "line" }, { key: "bbl", title: "BB−: ", type: "line" }],
+    calc: (list, ind) => {
+      const [n, sn, sd] = ind.calcParams, x = ind.extendData, r = rsiOf(list.map((k) => srcOf(k, x.src)), n);
+      const smt = x.smooth === "None" ? [] : maBy(x.smooth === "SMA + Bollinger Bands" ? "SMA" : x.smooth, r.map((v) => v ?? 50), sn);
+      return r.map((v, i) => { const o = {}; if (v === null) return o; if (x.show.rsi) o.rsi = v; if (smt[i] !== null && smt[i] !== undefined && i >= n + sn && x.show.ma) { o.ma = smt[i];
+        if (x.smooth === "SMA + Bollinger Bands") { const w = r.slice(i - sn + 1, i + 1), mean = smt[i], sdv = Math.sqrt(w.reduce((a, z) => a + (z - mean) ** 2, 0) / sn); o.bbu = mean + sd * sdv; o.bbl = mean - sd * sdv; } } return o; });
+    },
+    draw: ({ ctx, indicator, bounding, yAxis }) => {
+      const x = indicator.extendData, [u, mid, lo] = x.bands, yu = yAxis.convertToPixel(u), yl = yAxis.convertToPixel(lo), ym = yAxis.convertToPixel(mid);
+      ctx.save();
+      if (x.show.fill) { ctx.globalAlpha = 0.1; ctx.fillStyle = x.col.fill; ctx.fillRect(0, yu, bounding.width, yl - yu); ctx.globalAlpha = 1; }
+      if (x.show.bands) { ctx.strokeStyle = x.col.bands; [[yu, [4, 4]], [ym, [1, 4]], [yl, [4, 4]]].forEach(([y, d]) => { ctx.setLineDash(d); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(bounding.width, y); ctx.stroke(); }); }
+      ctx.restore(); return false;
+    },
+    createTooltipDataSource: tip,
+  });
+  K.registerIndicator({
+    // Volume like TradingView: bars along the bottom of the price chart (bottom 20%, own scale), not a separate panel.
+    // No figures -> the volume numbers never stretch the price scale; we draw the bars ourselves.
+    name: "TV_VOL", shortName: "Vol", calcParams: [20], precision: 0, extendData: clone(IND_DEF.TV_VOL.ext), figures: [],
+    calc: (list, ind) => { const v = list.map((k) => k.volume || 0), m = sma(v, ind.calcParams[0] || 20); return v.map((x, i) => ({ vol: x, ma: m[i] })); },
+    draw: ({ ctx, kLineDataList, indicator, visibleRange, bounding, barSpace, xAxis }) => {
+      const x = indicator.extendData, res = indicator.result || [], H = bounding.height * 0.2, base = bounding.height;
+      let mx = 0; for (let i = visibleRange.from; i < visibleRange.to; i++) mx = Math.max(mx, res[i]?.vol || 0);
+      if (!mx) return true;
+      const w = Math.max(1, barSpace.gapBar), pts = [];
+      for (let i = visibleRange.from; i < visibleRange.to; i++) {
+        const k = kLineDataList[i], p = kLineDataList[i - 1], v = res[i]?.vol || 0; if (!k) continue;
+        const up = x.prev && p ? k.close >= p.close : k.close >= k.open, cx = xAxis.convertToPixel(i), h = (v / mx) * H;
+        ctx.fillStyle = (up ? x.col.up : x.col.dn) + "80"; ctx.fillRect(cx - w / 2, base - h, w, h);
+        if (x.showMA && res[i]?.ma !== null && res[i]?.ma !== undefined) pts.push([cx, base - (res[i].ma / mx) * H]);
+      }
+      if (pts.length > 1) { ctx.strokeStyle = x.col.ma; ctx.lineWidth = 1; ctx.beginPath(); pts.forEach(([a, b], j) => (j ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.stroke(); }
+      return true;
+    },
+    createTooltipDataSource: (d) => {
+      const t = tip(d), i = d.crosshair?.dataIndex ?? (d.indicator.result || []).length - 1, r = d.indicator.result?.[i], x = d.indicator.extendData;
+      const k = d.kLineDataList[i], p = d.kLineDataList[i - 1], up = k && (x.prev && p ? k.close >= p.close : k.close >= k.open);
+      const vals = r ? [{ title: { text: "", color: "#888" }, value: { text: Number(r.vol || 0).toLocaleString("en-US"), color: up ? x.col.up : x.col.dn } }] : [];
+      if (r && x.showMA && r.ma !== null && r.ma !== undefined) vals.push({ title: { text: "MA: ", color: "#888" }, value: { text: Math.round(r.ma).toLocaleString("en-US"), color: x.col.ma } });
+      return { ...t, values: vals };
+    },
+  });
+  // ===== round 47: CDC ActionZone V3, Percentage Volume Oscillator, Zig Zag, RSI divergence =====
+  const LBL = (ctx, x, y, text, bg, fg = "#fff", up = true) => {   // small rounded label with an arrow tip
+    ctx.font = "700 11px Inter, sans-serif"; const w = ctx.measureText(text).width + 10, h = 17, yy = up ? y - h - 5 : y + 5;
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - w / 2, yy, w, h, 3) : ctx.rect(x - w / 2, yy, w, h); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x - 4, up ? yy + h : yy); ctx.lineTo(x + 4, up ? yy + h : yy); ctx.lineTo(x, up ? yy + h + 4 : yy - 4); ctx.fill();
+    ctx.fillStyle = fg; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x, yy + h / 2 + 0.5);
+  };
+  // CDC ActionZone V3 2020 (piriya33): AP = EMA(OHLC4, 2); Fast = EMA(AP, 12); Slow = EMA(AP, 26); zone colours + Buy / Sell on the cross
+  K.registerIndicator({
+    name: "TV_CDC", shortName: "CDC ActionZone", calcParams: [12, 26], precision: 2, extendData: clone(IND_DEF.TV_CDC.ext),
+    figures: [{ key: "fast", title: "Fast: ", type: "line" }, { key: "slow", title: "Slow: ", type: "line" }],
+    styles: { lines: [LN("#FF5252", 1), LN("#2962FF", 1)] },
+    calc: (list, ind) => {
+      const src = list.map((k) => (k.open + k.high + k.low + k.close) / 4), ap = ema(src, 2).map((v, i) => v ?? src[i]), f = ema(ap, ind.calcParams[0]), s = ema(ap, ind.calcParams[1]);
+      return list.map((_, i) => {
+        if (f[i] === null || s[i] === null || ap[i] === null) return {};
+        const bull = f[i] > s[i], p = ap[i], zone = bull ? (p > f[i] ? "g" : p > s[i] ? "y" : "o") : (p < f[i] ? "r" : p < s[i] ? "b" : "lb");
+        const pb = i && f[i - 1] !== null && s[i - 1] !== null ? f[i - 1] > s[i - 1] : bull;
+        return { fast: f[i], slow: s[i], zone, bull, sig: bull && !pb ? "buy" : !bull && pb ? "sell" : null };
+      });
+    },
+    draw: ({ ctx, kLineDataList, indicator, visibleRange, barSpace, xAxis, yAxis }) => {
+      const x = indicator.extendData, res = indicator.result || [], Z = { g: "#00C853", y: "#FFD600", o: "#FF9100", r: "#FF1744", b: "#2962FF", lb: "#00B8D4" };
+      for (let i = Math.max(1, visibleRange.from); i < visibleRange.to; i++) {   // shade between the lines: green = bullish, red = bearish
+        const a = res[i - 1], b = res[i]; if (!a?.fast || !b?.fast) continue;
+        const x0 = xAxis.convertToPixel(i - 1), x1 = xAxis.convertToPixel(i);
+        ctx.fillStyle = b.bull ? "rgba(0,200,83,0.12)" : "rgba(255,23,68,0.12)";
+        ctx.beginPath(); ctx.moveTo(x0, yAxis.convertToPixel(a.fast)); ctx.lineTo(x1, yAxis.convertToPixel(b.fast)); ctx.lineTo(x1, yAxis.convertToPixel(b.slow)); ctx.lineTo(x0, yAxis.convertToPixel(a.slow)); ctx.closePath(); ctx.fill();
+      }
+      const w = Math.max(1, barSpace.gapBar), hw = w / 2;
+      for (let i = visibleRange.from; i < visibleRange.to; i++) {
+        const k = kLineDataList[i], r = res[i]; if (!k || !r?.zone) continue;
+        const cx = xAxis.convertToPixel(i);
+        if (x.bars) {   // colour the candles by zone, like the script's barcolor()
+          const c = Z[r.zone], yo = yAxis.convertToPixel(k.open), yc = yAxis.convertToPixel(k.close);
+          ctx.fillStyle = c; ctx.fillRect(cx - 0.5, yAxis.convertToPixel(k.high), 1, yAxis.convertToPixel(k.low) - yAxis.convertToPixel(k.high));
+          ctx.fillRect(cx - hw, Math.min(yo, yc), w, Math.max(1, Math.abs(yc - yo)));
+        }
+        if (x.sig && r.sig) r.sig === "buy" ? LBL(ctx, cx, yAxis.convertToPixel(k.low), "Buy", "#00C853", "#fff", false) : LBL(ctx, cx, yAxis.convertToPixel(k.high), "Sell", "#FF1744", "#fff", true);
+      }
+      return false;
+    },
+    createTooltipDataSource: tip,
+  });
+  // Percentage Volume Oscillator: (EMA(vol, fast) - EMA(vol, slow)) / EMA(vol, slow) x 100, signal EMA, histogram
+  K.registerIndicator({
+    name: "TV_PVO", shortName: "PVO", calcParams: [12, 26, 9], precision: 2, extendData: clone(IND_DEF.TV_PVO.ext),
+    figures: [{ key: "hist", title: "Hist: ", type: "bar", baseValue: 0, styles: (d) => { const v = d.current?.indicatorData?.hist, p = d.prev?.indicatorData?.hist; if (v === undefined) return {};
+        const c = v >= 0 ? (p !== undefined && v < p ? "#B2DFDB" : "#26A69A") : (p !== undefined && v > p ? "#FFCDD2" : "#FF5252"); return { style: "fill", color: c, borderColor: c }; } },
+      { key: "pvo", title: "PVO: ", type: "line" }, { key: "sig", title: "Signal: ", type: "line" }],
+    styles: { lines: [LN("#2962FF", 1), LN("#FF6D00", 1)] },
+    calc: (list, ind) => {
+      const [f, s, g] = ind.calcParams, v = list.map((k) => k.volume || 0), ef = ema(v, f), es = ema(v, s);
+      const pvo = v.map((_, i) => (ef[i] !== null && es[i] ? ((ef[i] - es[i]) / es[i]) * 100 : null)), first = pvo.findIndex((x) => x !== null);
+      const sg = first < 0 ? [] : [...Array(first).fill(null), ...ema(pvo.slice(first), g)];
+      return v.map((_, i) => (pvo[i] === null ? {} : { pvo: pvo[i], ...(sg[i] !== null && sg[i] !== undefined ? { sig: sg[i], hist: pvo[i] - sg[i] } : {}) }));
+    },
+    createTooltipDataSource: tip,
+  });
+  // Zig Zag: joins swing highs and lows that are at least "deviation %" apart and "depth" bars apart; labels price + % move
+  const zigzag = (list, dev) => {   // dev = 0.05 for 5%: a swing ends when price turns back by that much
+    const piv = []; if (!list.length) return { piv, last: [0, 0] };
+    let dir = 0, hi = list[0].high, hiI = 0, lo = list[0].low, loI = 0;
+    for (let i = 1; i < list.length; i++) {
+      const k = list[i];
+      if (dir === 0) {
+        if (k.high > hi) { hi = k.high; hiI = i; } if (k.low < lo) { lo = k.low; loI = i; }
+        if (hi >= lo * (1 + dev)) { if (hiI > loI) { piv.push([loI, lo]); dir = 1; } else { piv.push([hiI, hi]); dir = -1; } }
+        continue;
+      }
+      if (dir === 1) { if (k.high >= hi) { hi = k.high; hiI = i; } else if (k.low <= hi * (1 - dev)) { piv.push([hiI, hi]); dir = -1; lo = k.low; loI = i; } }
+      else { if (k.low <= lo) { lo = k.low; loI = i; } else if (k.high >= lo * (1 + dev)) { piv.push([loI, lo]); dir = 1; hi = k.high; hiI = i; } }
+    }
+    return { piv, last: dir === 1 ? [hiI, hi] : [loI, lo] };
+  };
+  K.registerIndicator({
+    name: "TV_ZZ", shortName: "Zig Zag", calcParams: [5], precision: 2, extendData: clone(IND_DEF.TV_ZZ.ext), figures: [],
+    calc: (list, ind) => { const z = zigzag(list, (ind.calcParams[0] || 5) / 100); ind.extendData._z = z; return list.map(() => ({})); },
+    draw: ({ ctx, indicator, visibleRange, xAxis, yAxis }) => {
+      const x = indicator.extendData, z = x._z; if (!z) return true;
+      const pts = [...z.piv, z.last], col = x.color || "#2962FF";
+      ctx.strokeStyle = col; ctx.lineWidth = x.w || 2; ctx.beginPath();
+      let started = false;
+      pts.forEach(([i, v], j) => { if (j && pts[j - 1][0] > visibleRange.to + 50) return; const px = xAxis.convertToPixel(i), py = yAxis.convertToPixel(v); if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py); });
+      ctx.stroke();
+      if (x.labels) pts.forEach(([i, v], j) => {
+        if (!j || i < visibleRange.from || i > visibleRange.to) return;
+        const pv = pts[j - 1][1], up = v > pv, ch = ((v - pv) / pv) * 100;
+        LBL(ctx, xAxis.convertToPixel(i), yAxis.convertToPixel(v), `${Number(v).toFixed(2)} (${ch > 0 ? "+" : ""}${ch.toFixed(1)}%)`, up ? "#089981" : "#F23645", "#fff", up);
+      });
+      return true;
+    },
+    createTooltipDataSource: (d) => ({ ...tip(d), values: [] }),
+  });
+  // RSI with divergence (TradingView's Divergence rules: pivots 5 left / 5 right, 5-60 bars apart)
+  K.registerIndicator({
+    name: "TV_RSIDIV", shortName: "RSI divergence", calcParams: [14, 5, 5], precision: 2, minValue: 0, maxValue: 100, extendData: clone(IND_DEF.TV_RSIDIV.ext),
+    figures: [{ key: "rsi", title: "RSI: ", type: "line" }],
+    styles: { lines: [LN("#7E57C2", 1)] },
+    calc: (list, ind) => {
+      const [n, L, R] = ind.calcParams, c = list.map((k) => k.close), r = rsiOf(c, n), out = r.map((v) => (v === null || v === undefined ? {} : { rsi: v }));
+      const isLow = (i) => { for (let k = i - L; k <= i + R; k++) if (k !== i && (r[k] === null || r[k] === undefined || r[k] < r[i])) return false; return r[i] !== null; };
+      const isHigh = (i) => { for (let k = i - L; k <= i + R; k++) if (k !== i && (r[k] === null || r[k] === undefined || r[k] > r[i])) return false; return r[i] !== null; };
+      const div = []; let pl = null, ph = null;
+      for (let i = L; i < list.length - R; i++) {
+        if (isLow(i)) { if (pl !== null && i - pl >= 5 && i - pl <= 60) {
+            if (r[i] > r[pl] && list[i].low < list[pl].low) div.push({ a: pl, b: i, t: "bull" });
+            else if (ind.extendData.hidden && r[i] < r[pl] && list[i].low > list[pl].low) div.push({ a: pl, b: i, t: "hbull" }); } pl = i; }
+        if (isHigh(i)) { if (ph !== null && i - ph >= 5 && i - ph <= 60) {
+            if (r[i] < r[ph] && list[i].high > list[ph].high) div.push({ a: ph, b: i, t: "bear" });
+            else if (ind.extendData.hidden && r[i] > r[ph] && list[i].high < list[ph].high) div.push({ a: ph, b: i, t: "hbear" }); } ph = i; }
+      }
+      ind.extendData._div = div;
+      return out;
+    },
+    draw: ({ ctx, indicator, visibleRange, xAxis, yAxis, bounding }) => {
+      const x = indicator.extendData, res = indicator.result || [];
+      [70, 30].forEach((v) => { const y = yAxis.convertToPixel(v); ctx.strokeStyle = "rgba(120,123,134,0.6)"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(bounding.width, y); ctx.stroke(); });
+      ctx.setLineDash([]);
+      (x._div || []).forEach(({ a, b, t }) => {
+        if (b < visibleRange.from || a > visibleRange.to) return;
+        const bull = t === "bull" || t === "hbull", col = bull ? "#089981" : "#F23645", x0 = xAxis.convertToPixel(a), x1 = xAxis.convertToPixel(b), y0 = yAxis.convertToPixel(res[a].rsi), y1 = yAxis.convertToPixel(res[b].rsi);
+        ctx.strokeStyle = col; ctx.lineWidth = 2; if (t[0] === "h") ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+        LBL(ctx, x1, y1, t === "bull" ? "Bull" : t === "bear" ? "Bear" : t === "hbull" ? "H Bull" : "H Bear", col, "#fff", !bull);
+      });
+      return false;
+    },
+    createTooltipDataSource: tip,
+  });
+  // Compare lines: TV_CMP1..5 (values = our close at the first candle on screen x their % change, so the % scale lines up)
+  for (let n = 1; n <= 5; n++) K.registerIndicator({
+    name: `TV_CMP${n}`, shortName: "", calcParams: [], precision: 2, figures: [{ key: "v", title: "", type: "line" }],
+    calc: (list, ind) => {
+      const x = ind.extendData || {}, cl = x.closes || []; let b = Math.max(0, Math.min(list.length - 1, x.base || 0));
+      while (b < list.length - 1 && (cl[b] === null || cl[b] === undefined)) b++;
+      const ref = cl[b], mref = list[b]?.close;
+      return list.map((_, i) => (cl[i] === null || cl[i] === undefined || !ref || !mref ? {} : { v: (mref * cl[i]) / ref }));
+    },
+    createTooltipDataSource: ({ indicator, crosshair }) => {
+      const x = indicator.extendData || {}, cl = x.closes || [], i = crosshair?.dataIndex ?? cl.length - 1; let b = x.base || 0;
+      while (b < cl.length - 1 && (cl[b] === null || cl[b] === undefined)) b++;
+      const v = cl[i], pc = v && cl[b] ? (v / cl[b] - 1) * 100 : null;
+      return { name: x.sym || "", calcParamsText: "", icons: [], values: v ? [{ title: { text: "", color: x.color }, value: { text: `${fmtPx(v)}${pc === null ? "" : ` (${pc > 0 ? "+" : ""}${pc.toFixed(2)}%)`}`, color: x.color } }] : [] };
+    },
+  });
+  // Fibonacci retracement with your levels, colours and labels (replaces the library's fixed one; settings: double-click it)
+  K.registerOverlay({
+    name: "fibonacciLine", totalStep: 3, needDefaultPointFigure: true, needDefaultXAxisFigure: true, needDefaultYAxisFigure: false,
+    createYAxisFigures: ({ coordinates, overlay, precision }) => {
+      if (coordinates.length < 2 || overlay.points.length < 2) return [];
+      const f = overlay.extendData || prefs().fib, [a, b] = coordinates, p1 = overlay.points[0].value, p2 = overlay.points[1].value;
+      if (f.axis === 0 || f.axis === false) return [];
+      return (f.levels || []).filter((l) => l[2]).map(([lv, col]) => ktAxisTag(b.y + (a.y - b.y) * lv, p2 + (p1 - p2) * lv, col, precision));
+    },
+    createPointFigures: ({ coordinates, overlay, precision }) => {
+      if (coordinates.length < 2) return [];
+      const f = overlay.extendData || prefs().fib, [a, b] = coordinates, p1 = overlay.points[0].value, p2 = overlay.points[1].value;
+      const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x), out = [];
+      if (f.trend?.on) out.push({ type: "line", attrs: { coordinates: [a, b] }, styles: { color: f.trend.color, style: f.trend.dash ? "dashed" : "solid", dashedValue: [5, 4] } });
+      (f.levels || []).filter((l) => l[2]).forEach(([lv, col]) => {
+        const price = p2 + (p1 - p2) * lv, y = b.y + (a.y - b.y) * lv;
+        out.push({ type: "line", attrs: { coordinates: [{ x: x1, y }, { x: x2, y }] }, styles: { color: col } });
+        const txt = `${f.pct ? `${+(lv * 100).toFixed(2)}%` : lv}${f.prices ? ` (${Number(price).toFixed(precision.price)})` : ""}`;
+        out.push({ type: "text", ignoreEvent: true, attrs: { x: (x1 + x2) / 2, y: y - 2, text: txt, align: "center", baseline: "bottom" }, styles: { color: col, size: f.size || 12, family: "Inter, sans-serif", backgroundColor: "transparent", paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0 } });
+      });
+      return out;
+    },
+  });
+}
+
+// ----- active indicators on the chart -----
+const isMain = (n) => IND_MAIN.includes(n);
+const LN = (color, size = 1) => ({ style: "solid", smooth: false, size, color, dashedValue: [2, 2] });   // a full line style (the library needs every field)
+function kcIndValue(e) {
+  const st = e.style || {};
+  const x = e.ext;
+  const lines = e.name === "TV_MACD" ? [LN(x.col.macd, x.w.macd), LN(x.col.signal, x.w.signal)] : e.name === "TV_RSI" ? [LN(x.col.rsi, x.w.rsi), LN(x.col.ma, x.w.ma), LN(x.col.ma), LN(x.col.ma)]
+    : e.name === "TV_VOL" ? [LN(x.col.ma)] : st.lines ? st.lines.map((l) => LN(l.color, l.size || 1)) : null;
+  return { name: e.name, calcParams: e.params, ...(x ? { extendData: clone(x) } : {}), ...(lines ? { styles: { lines } } : {}) };
+}
+function kcAddInd(e, save = true) {
+  const c = kc.chart; if (!c) return;
+  const main = isMain(e.name) || e.name === "TV_VOL", h = 110;   // Volume sits on the price chart, like TradingView
+  const paneId = c.createIndicator(kcIndValue(e), main, main ? { id: "candle_pane" } : { height: h });
+  if (!paneId) return;
+  kc.active.push({ ...e, paneId });
+  kcVisApply();
+  if (save) { prefs().list = kc.active.map(({ paneId: _, ...x }) => x); kcSavePrefs(); }
+}
+function kcRemoveInd(name) {
+  const i = kc.active.findIndex((a) => a.name === name); if (i < 0) return;
+  kc.chart.removeIndicator(kc.active[i].paneId, name); kc.active.splice(i, 1);
+  prefs().list = kc.active.map(({ paneId: _, ...x }) => x); kcSavePrefs();
+}
+function kcUpdateInd(name, e) {
+  const a = kc.active.find((x) => x.name === name); if (!a) return;
+  Object.assign(a, e);
+  kc.chart.overrideIndicator({ ...kcIndValue(a) }, a.paneId);
+  kcVisApply();
+  prefs().list = kc.active.map(({ paneId: _, ...x }) => x); kcSavePrefs();
+}
+function kcVisApply() {   // Visibility tab: which candle sizes an indicator shows on
+  const pt = KC_PERIODS[kc.period ?? 3]?.text;
+  kc.active.forEach((a) => kc.chart.overrideIndicator({ name: a.name, visible: !(a.hideOn || []).includes(pt) && !a.hidden }, a.paneId));
+}
+function kcInitInds() {
+  if (kc.indFor === kc.chart) return;
+  kc.indFor = kc.chart; kc.active = [];
+  prefs().list.forEach((e) => kcAddInd(e, false));
+}
+
+// ----- saving drawings + undo / redo -----
+const kcPlain = (o) => ({ name: o.name, groupId: o.groupId, lock: o.lock, visible: true, extendData: o.extendData, styles: o.styles,
+  points: (o.points || []).map((p) => ({ timestamp: p.timestamp, value: p.value })), ...(kc.ov.get(o.id)?.ui ? { ui: kc.ov.get(o.id).ui } : {}) });
+function kcWrap(v) {
+  const o = typeof v === "string" ? { name: v } : { ...v };
+  if (o.name === "fibonacciLine" && !o.extendData) o.extendData = clone(prefs().fib);
+  const keep = (e) => { if (!kc.restoring && e?.overlay) { if (!kc.ov.has(e.overlay.id)) { kc.hist.push({ t: "add", id: e.overlay.id }); kc.redo = []; } kc.ov.set(e.overlay.id, kcPlain(e.overlay)); kcSave(); } return false; };
+  const chain = (f, g) => (e) => { const r = f ? f(e) : false; g(e); return r; };
+  o.onDrawEnd = chain(o.onDrawEnd, (e) => { keep(e); ktDone(e?.overlay); });
+  o.onDrawing = chain(o.onDrawing, (e) => { const h = KT_HINT[e?.overlay?.name]; const n = (e?.overlay?.points || []).length; if (h && h[n - 1]) ktTip(h[n - 1]); });
+  o.onPressedMoveEnd = chain(o.onPressedMoveEnd, keep);
+  o.onRemoved = chain(o.onRemoved, (e) => { if (!kc.restoring && e?.overlay && kc.ov.has(e.overlay.id)) { if (!kc.undoing) { kc.hist.push({ t: "del", data: kc.ov.get(e.overlay.id) }); kc.redo = []; } kc.ov.delete(e.overlay.id); if (kc.sel === e.overlay.id) kc.sel = null; kcSave(); ktFloat(); } });
+  o.onSelected = chain(o.onSelected, (e) => { kc.sel = e?.overlay?.id || null; ktFloat(); });
+  o.onDeselected = chain(o.onDeselected, (e) => { if (kc.sel === e?.overlay?.id) kc.sel = null; setTimeout(ktFloat, 0); });
+  o.onDoubleClick = chain(o.onDoubleClick, (e) => { const ov = e?.overlay; if (!ov) return; kc.sel = ov.id; if (ov.name === "fibonacciLine") fibWindow(ov.id); else ktSettings(ov.id, ov.name === "tvText" ? "text" : "style"); });
+  return o;
+}
+function kcAddDone(v) {   // a drawing made in one go (right-click "horizontal line here"): record + save it
+  const id = kc.chart.createOverlay(v);
+  const ov = id && kc.chart.getOverlayById(id);
+  if (ov) { kc.ov.set(id, kcPlain(ov)); kc.hist.push({ t: "add", id }); kc.redo = []; kcSave(); }
+}
+function kcUndo(redo = false) {
+  const st = redo ? kc.redo : kc.hist, a = st.pop(); if (!a || !kc.chart) return;
+  kc.undoing = true;
+  try {
+    if (a.t === "edit") { const now = clone(kc.ov.get(a.id)); if (now) { ktApply(a.id, a.before); (redo ? kc.hist : kc.redo).push({ t: "edit", id: a.id, before: now }); } }
+    else if (a.t === "add") { const data = kc.ov.get(a.id); kc.chart.removeOverlay(a.id); kc.ov.delete(a.id); (redo ? kc.hist : kc.redo).push({ t: "del", data }); }
+    else { kc.restoring = true; const id = kc.chart.createOverlay({ ...a.data }); kc.restoring = false; if (id) { kc.ov.set(id, a.data); (redo ? kc.hist : kc.redo).push({ t: "add", id }); } }
+  } finally { kc.undoing = false; kc.restoring = false; }
+  kcSave();
+}
+function kcHook(c) {
+  kc.chart = c; kc.indFor = null;
+  const co = c.createOverlay.bind(c), an = c.applyNewData.bind(c);
+  c.createOverlay = (v, pane) => co(Array.isArray(v) ? v.map(kcWrap) : kcWrap(v), pane);
+  c.applyNewData = (d, more, cb) => { an(d, more, cb); if (d?.length) { kcInitInds(); kcRestore(); if (kc.pendingBars) setTimeout(kcZoom, 30); if (cmpList().length) setTimeout(kcCmpApply, 0); } };
+  c.subscribeAction("onTooltipIconClick", (d) => {
+    const n = d?.indicatorName, a = kc.active.find((x) => x.name === n); if (!a) return;
+    if (d.iconId === "ic_del") kcRemoveInd(n);
+    else if (d.iconId === "ic_set") indWindow(n);
+    else if (d.iconId === "ic_hide" || d.iconId === "ic_show") { a.hidden = d.iconId === "ic_hide"; kcVisApply(); prefs().list = kc.active.map(({ paneId: _, ...x }) => x); kcSavePrefs(); }
+  });
+  let navT = 0; const nav = () => { kcRangeOff(); if (!navT) navT = setTimeout(() => { navT = 0; kcNavState(); }, 120); };
+  c.subscribeAction("onZoom", nav); c.subscribeAction("onScroll", nav);
+  let cmpT = 0; c.subscribeAction("onVisibleRangeChange", () => { clearTimeout(cmpT); cmpT = setTimeout(kcCmpRebase, 120); });
+  c.subscribeAction("onCrosshairChange", (d) => { const p = d?.kLineData; if (p && d.y !== undefined) { const v = c.convertFromPixel([{ y: d.y }], { paneId: "candle_pane" })?.[0]?.value; kc.lastPrice = Number.isFinite(v) ? v : p.close; } });
+}
+function kcRestore() {
+  const c = kc.chart, t = kc.sym;
+  if (!c || kc.restoredFor === t) return;
+  kc.restoredFor = t; kc.restoring = true; kc.hist = []; kc.redo = [];
+  try {
+    c.removeOverlay({ groupId: "drawing_tools" }); kc.ov.clear();
+    (chOf().draw[t] || []).forEach((o) => { const id = c.createOverlay({ ...o }); if (id) kc.ov.set(id, o); });
+    ktApplyVis();
+  } finally { kc.restoring = false; }
+}
+function kcSave() {
+  const t = kc.sym; clearTimeout(kc.saveT);
+  kc.ov.forEach((p) => { if (p.ui?.alert?.on) { const a = ktAlertState(p); if (a && a.h !== p.ui.alert.h) p.ui = { ...p.ui, alert: a }; } });
+  ktTree();
+  kc.saveT = setTimeout(async () => {
+    const list = [...kc.ov.values()]; chOf().draw[t] = list;
+    const { error } = await sb.from("chart_drawings").upsert({ user_id: state.user.id, symbol: t, overlays: list, updated_at: new Date().toISOString() }, { onConflict: "user_id,symbol" });
+    if (error) toast(`Drawing not saved: ${esc(/chart_drawings/.test(error.message) ? "run supabase/013_charts.sql first" : error.message)}`);
+  }, 700);
+}
+const kcTheme = () => (isDark() ? "dark" : "light");
+function kcStyle() {   // site colours + Inter (the library asks for Helvetica Neue, which Windows doesn't have -> serif)
+  const up = "#089981", dn = "#F23645", F = "Inter, system-ui, sans-serif", t = { family: F };   // TradingView's candle colours, as on your TradingView
+  kc.pro?.setStyles({
+    candle: { type: kc.ctype, bar: { upColor: up, downColor: dn, noChangeColor: "#888", upBorderColor: up, downBorderColor: dn, noChangeBorderColor: "#888", upWickColor: up, downWickColor: dn, noChangeWickColor: "#888" },
+      area: { lineColor: "#2962FF", backgroundColor: [{ offset: 0, color: "rgba(41,98,255,.02)" }, { offset: 1, color: "rgba(41,98,255,.22)" }] },
+      priceMark: { high: { textFamily: F }, low: { textFamily: F }, last: { upColor: up, downColor: dn, text: t } }, tooltip: { text: t } },
+    indicator: { lastValueMark: { show: true, text: t }, tooltip: { text: t } },
+    yAxis: { type: kc.log ? "log" : kc.pct ? "percentage" : "normal", tickText: t }, xAxis: { tickText: t }, crosshair: { horizontal: { text: t }, vertical: { text: t } },
+    overlay: { text: t, rectText: t } });
+}
+function kcZoom() {   // range buttons: show the last N candles
+  const c = kc.chart, n = kc.pendingBars; kc.pendingBars = 0;
+  if (!c || !n) return;
+  const w = (kc.box?.clientWidth || 900) - 110, len = c.getDataList().length, bars = Math.min(n, len);
+  kc.zooming = true; c.setBarSpace(Math.max(1, Math.min(40, w / Math.max(10, bars)))); c.scrollToRealTime(); kcAutoY(); setTimeout(() => { kc.zooming = false; kcNavState(); }, 120);
+}
+function kcSetPeriod(i, keepRange) {
+  if (!kc.pro) return;
+  if (!keepRange) kc.range = null;
+  if (i === kc.period) { if (kc.pendingBars) kcZoom(); render(false); return; }
+  kc.period = i; kc.loaded = ""; kc.pro.setPeriod(KC_PERIODS[i]); kcVisApply(); ktApplyVis(); ktTree(); render(false);
+}
+function kcRangeClick(l) {
+  const r = l === "10Y" ? ["10Y", 5, 120] : KC_RNG.find((x) => x[0] === l); if (!r) return;
+  kc.range = l;
+  let bars = r[2];
+  if (l === "YTD") { const d0 = new Date(new Date().getFullYear(), 0, 1); bars = Math.max(5, Math.round((Date.now() - d0) / 864e5 * 5 / 7)); }
+  kc.pendingBars = bars; kcSetPeriod(r[1], true);
+}
+async function kcMount(t) {
+  const host = document.getElementById("kchost");
+  if (!host) return;
+  if (!kc.box) {
+    kc.box = document.createElement("div"); kc.box.className = "kcbox";
+    kc.box.addEventListener("contextmenu", kcMenu);
+    kc.box.insertAdjacentHTML("beforeend", `<div class="kctools" role="toolbar" aria-label="Drawing tools"></div><div class="kttip" hidden></div><div class="ktfloat" hidden></div><div class="ktree" hidden></div>`);
+    kc.box.querySelector(".ktree").addEventListener("click", ktTreeClick);
+    ["mousedown", "pointerdown", "wheel"].forEach((ev) => kc.box.querySelector(".ktree").addEventListener(ev, (e) => e.stopPropagation(), true));
+    kc.box.querySelector(".kctools").addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.ktg) return ktFly(b.dataset.ktg, b);
+      if (b.dataset.kt) return ktStart(b.dataset.kt);
+      if (b.dataset.kto) return ktOption(b.dataset.kto, b);
+    });
+    kc.box.querySelector(".ktfloat").addEventListener("click", (e) => { const b = e.target.closest("[data-kf]"); if (b) { e.preventDefault(); ktFloatClick(b.dataset.kf); } });
+    ["mousedown", "pointerdown"].forEach((ev) => kc.box.querySelector(".ktfloat").addEventListener(ev, (e) => e.stopPropagation(), true));
+    kcNavInit(); ktRender();
+  }
+  if (kc.box.parentNode !== host) { host.appendChild(kc.box); requestAnimationFrame(() => kc.chart?.resize()); }   // the chart survives page redraws: it is moved, never rebuilt
+  if (kc.pro && kc.sym === t) { if (kc.pro.getTheme() !== kcTheme()) { kc.pro.setTheme(kcTheme()); kcStyle(); } return; }
+  const y = yahoo(t), first = !kc.pro;
+  kc.sym = t; kc.restoredFor = null; kc.loaded = "";
+  kc.drawP = sb.from("chart_drawings").select("symbol,overlays,indicators").in("symbol", [t, "*"]).then(({ data }) => {
+    (data || []).forEach((r) => { if (r.symbol === "*") { if (r.indicators && Array.isArray(r.indicators.list)) chOf().prefs = r.indicators; } else chOf().draw[r.symbol] = r.overlays || []; });
+  });
+  const symbol = { ticker: y, shortName: t, name: cleanName(chName(y) || statsOf(y)?.name || t), exchange: "", pricePrecision: y.endsWith("=X") ? 4 : 2, volumePrecision: 0 };
+  if (!first) { kc.pro.setSymbol(symbol); return; }
+  kcNote("Loading the chart…");
+  try { await kcLoad(); await kc.drawP; } catch (e) { kcNote(esc(e.message) + ". Check your connection and reload."); return; }
+  if (kc.pro || !document.getElementById("kchost")) return;
+  kcNote("");
+  kc.pro = new window.klinechartspro.KLineChartPro({ container: kc.box, theme: kcTheme(), locale: "en-US", watermark: "", timezone: "Asia/Bangkok",
+    symbol, period: KC_PERIODS[kc.period ?? 3], periods: KC_PERIODS, mainIndicators: [], subIndicators: [], datafeed: kcDatafeed, drawingBarVisible: true });
+  kcStyle(); ktRender();
+}
+
+// ----- chart navigation like TradingView (round 44): wheel zoom on every pane, hover buttons, jump to today, auto price scale,
+// double-click a scale to reset, arrow keys, Shift+click measure -----
+const KC_SPACE = [1, 50];   // the library's own limits for candle width (pixels); it ignores steps past them, so we clamp
+function kcGeo() {   // where things are inside the chart, in page pixels
+  const c = kc.chart, el = c?.getContainer?.(); if (!el) return null;
+  const r = el.getBoundingClientRect(), main = c.getSize("candle_pane", "main"), xa = c.getSize("x_axis_pane", "root");
+  return { r, mainW: main?.width ?? r.width - 60, candleH: main?.height ?? r.height * 0.6, xTop: xa?.top ?? r.height - 28 };
+}
+function kcZoomBy(f, x) {   // f > 1 zooms in (wider candles), around page-x (or the middle)
+  const c = kc.chart; if (!c) return;
+  const g = kcGeo(), b = c.getBarSpace(), bar = typeof b === "object" ? b.bar : b;
+  const nb = Math.max(KC_SPACE[0], Math.min(KC_SPACE[1], bar * f));
+  if (!g || Math.abs(nb - bar) < 0.001) return;
+  const px = x === undefined ? g.mainW / 2 : Math.max(0, Math.min(g.mainW, x - g.r.left));
+  c.zoomAtCoordinate(nb / bar, { x: px, y: 0 });
+}
+function kcScrollBars(n) { const c = kc.chart; if (!c) return; const b = c.getBarSpace(); c.scrollByDistance(n * (typeof b === "object" ? b.bar : b)); }
+function kcAutoY() {   // back to "fit the visible candles" on every pane (TradingView's A button)
+  const c = kc.chart; if (!c) return;
+  [c.getDrawPaneById?.("candle_pane"), ...(c.getAllDrawPanes?.() || [])].forEach((p) => { const a = p?.getAxisComponent?.(); if (a && !a.getAutoCalcTickFlag()) a.setAutoCalcTickFlag(true); });
+  c.adjustPaneViewport?.(false, true, true, true); kcNavState();
+}
+const kcIsAuto = () => kc.chart?.getDrawPaneById?.("candle_pane")?.getAxisComponent?.()?.getAutoCalcTickFlag?.() ?? true;
+function kcResetView() {   // Alt+R: TradingView's default look: ~8 px candles, latest bar on the right, price scale fitted
+  const c = kc.chart; if (!c) return;
+  c.setBarSpace(8); c.scrollToRealTime(); kcAutoY(); kcRangeOff();
+}
+function kcRangeOff() {   // a 1D / 1M / 6M... button stays lit only until you zoom or scroll by hand (like TradingView)
+  if (kc.zooming || !kc.range) return;
+  kc.range = null; document.querySelectorAll("[data-kcr].on,[data-chperf].on").forEach((b) => b.classList.remove("on"));
+}
+function kcNavState() {   // show "jump to today" when scrolled back; light up Auto while the price scale fits by itself
+  const c = kc.chart; if (!c || !kc.box) return;
+  const r = c.getVisibleRange?.(), n = c.getDataList().length;
+  kc.box.querySelector(".kclatest")?.classList.toggle("on", !!r && n > 0 && r.realTo < n - 1);
+  document.querySelector('[data-kcact="auto"]')?.classList.toggle("on", kcIsAuto());
+}
+function kcNavInit() {   // once per chart box (the box survives page redraws)
+  const box = kc.box;
+  const nav = document.createElement("div"); nav.className = "kcnav";
+  nav.innerHTML = [["out", "Zoom out", "−"], ["in", "Zoom in", "+"], ["left", "Scroll left", "‹"], ["right", "Scroll right", "›"], ["reset", "Reset chart view (Alt+R)", "⟲"]]
+    .map(([k, t, s]) => `<button data-nv="${k}" title="${t}" aria-label="${t}">${s}</button>`).join("");
+  const latest = document.createElement("button"); latest.className = "kclatest"; latest.title = "Scroll to the latest bar"; latest.setAttribute("aria-label", latest.title); latest.textContent = "»";
+  const meas = document.createElement("div"); meas.className = "kcmeasure"; meas.hidden = true;
+  box.append(nav, latest, meas);
+  const step = (k) => { if (k === "in") kcZoomBy(1.15); else if (k === "out") kcZoomBy(1 / 1.15); else if (k === "left") kcScrollBars(5); else if (k === "right") kcScrollBars(-5); };
+  let rep = null;
+  nav.addEventListener("pointerdown", (e) => {   // hold to repeat, like TradingView
+    const k = e.target.closest("[data-nv]")?.dataset.nv; if (!k) return;
+    e.preventDefault(); e.stopPropagation();
+    if (k === "reset") return kcResetView();
+    step(k); clearInterval(rep); const t0 = setTimeout(() => { rep = setInterval(() => step(k), 60); }, 350);
+    const stop = () => { clearTimeout(t0); clearInterval(rep); removeEventListener("pointerup", stop); };
+    addEventListener("pointerup", stop);
+  });
+  nav.addEventListener("mousedown", (e) => e.stopPropagation(), true);
+  latest.addEventListener("mousedown", (e) => e.stopPropagation(), true);
+  latest.addEventListener("click", () => { kc.chart?.scrollToRealTime(); setTimeout(kcNavState, 50); });
+
+  // wheel: zoom on every pane and on the time scale, around the mouse; Shift+wheel or a sideways swipe scrolls in time
+  box.addEventListener("wheel", (e) => {
+    const g = kcGeo(); if (!g || !g.r.width || e.clientX < g.r.left || e.clientX > g.r.right || e.clientY < g.r.top || e.clientY > g.r.bottom) return;
+    e.preventDefault(); e.stopPropagation();
+    const unit = e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? 120 : 1, dx = e.deltaX * unit, dy = e.deltaY * unit;
+    if (e.shiftKey || Math.abs(dx) > Math.abs(dy)) { kc.chart.scrollByDistance(-(Math.abs(dx) > Math.abs(dy) ? dx : dy)); kcRangeOff(); return; }
+    kcZoomBy(Math.exp(-dy * (e.ctrlKey ? 0.012 : 0.0014)), e.clientX);   // one mouse-wheel notch ~ 13%; trackpad pinch is smooth
+    kcRangeOff();
+  }, { passive: false, capture: true });
+
+  // double-click the price scale -> fit prices again; double-click the time scale -> reset the view
+  box.addEventListener("dblclick", (e) => {
+    const g = kcGeo(); if (!g) return;
+    const x = e.clientX - g.r.left, y = e.clientY - g.r.top;
+    if (y >= g.xTop) { kcResetView(); return; }
+    if (x > g.mainW) kcAutoY();
+  });
+  ["mouseup", "touchend"].forEach((ev) => box.addEventListener(ev, () => setTimeout(kcNavState, 0)));
+  box.addEventListener("mouseenter", () => { kc.hover = true; });
+  box.addEventListener("mouseleave", () => { kc.hover = false; });
+
+  // Shift + click: measure (price change, %, bars, days); click again to clear
+  let m0 = null;
+  const at = (e) => { const g = kcGeo(); if (!g) return null; const x = e.clientX - g.r.left, y = e.clientY - g.r.top; if (x < 0 || x > g.mainW || y < 0 || y > g.candleH) return null;
+    const p = kc.chart.convertFromPixel([{ x, y }], { paneId: "candle_pane" })?.[0]; return p && Number.isFinite(p.value) ? { x, y, ...p, g } : null; };
+  const show = (a, b) => {
+    const bx = kc.box.getBoundingClientRect(), off = [a.g.r.left - bx.left, a.g.r.top - bx.top];
+    const d = b.value - a.value, pct = a.value ? (d / a.value) * 100 : 0, bars = Math.round((b.dataIndex ?? 0) - (a.dataIndex ?? 0));
+    const list = kc.chart.getDataList(), ts = (i) => list[Math.max(0, Math.min(list.length - 1, Math.round(i ?? 0)))]?.timestamp, days = Math.round(Math.abs((ts(b.dataIndex) - ts(a.dataIndex)) / 864e5));
+    Object.assign(meas.style, { left: off[0] + Math.min(a.x, b.x) + "px", top: off[1] + Math.min(a.y, b.y) + "px", width: Math.abs(b.x - a.x) + "px", height: Math.abs(b.y - a.y) + "px" });
+    meas.className = "kcmeasure " + (d >= 0 ? "up" : "dn"); meas.hidden = false;
+    meas.innerHTML = `<span class="${b.y < a.y ? "t" : "b"}">${d >= 0 ? "+" : ""}${fmtPx(d)} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)<br>${bars} bar${Math.abs(bars) === 1 ? "" : "s"}${days ? ` · ${days} day${days === 1 ? "" : "s"}` : ""}</span>`;
+  };
+  box.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    if (kc.measuring) { e.stopPropagation(); e.preventDefault(); kc.measuring = false; m0 = null; return; }   // second click: freeze
+    if (!meas.hidden && !e.shiftKey) { meas.hidden = true; return; }                                           // next click: clear
+    if (!e.shiftKey && !kc.measureArm) return;
+    const a = at(e); if (!a) return;
+    if (kc.measureArm) { kc.measureArm = false; ktTip(""); ktRender(); }
+    e.stopPropagation(); e.preventDefault(); m0 = a; kc.measuring = true; show(a, a);
+  }, true);
+  box.addEventListener("mousemove", (e) => { if (!kc.measuring || !m0) return; const b = at(e); if (b) show(m0, b); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !meas.hidden) { meas.hidden = true; kc.measuring = false; m0 = null; } });
+}
+
+// ----- drawing toolbar like TradingView (round 44): groups with the last-used tool on top and a flyout list, then
+// Measure, Magnet, Stay in drawing mode, Lock all, Hide all, Remove. Replaces the chart library's own left bar. -----
+const TI = {   // 24px line icons (same stroke as the rest of the site)
+  cursor: '<path d="M12 3v18M3 12h18"/>',
+  segment: '<path d="M5 19 19 5"/><circle cx="5" cy="19" r="1.8"/><circle cx="19" cy="5" r="1.8"/>',
+  rayLine: '<path d="M5 19 21 3"/><circle cx="5" cy="19" r="1.8"/>', straightLine: '<path d="M2 22 22 2"/>',
+  horizontalStraightLine: '<path d="M2 12h20"/><circle cx="12" cy="12" r="1.8"/>', horizontalRayLine: '<path d="M6 12h16"/><circle cx="6" cy="12" r="1.8"/>',
+  verticalStraightLine: '<path d="M12 2v20"/><circle cx="12" cy="12" r="1.8"/>', priceChannelLine: '<path d="M3 15 15 3M9 21 21 9"/><path d="M6 18 18 6" stroke-dasharray="2 2"/>',
+  parallelStraightLine: '<path d="M3 14 14 3M10 21 21 10"/>', priceLine: '<path d="M3 12h12"/><rect x="15" y="9" width="7" height="6" rx="1"/>',
+  fibonacciLine: '<path d="M3 5h18M3 10h18M3 14h18M3 19h18"/><circle cx="5" cy="19" r="1.6"/><circle cx="19" cy="5" r="1.6"/>',
+  fibonacciExtension: '<path d="M3 5h18M3 11h18M3 17h18"/><path d="m4 20 6-8 5 4"/>', fibonacciSegment: '<path d="M6 5h12M6 10h12M6 14h12M6 19h12"/>',
+  fibonacciSpeedResistanceFan: '<path d="M4 20 20 4M4 20l16-7M4 20l16-12M4 20 13 4"/>', fibonacciCircle: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="9.5"/>',
+  fibonacciSpiral: '<path d="M12 12a2 2 0 1 1 2 2 4 4 0 0 1-6-2 6 6 0 0 1 8-6 8 8 0 0 1 4 10"/>', gannBox: '<rect x="3" y="3" width="18" height="18"/><path d="M3 3l18 18M21 3 3 21M12 3v18M3 12h18"/>',
+  xabcd: '<path d="m2 18 5-12 5 9 5-11 5 14"/><path d="M2 18 12 15M7 6l10-2" stroke-dasharray="2 2"/>', abcd: '<path d="m3 18 6-12 6 8 6-10"/>',
+  fiveWaves: '<path d="m2 18 4-7 3 4 5-11 3 6 5-6"/>', threeWaves: '<path d="m3 5 7 11 4-6 7 10"/>', eightWaves: '<path d="m1 16 3-5 2 3 3-9 2 5 3-6 3 9 2-4 4 9"/>', anyWaves: '<path d="m2 14 4-6 4 8 4-10 4 8 4-4"/>',
+  tvLong: '<rect x="3" y="4" width="18" height="8" fill="currentColor" fill-opacity=".25"/><rect x="3" y="12" width="18" height="6"/><path d="M3 12h18"/>',
+  tvShort: '<rect x="3" y="6" width="18" height="6"/><rect x="3" y="12" width="18" height="8" fill="currentColor" fill-opacity=".25"/><path d="M3 12h18"/>',
+  tvPriceRange: '<path d="M12 3v18M8 7l4-4 4 4M4 3h16M4 21h16"/>', tvDateRange: '<path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4M3 4v16M21 4v16"/>',
+  tvDatePriceRange: '<rect x="3" y="3" width="18" height="18" stroke-dasharray="2 2"/><path d="M12 6v12M6 12h12"/>',
+  rect: '<rect x="3" y="6" width="18" height="12" rx="1"/>', circle: '<circle cx="12" cy="12" r="8.5"/>', triangle: '<path d="M12 4 21 20H3z"/>',
+  parallelogram: '<path d="M7 5h14l-4 14H3z"/>', arrow: '<path d="M4 20 20 4M11 4h9v9"/>',
+  tvText: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>', simpleAnnotation: '<rect x="3" y="3" width="18" height="11" rx="2"/><path d="M12 14v7"/>', simpleTag: '<path d="M3 12 8 6h13v12H8z"/>',
+  measure: '<path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/>', magnet: '<path d="M6 3v9a6 6 0 0 0 12 0V3h-4v9a2 2 0 0 1-4 0V3z"/><path d="M6 7h4M14 7h4"/>',
+  stay: '<path d="M4 20 15 9l3 3L7 23"/><path d="m14 4 6 6M17 2l5 5"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>', eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.8M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 4.4-1"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>', dup: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
+};
+const ti = (k, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TI[k] || TI.segment}</svg>`;
+const KT_GROUPS = [
+  ["cursor", "Cursor", [["cursor", "Crosshair", "Esc"]]],
+  ["lines", "Trend line tools", [["segment", "Trend line", "Alt+T"], ["rayLine", "Ray"], ["straightLine", "Extended line"], ["horizontalStraightLine", "Horizontal line", "Alt+H"],
+    ["horizontalRayLine", "Horizontal ray", "Alt+J"], ["verticalStraightLine", "Vertical line", "Alt+V"], ["priceChannelLine", "Parallel channel"], ["parallelStraightLine", "Parallel lines"], ["priceLine", "Price line"]]],
+  ["fib", "Fibonacci & Gann tools", [["fibonacciLine", "Fib retracement", "Alt+F"], ["fibonacciExtension", "Trend-based fib extension"], ["fibonacciSegment", "Fib segment"],
+    ["fibonacciSpeedResistanceFan", "Fib speed resistance fan"], ["fibonacciCircle", "Fib circles"], ["fibonacciSpiral", "Fib spiral"], ["gannBox", "Gann box"]]],
+  ["pat", "Patterns", [["fiveWaves", "Elliott impulse wave (1 2 3 4 5)"], ["threeWaves", "Elliott correction wave (A B C)"], ["eightWaves", "Elliott wave (1 2 3 4 5 A B C)"],
+    ["anyWaves", "Any waves (double-click to finish)"], ["xabcd", "XABCD pattern"], ["abcd", "ABCD pattern"]]],
+  ["pred", "Forecasting & measuring tools", [["tvLong", "Long position"], ["tvShort", "Short position"], ["tvPriceRange", "Price range"], ["tvDateRange", "Date range"], ["tvDatePriceRange", "Date and price range"]]],
+  ["shape", "Geometric shapes", [["rect", "Rectangle"], ["circle", "Circle"], ["triangle", "Triangle"], ["parallelogram", "Parallelogram"], ["arrow", "Arrow"]]],
+  ["text", "Annotation tools", [["tvText", "Text"], ["simpleAnnotation", "Note with arrow"], ["simpleTag", "Price label"]]],
+];
+const KT_NAME = Object.fromEntries(KT_GROUPS.flatMap(([, , l]) => l.map(([k, n]) => [k, n])));
+const KT_HINT = { tvLong: ["Click the entry price", "Click the target (also sets the width)", "Click the stop"], tvShort: ["Click the entry price", "Click the target (also sets the width)", "Click the stop"],
+  anyWaves: ["Click each wave point, double-click to finish"], tvText: ["Click where the text goes"] };
+const ktOpt = () => chOf().kt || (chOf().kt = safe(() => JSON.parse(localStorage.getItem("ic_kt") || "null"), null) || { last: {}, magnet: "", stay: false });
+const ktSaveOpt = () => safe(() => localStorage.setItem("ic_kt", JSON.stringify(ktOpt())));
+function ktRender() {
+  const bar = kc.box?.querySelector(".kctools"); if (!bar) return;
+  const o = ktOpt(), allLocked = [...kc.ov.keys()].length && [...kc.ov.keys()].every((id) => kc.chart?.getOverlayById(id)?.lock), hidden = !!kc.hideAll;
+  bar.innerHTML = KT_GROUPS.map(([g, label, list]) => {
+    const cur = list.find(([k]) => k === o.last[g]) || list[0], on = kc.tool ? list.some(([k]) => k === kc.tool) : g === "cursor";
+    return `<div class="ktg${on ? " on" : ""}"><button class="ktb" data-kt="${cur[0]}" title="${esc(cur[1])}${cur[2] ? ` (${cur[2]})` : ""}">${ti(cur[0])}</button>${list.length > 1 ? `<button class="ktx" data-ktg="${g}" title="${esc(label)}" aria-label="${esc(label)}"><i></i></button>` : ""}</div>`;
+  }).join("") + `<hr>
+    <div class="ktg${kc.measureArm ? " on" : ""}"><button class="ktb" data-kto="measure" title="Measure (Shift + click on the chart)">${ti("measure")}</button></div>
+    <div class="ktg${o.magnet ? " on" : ""}"><button class="ktb" data-kto="magnet" title="Magnet: ${o.magnet === "strong_magnet" ? "strong" : o.magnet ? "weak" : "off"} (points snap to open/high/low/close)">${ti("magnet")}${o.magnet === "strong_magnet" ? "<b>S</b>" : ""}</button></div>
+    <div class="ktg${o.stay ? " on" : ""}"><button class="ktb" data-kto="stay" title="Stay in drawing mode">${ti("stay")}</button></div>
+    <div class="ktg${allLocked ? " on" : ""}"><button class="ktb" data-kto="lock" title="${allLocked ? "Unlock" : "Lock"} all drawings">${ti(allLocked ? "lock" : "unlock")}</button></div>
+    <div class="ktg${hidden ? " on" : ""}"><button class="ktb" data-kto="hide" title="${hidden ? "Show" : "Hide"} all drawings">${ti(hidden ? "eyeoff" : "eye")}</button></div>
+    <div class="ktg"><button class="ktb" data-kto="remove" title="Remove drawings or indicators">${ti("trash")}</button></div>`;
+}
+function ktFly(g, btn) {   // the flyout list of one group
+  document.querySelector(".ktfly")?.remove();
+  const grp = KT_GROUPS.find((x) => x[0] === g); if (!grp) return;
+  const r = btn.closest(".ktg").getBoundingClientRect(), m = document.createElement("div");
+  m.className = "ktfly"; m.style.left = r.right + 6 + "px"; m.style.top = Math.min(r.top, innerHeight - 44 * grp[2].length - 50) + "px";
+  m.innerHTML = `<small>${esc(grp[1].toUpperCase())}</small>` + grp[2].map(([k, n, s]) => `<button data-kt="${k}" class="${kc.tool === k ? "on" : ""}">${ti(k, 20)}<span>${esc(n)}</span>${s ? `<em>${s}</em>` : ""}</button>`).join("");
+  document.body.appendChild(m);
+  const out = (e) => { if (!m.contains(e.target) && !e.target.closest(".ktx")) { m.remove(); document.removeEventListener("mousedown", out, true); } };
+  setTimeout(() => document.addEventListener("mousedown", out, true), 0);
+  m.addEventListener("click", (e) => { const k = e.target.closest("[data-kt]")?.dataset.kt; if (k) { m.remove(); document.removeEventListener("mousedown", out, true); ktStart(k); } });
+}
+function ktStart(k) {   // pick a tool: the next clicks on the chart place its points
+  const c = kc.chart; if (!c) return;
+  if (kc.drawingId) { c.removeOverlay(kc.drawingId); kc.drawingId = null; }
+  kc.measureArm = false;
+  if (k === "cursor") { kc.tool = null; ktTip(""); ktRender(); return; }
+  const g = KT_GROUPS.find(([, , l]) => l.some(([x]) => x === k)); if (g) { ktOpt().last[g[0]] = k; ktSaveOpt(); }
+  kc.tool = k; kc.toolStep = 0;
+  const def = ktDefs()[k];
+  kc.drawingId = c.createOverlay({ name: k, groupId: "drawing_tools", mode: ktOpt().magnet || "normal", visible: true, ...(def?.styles ? { styles: clone(def.styles) } : {}), ...(def?.extendData ? { extendData: clone(def.extendData) } : {}) });
+  ktTip((KT_HINT[k] || [])[0] || `${KT_NAME[k] || "Drawing"}: click on the chart to place it`);
+  ktRender();
+}
+function ktDone(ov) {   // called when a drawing is finished (from kcWrap)
+  kc.drawingId = null;
+  if (ov?.name === "tvText") ktSettings(ov.id, "text");
+  if (ktOpt().stay && kc.tool && kc.tool !== "tvText") { const k = kc.tool; setTimeout(() => ktStart(k), 0); return; }
+  kc.tool = null; ktTip(""); ktRender();
+}
+function ktTip(t) { const el = kc.box?.querySelector(".kttip"); if (!el) return; el.textContent = t; el.hidden = !t; }
+function ktOption(k, btn) {
+  const c = kc.chart, o = ktOpt(); if (!c) return;
+  if (k === "measure") { kc.measureArm = !kc.measureArm; kc.tool = null; ktTip(kc.measureArm ? "Click a start point on the chart (or Shift + click any time)" : ""); }
+  else if (k === "magnet") { o.magnet = o.magnet === "" ? "weak_magnet" : o.magnet === "weak_magnet" ? "strong_magnet" : ""; ktSaveOpt(); toast(`Magnet ${o.magnet === "strong_magnet" ? "strong" : o.magnet ? "weak" : "off"}`); }
+  else if (k === "stay") { o.stay = !o.stay; ktSaveOpt(); }
+  else if (k === "lock" || k === "hide") {
+    const ids = [...kc.ov.keys()], lockAll = k === "lock" && !ids.every((id) => c.getOverlayById(id)?.lock);
+    if (k === "hide") kc.hideAll = !kc.hideAll;
+    if (k === "hide") ktApplyVis();
+    else ids.forEach((id) => { c.overrideOverlay({ id, lock: lockAll }); const p = kc.ov.get(id); if (p) p.lock = lockAll; });
+    if (k === "lock") kcSave();
+  } else if (k === "remove") {
+    document.querySelector(".kcctx")?.remove();
+    const r = btn.getBoundingClientRect(), m = document.createElement("div"); m.className = "kcctx"; m.style.left = r.right + 6 + "px"; m.style.top = r.top - 60 + "px";
+    m.innerHTML = `<button data-m="clr">Remove ${kc.ov.size} drawing${kc.ov.size === 1 ? "" : "s"}</button><button data-m="clri">Remove all indicators</button><button data-m="clra">Remove drawings and indicators</button>`;
+    document.body.appendChild(m);
+    const close = () => { m.remove(); document.removeEventListener("mousedown", out, true); }, out = (e) => { if (!m.contains(e.target)) close(); };
+    setTimeout(() => document.addEventListener("mousedown", out, true), 0);
+    m.addEventListener("click", (e) => { const a = e.target.closest("[data-m]")?.dataset.m; if (!a) return; close(); if (a === "clra") { kcAction("clr"); kcAction("clri"); } else kcAction(a); });
+  }
+  ktRender();
+}
+// floating bar over a selected drawing: colour, width, line style, (settings), lock, clone, delete
+const KT_COLORS = ["#2962FF", "#F23645", "#089981", "#FF9800", "#9C27B0", "#00BCD4", "#FFEB3B", "#E91E63", "#787B86", "#FFFFFF", "#131722", "#4CAF50"];
+function ktFloat() {
+  const box = kc.box, el = box?.querySelector(".ktfloat"); if (!el) return;
+  const ov = kc.sel && kc.chart?.getOverlayById(kc.sel);
+  if (!ov || kc.tool) { el.hidden = true; return; }
+  const ln = ov.styles?.line || {}, col = ln.color || "#2962FF", w = ln.size || 1, st = ln.style === "dashed" ? (String(ln.dashedValue) === "1,3" ? "dot" : "dash") : "solid", fib = ov.name === "fibonacciLine", txt = ov.name === "tvText";
+  el.innerHTML = `<span class="ktn">${esc(KT_NAME[ov.name] || ov.name)}</span><i></i>
+    ${fib ? "" : `<details class="ktdd"><summary title="Colour"><span class="sw" style="background:${esc(col)}"></span></summary><div class="sws">${KT_COLORS.map((c) => `<button data-kf="col:${c}" style="background:${c}" title="${c}"></button>`).join("")}</div></details>`}
+    ${fib || txt ? "" : `<details class="ktdd"><summary title="Line width"><span class="lw" style="height:${w}px"></span>${w}px</summary><div>${[1, 2, 3, 4].map((x) => `<button data-kf="w:${x}" class="${x === w ? "on" : ""}"><span class="lw" style="height:${x}px"></span>${x}px</button>`).join("")}</div></details>
+    <details class="ktdd"><summary title="Line style">${st === "solid" ? "━" : st === "dash" ? "╍" : "┉"}</summary><div>${[["solid", "━ Solid"], ["dash", "╍ Dashed"], ["dot", "┉ Dotted"]].map(([k, l]) => `<button data-kf="st:${k}" class="${k === st ? "on" : ""}">${l}</button>`).join("")}</div></details>`}
+    <button data-kf="set" title="Settings (or double-click the drawing)">${ti("gear", 18)}</button>${KT_TEXTABLE.includes(ov.name) ? `<button data-kf="edit" title="Text">${ti("tvText", 18)}</button>` : ""}
+    ${KT_ALERTABLE.includes(ov.name) ? `<button data-kf="alert" class="${kc.ov.get(ov.id)?.ui?.alert?.on ? "on" : ""}" title="${kc.ov.get(ov.id)?.ui?.alert?.on ? "Alert is on: click to turn it off" : "Alert me (Telegram) when the price crosses this"}">${chI("bell", 18)}</button>` : ""}
+    <button data-kf="lock" title="${ov.lock ? "Unlock" : "Lock"}">${ti(ov.lock ? "lock" : "unlock", 18)}</button><button data-kf="dup" title="Clone">${ti("dup", 18)}</button><button data-kf="del" title="Remove (Delete)">${ti("trash", 18)}</button>`;
+  el.hidden = false;
+}
+function ktFloatClick(k) {
+  const c = kc.chart, id = kc.sel, ov = id && c?.getOverlayById(id); if (!ov) return;
+  const ln = { style: "solid", smooth: false, size: 1, color: "#2962FF", dashedValue: [2, 2], ...(ov.styles?.line || {}) };
+  const put = (styles) => { c.overrideOverlay({ id, styles }); const p = kc.ov.get(id); if (p) { p.styles = { ...(p.styles || {}), ...styles }; kcSave(); } ktFloat(); };
+  const [a, v] = k.split(":");
+  if (a === "col") { const fill = v + "26"; put({ line: { ...ln, color: v }, polygon: { color: fill, borderColor: v, borderSize: ln.size, style: "stroke_fill" }, circle: { color: fill, borderColor: v, style: "stroke_fill" }, arc: { color: v }, text: { color: v } }); }
+  else if (a === "w") put({ line: { ...ln, size: +v }, polygon: { ...(ov.styles?.polygon || {}), borderSize: +v } });
+  else if (a === "st") put({ line: { ...ln, style: v === "solid" ? "solid" : "dashed", dashedValue: v === "dot" ? [1, 3] : [6, 4] } });
+  else if (a === "set") (ov.name === "fibonacciLine" ? fibWindow(id) : ktSettings(id));
+  else if (a === "edit") ktSettings(id, "text");
+  else if (a === "alert") ktAlertToggle(id);
+  else if (a === "lock") { c.overrideOverlay({ id, lock: !ov.lock }); const p = kc.ov.get(id); if (p) { p.lock = !ov.lock; kcSave(); } ktFloat(); ktRender(); }
+  else if (a === "dup") { const p = kc.ov.get(id); if (p) { const list = c.getDataList(), bs = c.getBarSpace(), shift = (list.at(-1)?.timestamp - list.at(-2)?.timestamp || 864e5) * 5;
+    kcAddDone({ ...clone(p), points: p.points.map((q) => ({ ...q, timestamp: q.timestamp + shift })) }); void bs; } }
+  else if (a === "del") { c.removeOverlay(id); kc.sel = null; ktFloat(); }
+  document.querySelectorAll(".ktfloat details[open]").forEach((d) => d.removeAttribute("open"));
+}
+function ktTextEdit(id, fresh) {
+  const ov = kc.chart?.getOverlayById(id); if (!ov) return;
+  const m = kcModal(`<div class="kwh"><b>Text</b><button class="x" data-k="close">✕</button></div><div class="kwb"><textarea class="kttext" rows="3" maxlength="300" placeholder="Type your note">${esc(ov.extendData?.text || "")}</textarea>
+    <div class="f"><span>Size</span><span><select data-ts>${[12, 14, 16, 20, 24, 28].map((s) => `<option ${s === (ov.extendData?.size || 14) ? "selected" : ""}>${s}</option>`).join("")}</select></span></div></div>
+    <div class="kwf"><span class="sp"></span><button class="c" data-k="close">Cancel</button><button class="ok" data-k="ok">Ok</button></div>`);
+  const ta = m.querySelector("textarea"); setTimeout(() => ta.focus(), 0);
+  m.addEventListener("click", (e) => {
+    const k = e.target.closest("[data-k]")?.dataset.k; if (!k) return;
+    if (k === "ok") { const t = ta.value.trim(); if (!t && fresh) { kc.chart.removeOverlay(id); m.remove(); return; }
+      const ext = { ...(ov.extendData || {}), text: t || ov.extendData?.text || "Text", size: +m.querySelector("[data-ts]").value };
+      kc.chart.overrideOverlay({ id, extendData: ext }); const p = kc.ov.get(id); if (p) { p.extendData = ext; kcSave(); } }
+    else if (fresh && !ov.extendData?.text) kc.chart.removeOverlay(id);
+    m.remove();
+  });
+}
+// our extra drawings: Long / Short position, Price / Date / Date-and-price range, Text
+function kcRegisterTV(K) {
+  const F = "Inter, sans-serif", lbl = (x, y, text, bg, align = "center", baseline = "middle") => ({ type: "text", ignoreEvent: true, attrs: { x, y, text, align, baseline },
+    styles: { color: "#fff", size: 12, family: F, weight: 600, backgroundColor: bg, borderRadius: 4, paddingLeft: 6, paddingRight: 6, paddingTop: 4, paddingBottom: 4, borderSize: 0 } });
+  const fx = (v, p) => Number(v).toFixed(p?.price ?? 2);
+  ["tvLong", "tvShort"].forEach((name) => K.registerOverlay({
+    name, totalStep: 4, needDefaultPointFigure: true, needDefaultXAxisFigure: true, needDefaultYAxisFigure: true,
+    createPointFigures: ({ coordinates: cs, overlay, precision }) => {
+      if (cs.length < 2) return cs.length ? [{ type: "line", attrs: { coordinates: [{ x: cs[0].x - 60, y: cs[0].y }, { x: cs[0].x + 60, y: cs[0].y }] }, styles: { color: "#787B86" } }] : [];
+      const [a, b, c] = cs, P = overlay.points, e = P[0].value, t = P[1].value, s = P[2]?.value ?? e - (t - e) / 2, yS = c ? c.y : a.y + (a.y - b.y) / 2;
+      const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x, a.x + 40), w = x2 - x1, rr = Math.abs(e - s) ? Math.abs(t - e) / Math.abs(e - s) : 0, sign = name === "tvLong" ? 1 : -1;
+      const pct = (v) => `${(((v - e) / e) * 100 * sign).toFixed(2)}%`, X = ktExt(overlay);
+      const riskAmt = X.acct ? (X.riskT === "amt" ? X.risk ?? 0 : (X.acct * (X.risk ?? 1)) / 100) : 0, qty = riskAmt && Math.abs(e - s) ? riskAmt / Math.abs(e - s) : 0;
+      const money = (v) => (qty ? ` · ${v >= 0 ? "+" : "−"}${Math.abs(v).toLocaleString("en-US", { maximumFractionDigits: 2 })}` : "");
+      return [
+        { type: "rect", attrs: { x: x1, y: Math.min(a.y, b.y), width: w, height: Math.abs(b.y - a.y) }, styles: { style: "fill", color: "rgba(8,153,129,0.22)" } },
+        { type: "rect", attrs: { x: x1, y: Math.min(a.y, yS), width: w, height: Math.abs(yS - a.y) }, styles: { style: "fill", color: "rgba(242,54,69,0.22)" } },
+        { type: "line", attrs: { coordinates: [{ x: x1, y: a.y }, { x: x2, y: a.y }] }, styles: { color: "#787B86" } },
+        lbl((x1 + x2) / 2, b.y + (b.y < a.y ? -12 : 12), `Target: ${fx(t, precision)} (${pct(t)})${money(qty * (t - e) * sign)}`, "#089981"),
+        lbl((x1 + x2) / 2, yS + (yS > a.y ? 12 : -12), `Stop: ${fx(s, precision)} (${pct(s)})${money(qty * (s - e) * sign)}`, "#F23645"),
+        lbl((x1 + x2) / 2, a.y, `${name === "tvLong" ? "Long" : "Short"} ${fx(e, precision)}${qty ? ` · Qty ${qty >= 100 ? Math.floor(qty).toLocaleString("en-US") : qty.toFixed(2)}` : ""} · Risk/reward ${rr.toFixed(2)}`, "#2a2e39"),
+      ];
+    },
+  }));
+  const range = (name, kind) => K.registerOverlay({
+    name, totalStep: 3, needDefaultPointFigure: true, needDefaultXAxisFigure: true, needDefaultYAxisFigure: true,
+    createPointFigures: ({ coordinates: cs, overlay, precision, xAxis }) => {
+      if (cs.length < 2) return [];
+      const [a, b] = cs, P = overlay.points, d = P[1].value - P[0].value, up = d >= 0, col = up ? "rgba(41,98,255," : "rgba(242,54,69,";
+      const i0 = xAxis?.convertFromPixel?.(a.x), i1 = xAxis?.convertFromPixel?.(b.x), bars = Number.isFinite(i0) && Number.isFinite(i1) ? Math.round(i1 - i0) : 0;
+      const days = P[0].timestamp && P[1].timestamp ? Math.round(Math.abs(P[1].timestamp - P[0].timestamp) / 864e5) : 0;
+      const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x), y1 = Math.min(a.y, b.y), y2 = Math.max(a.y, b.y), mx = (x1 + x2) / 2, my = (y1 + y2) / 2, out = [];
+      out.push({ type: "rect", attrs: { x: x1, y: y1, width: Math.max(1, x2 - x1), height: Math.max(1, y2 - y1) }, styles: { style: "fill", color: col + "0.16)" } });
+      if (kind !== "date") out.push({ type: "line", attrs: { coordinates: [{ x: mx, y: a.y }, { x: mx, y: b.y }] }, styles: { color: col + "1)" } },
+        { type: "line", attrs: { coordinates: [{ x: mx - 5, y: b.y + (up ? 6 : -6) }, { x: mx, y: b.y }, { x: mx + 5, y: b.y + (up ? 6 : -6) }] }, styles: { color: col + "1)" } });
+      if (kind !== "price") out.push({ type: "line", attrs: { coordinates: [{ x: a.x, y: my }, { x: b.x, y: my }] }, styles: { color: col + "1)" } },
+        { type: "line", attrs: { coordinates: [{ x: b.x + (b.x > a.x ? -6 : 6), y: my - 5 }, { x: b.x, y: my }, { x: b.x + (b.x > a.x ? -6 : 6), y: my + 5 }] }, styles: { color: col + "1)" } });
+      const t1 = `${up ? "+" : ""}${fx(d, precision)} (${up ? "+" : ""}${P[0].value ? ((d / P[0].value) * 100).toFixed(2) : "0"}%)`, t2 = `${bars} bars${days ? `, ${days}d` : ""}`;
+      const text = kind === "price" ? t1 : kind === "date" ? t2 : `${t1} · ${t2}`;
+      out.push(lbl(mx, (b.y > a.y ? y2 + 14 : y1 - 14), text, up ? "#2962FF" : "#F23645"));
+      return out;
+    },
+  });
+  range("tvPriceRange", "price"); range("tvDateRange", "date"); range("tvDatePriceRange", "both");
+  ktRegisterLines(K);
+  K.registerOverlay({
+    name: "tvText", totalStep: 2, needDefaultPointFigure: true, needDefaultXAxisFigure: false, needDefaultYAxisFigure: false,
+    createPointFigures: ({ coordinates: cs, overlay }) => {
+      if (!cs.length) return [];
+      const e = overlay.extendData || {}, col = overlay.styles?.text?.color || "#2962FF";
+      return String(e.text || "Text").split("\n").map((line, i) => ({ type: "text", attrs: { x: cs[0].x, y: cs[0].y + i * ((e.size || 14) + 4), text: line, align: "left", baseline: "middle" },
+        styles: { color: col, size: e.size || 14, family: F, weight: 600, backgroundColor: "transparent", paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0, borderSize: 0 } }));
+    },
+  });
+}
+
+// ----- round 45: deeper drawing settings (TradingView's Style / Text / Coordinates / Visibility tabs + templates) and the Object tree -----
+const KT_LINES = { segment: "seg", rayLine: "ray", straightLine: "line", horizontalStraightLine: "h", horizontalRayLine: "hr", verticalStraightLine: "v" };
+const KT_SHAPES = ["rect", "circle", "triangle", "parallelogram"];
+const KT_TEXTABLE = [...Object.keys(KT_LINES), "rect", "tvText"];
+const KT_TF = [["m", "Minutes", [0, 1, 6, 7, 8]], ["h", "Hours", [2, 9, 10, 11]], ["d", "Days", [3]], ["w", "Weeks", [4]], ["mo", "Months", [5, 12, 13, 14]]];
+const ktTfNow = () => (KT_TF.find(([, , l]) => l.includes(kc.period ?? 3)) || KT_TF[2])[0];
+const ktDefs = () => safe(() => JSON.parse(localStorage.getItem("ic_ktdef") || "{}"), {}) || {};
+const ktExt = (o) => (o && typeof o.extendData === "object" && o.extendData && !Array.isArray(o.extendData) ? o.extendData : {});
+function ktApplyVis() {   // each drawing: your eye toggle (object tree), "hide all", and which timeframes it shows on
+  const c = kc.chart; if (!c) return;
+  const tf = ktTfNow();
+  kc.ov.forEach((p, id) => { const ui = p.ui || {}; c.overrideOverlay({ id, visible: !kc.hideAll && !ui.hidden && (ui.vis?.[tf] ?? true) }); });
+}
+function ktApply(id, plain) {   // put a saved state back on the chart (undo of an edit, Cancel in settings)
+  const c = kc.chart; if (!c || !plain) return;
+  c.overrideOverlay({ id, styles: plain.styles || {}, extendData: plain.extendData, points: plain.points, lock: !!plain.lock });
+  kc.ov.set(id, clone(plain)); ktApplyVis();
+}
+const ktLineExtend = (a, b, l, r, w, h) => {   // stretch a line to the pane edges (extend left / right)
+  const dx = b.x - a.x, dy = b.y - a.y; if (!dx && !dy) return [a, b];
+  const ts = []; if (dx) ts.push(-a.x / dx, (w - a.x) / dx); if (dy) ts.push(-a.y / dy, (h - a.y) / dy);
+  const inside = ts.filter((t) => { const x = a.x + dx * t, y = a.y + dy * t; return x >= -1 && x <= w + 1 && y >= -1 && y <= h + 1; });
+  const lo = Math.min(...inside, 0), hi = Math.max(...inside, 1), P = (t) => ({ x: a.x + dx * t, y: a.y + dy * t });
+  return [l ? P(lo) : a, r ? P(hi) : b];
+};
+const ktArrow = (from, to) => {   // a small arrow head at "to"
+  const ang = Math.atan2(to.y - from.y, to.x - from.x), L = 10;
+  return { type: "line", attrs: { coordinates: [{ x: to.x - L * Math.cos(ang - 0.45), y: to.y - L * Math.sin(ang - 0.45) }, to, { x: to.x - L * Math.cos(ang + 0.45), y: to.y - L * Math.sin(ang + 0.45) }] } };
+};
+const ktTextFig = (e, x, y, align, baseline, col) => String(e.text).split("\n").map((ln, i, all) => ({ type: "text", ignoreEvent: true,
+  attrs: { x, y: y + (baseline === "bottom" ? -(all.length - 1 - i) : i) * ((e.ts || 13) + 3), text: ln, align, baseline },
+  styles: { color: e.tc || col, size: e.ts || 13, family: "Inter, sans-serif", weight: `${e.ti ? "italic " : ""}${e.tb ? 700 : 500}`, backgroundColor: "transparent", borderSize: 0, paddingLeft: 0, paddingRight: 0, paddingTop: 2, paddingBottom: 2 } }));
+function ktRegisterLines(K) {   // our versions of the line tools + rectangle: same names (old drawings keep working), more options
+  Object.entries(KT_LINES).forEach(([name, kind]) => K.registerOverlay({
+    name, totalStep: ["h", "hr", "v"].includes(kind) ? 2 : 3, needDefaultPointFigure: true, needDefaultXAxisFigure: true, needDefaultYAxisFigure: !["h", "hr"].includes(kind),
+    createYAxisFigures: ["h", "hr"].includes(kind) ? ({ coordinates: cs, overlay, precision, defaultStyles }) => (!cs.length || !overlay.points.length || ktExt(overlay).axis === false ? []
+      : [ktAxisTag(cs[0].y, overlay.points[0].value, overlay.styles?.line?.color || defaultStyles?.line?.color || "#2962FF", precision)]) : undefined,
+    createPointFigures: ({ coordinates: cs, bounding, overlay, precision, xAxis }) => {
+      if (!cs.length) return [];
+      const e = ktExt(overlay), W = bounding.width, H = bounding.height, col = overlay.styles?.line?.color || "#2962FF";
+      let a, b;
+      if (kind === "h") { a = { x: 0, y: cs[0].y }; b = { x: W, y: cs[0].y }; }
+      else if (kind === "hr") { a = cs[0]; b = { x: W, y: cs[0].y }; }
+      else if (kind === "v") { a = { x: cs[0].x, y: 0 }; b = { x: cs[0].x, y: H }; }
+      else { if (cs.length < 2) return []; [a, b] = ktLineExtend(cs[0], cs[1], e.extL ?? kind === "line", e.extR ?? (kind === "ray" || kind === "line"), W, H); }
+      const out = [{ type: "line", attrs: { coordinates: [a, b] } }];
+      if (!["h", "hr", "v"].includes(kind) && cs.length > 1) { if (e.arrR) out.push(ktArrow(cs[0], cs[1])); if (e.arrL) out.push(ktArrow(cs[1], cs[0])); }
+      if (e.mid && cs.length > 1) out.push({ type: "circle", attrs: { x: (cs[0].x + cs[1].x) / 2, y: (cs[0].y + cs[1].y) / 2, r: 3 }, styles: { style: "fill", color: col } });
+      if (e.stats && cs.length > 1 && overlay.points.length > 1) {
+        const P = overlay.points, d = P[1].value - P[0].value, i0 = xAxis?.convertFromPixel?.(cs[0].x), i1 = xAxis?.convertFromPixel?.(cs[1].x);
+        const bars = Number.isFinite(i0) && Number.isFinite(i1) ? Math.round(i1 - i0) : 0, days = P[0].timestamp && P[1].timestamp ? Math.round(Math.abs(P[1].timestamp - P[0].timestamp) / 864e5) : 0;
+        const ang = Math.round((Math.atan2(cs[0].y - cs[1].y, cs[1].x - cs[0].x) * 180) / Math.PI);
+        out.push({ type: "text", ignoreEvent: true, attrs: { x: cs[1].x + 8, y: cs[1].y, text: `${d >= 0 ? "+" : ""}${d.toFixed(precision.price)} (${P[0].value ? ((d / P[0].value) * 100).toFixed(2) : 0}%) · ${bars} bars${days ? `, ${days}d` : ""} · ${ang}°`, align: "left", baseline: "middle" },
+          styles: { color: "#fff", size: 11.5, family: "Inter, sans-serif", weight: 600, backgroundColor: col, borderRadius: 4, paddingLeft: 6, paddingRight: 6, paddingTop: 3, paddingBottom: 3, borderSize: 0 } });
+      }
+      if (e.text) {
+        const t = e.tpos === "left" ? 0.04 : e.tpos === "right" ? 0.96 : 0.5, base = kind === "v" ? { x: a.x + 6, y: H * t } : { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        out.push(...ktTextFig(e, base.x, base.y + (kind === "v" ? 0 : e.tv === "below" ? 4 : -4), kind === "v" ? "left" : e.tpos === "left" ? "left" : e.tpos === "right" ? "right" : "center", kind === "v" ? "middle" : e.tv === "below" ? "top" : "bottom", col));
+      }
+      return out;
+    },
+  }));
+  K.registerOverlay({
+    name: "rect", totalStep: 3, needDefaultPointFigure: true, needDefaultXAxisFigure: true, needDefaultYAxisFigure: true,
+    styles: { polygon: { style: "stroke_fill", color: "rgba(41,98,255,0.15)", borderColor: "#2962FF", borderSize: 1 } },
+    createPointFigures: ({ coordinates: cs, overlay }) => {
+      if (cs.length < 2) return [];
+      const [a, b] = cs, e = ktExt(overlay), out = [{ type: "polygon", attrs: { coordinates: [a, { x: b.x, y: a.y }, b, { x: a.x, y: b.y }] } }];
+      if (e.text) out.push(...ktTextFig(e, e.tpos === "left" ? Math.min(a.x, b.x) + 8 : e.tpos === "right" ? Math.max(a.x, b.x) - 8 : (a.x + b.x) / 2,
+        e.tv === "top" ? Math.min(a.y, b.y) + 6 : e.tv === "bottom" ? Math.max(a.y, b.y) - 6 : (a.y + b.y) / 2, e.tpos || "center", e.tv === "top" ? "top" : e.tv === "bottom" ? "bottom" : "middle", overlay.styles?.polygon?.borderColor || "#2962FF"));
+      return out;
+    },
+  });
+}
+// ----- alerts on drawings (round 47): the robot sends Telegram when the price crosses the line (see robot/drawing_alerts.py) -----
+const KT_ALERTABLE = ["horizontalStraightLine", "horizontalRayLine", "priceLine", "segment", "rayLine", "straightLine", "fibonacciLine"];
+function ktAlertState(p) {   // where the price is now vs each level (counted in candles of the timeframe on screen, like the robot does)
+  const c = kc.chart, list = c?.getDataList() || []; if (!list.length) return null;
+  const idx = (ts) => { let n = 0; for (const b of list) { if (b.timestamp <= ts) n++; else break; } return n - 1; };
+  const P = p.points || [], now = list.length - 1, price = list[now].close; let lv = [];
+  if (["horizontalStraightLine", "horizontalRayLine", "priceLine"].includes(p.name) && P[0]) lv = [P[0].value];
+  else if (["segment", "rayLine", "straightLine"].includes(p.name) && P.length > 1) { const i1 = idx(P[0].timestamp), i2 = idx(P[1].timestamp); if (i1 !== i2) lv = [P[0].value + (P[1].value - P[0].value) * (now - i1) / (i2 - i1)]; }
+  else if (p.name === "fibonacciLine" && P.length > 1) lv = (p.extendData?.levels || []).filter((l) => l[2]).map(([l]) => P[1].value + (P[0].value - P[1].value) * l);
+  if (!lv.length) return null;
+  const h = JSON.stringify([p.name, P.map((q) => [q.timestamp, +Number(q.value).toFixed(6)]), p.name === "fibonacciLine" ? (p.extendData?.levels || []).filter((l) => l[2]).map((l) => l[0]) : 0]);
+  let hash = 0; for (let i = 0; i < h.length; i++) hash = (hash * 31 + h.charCodeAt(i)) | 0;
+  return { on: 1, y: yahoo(kc.sym), tf: KC_PERIODS[kc.period ?? 3].text, side0: lv.map((v) => (price >= v ? "above" : "below")), h: String(hash >>> 0), lv: lv.map((v) => +v.toFixed(4)) };
+}
+function ktAlertToggle(id) {
+  const p = kc.ov.get(id); if (!p) return;
+  if (p.ui?.alert?.on) { p.ui = { ...p.ui, alert: undefined }; toast("Alert off for this drawing"); }
+  else { const a = ktAlertState(p); if (!a) { toast("This drawing can't have an alert yet"); return; }
+    p.ui = { ...(p.ui || {}), alert: a }; toast(`Alert on: Telegram when ${esc(kc.sym)} crosses ${a.lv.length > 1 ? `any of the ${a.lv.length} levels` : `this line (now ${fmtPx(a.lv[0])})`}. Checked every 30 min.`); }
+  kcSave(); ktFloat();
+}
+// ----- the settings window of one drawing -----
+function ktSettings(id, tab = "style") {
+  const c = kc.chart, ov = c?.getOverlayById(id); if (!ov) return;
+  if (ov.name === "fibonacciLine" && tab === "style") { fibWindow(id); return; }
+  const name = ov.name, before = clone(kc.ov.get(id) || kcPlain(ov)), cur = clone(before);
+  const isLine = !!KT_LINES[name], isShape = KT_SHAPES.includes(name), isPos = name === "tvLong" || name === "tvShort", txt = KT_TEXTABLE.includes(name), seg = ["segment", "rayLine", "straightLine"].includes(name);
+  const tabs = [["style", isPos ? "Inputs & style" : "Style"], ...(txt ? [["text", "Text"]] : []), ["coords", "Coordinates"], ["vis", "Visibility"]];
+  let t = tabs.some((x) => x[0] === tab) ? tab : "style";
+  const ln = () => ({ style: "solid", smooth: false, size: 1, color: "#2962FF", dashedValue: [2, 2], ...(cur.styles?.line || {}) });
+  const pg = () => ({ style: "stroke_fill", color: "rgba(41,98,255,0.15)", borderColor: "#2962FF", borderSize: 1, borderStyle: "solid", borderDashedValue: [2, 2], ...(cur.styles?.polygon || {}) });
+  const ext = () => (cur.extendData && typeof cur.extendData === "object" && !Array.isArray(cur.extendData) ? cur.extendData : {});
+  const live = () => { ktApply(id, cur); ktFloat(); };
+  const colorRow = (label, key, val) => `<div class="f"><span>${label}</span><span><input type="color" data-c="${key}" value="${esc(String(val).slice(0, 7))}">${KT_COLORS.slice(0, 8).map((x) => `<button class="kwsw" data-cs="${key}:${x}" style="background:${x}" title="${x}"></button>`).join("")}</span></div>`;
+  const sel = (key, val, opts) => `<select data-s="${key}">${opts.map(([v, l]) => `<option value="${v}" ${String(v) === String(val) ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  const chk = (key, val, label) => `<div class="f"><label class="ck"><input type="checkbox" data-k="${key}" ${val ? "checked" : ""}> ${label}</label></div>`;
+  const lineStyle = (s) => (s.style === "dashed" ? (String(s.dashedValue) === "1,3" ? "dot" : "dash") : "solid");
+  const body = () => {
+    const e = ext(), L = ln(), G = pg();
+    if (t === "style") {
+      let h = "";
+      if (isShape) h += `<div class="h">BORDER</div>${colorRow("Colour", "pg.borderColor", G.borderColor)}<div class="f"><span>Width · style</span><span>${sel("pg.borderSize", G.borderSize, [[1, "1px"], [2, "2px"], [3, "3px"], [4, "4px"]])}${sel("pg.dash", G.borderStyle === "dashed" ? "dash" : "solid", [["solid", "Solid"], ["dash", "Dashed"]])}</span></div>
+        <div class="h">BACKGROUND</div>${chk("pg.fill", G.style !== "stroke", "Fill the shape")}${colorRow("Colour", "pg.color", G.color)}<div class="f"><span>Opacity</span><span><input type="range" min="0" max="100" data-op value="${Math.round(((parseInt(String(G.color).slice(7, 9), 16) || 38) / 255) * 100)}"></span></div>`;
+      else if (isPos) h += `<div class="h">YOUR ACCOUNT (for position size)</div><div class="f"><span>Account size</span><span><input type="number" min="0" step="any" data-n="acct" value="${e.acct ?? 100000}"></span></div>
+        <div class="f"><span>Risk per trade</span><span><input type="number" min="0" step="0.1" data-n="risk" value="${e.risk ?? 1}"> ${sel("riskT", e.riskT || "pct", [["pct", "% of account"], ["amt", "amount"]])}</span></div>
+        <p class="note">Labels then show the quantity and the profit / loss at the target and stop.</p>`;
+      else {
+        h += `<div class="h">LINE</div>${colorRow("Colour", "ln.color", L.color)}<div class="f"><span>Width · style</span><span>${sel("ln.size", L.size, [[1, "1px"], [2, "2px"], [3, "3px"], [4, "4px"]])}${sel("ln.dash", lineStyle(L), [["solid", "Solid"], ["dash", "Dashed"], ["dot", "Dotted"]])}</span></div>`;
+        if (["horizontalStraightLine", "horizontalRayLine"].includes(name)) h += `<div class="h">PRICE SCALE</div>${chk("e.axis", e.axis !== false, "Price label on the scale, in the line's colour")}`;
+        if (seg) h += `<div class="h">ENDS</div>${chk("e.extL", e.extL ?? name === "straightLine", "Extend left")}${chk("e.extR", e.extR ?? (name !== "segment"), "Extend right")}${chk("e.arrL", e.arrL, "Left end arrow")}${chk("e.arrR", e.arrR, "Right end arrow")}${chk("e.mid", e.mid, "Middle point")}
+          <div class="h">STATS</div>${chk("e.stats", e.stats, "Show price change, %, bars, days and angle")}`;
+      }
+      return h;
+    }
+    if (t === "text") {
+      const T = name === "tvText" ? { text: e.text || "", ts: e.size || 14, ...e } : e;
+      return `<textarea class="kttext" rows="3" maxlength="300" data-t placeholder="Text shown on the drawing">${esc(T.text || "")}</textarea>
+        ${colorRow("Colour", "e.tc", T.tc || cur.styles?.text?.color || L.color)}
+        <div class="f"><span>Size</span><span>${sel("e.ts", T.ts || 13, [10, 11, 12, 13, 14, 16, 20, 24, 28, 36].map((v) => [v, v]))}</span></div>
+        ${chk("e.tb", T.tb, "<b>Bold</b>")}${chk("e.ti", T.ti, "<i>Italic</i>")}
+        ${name === "tvText" ? "" : `<div class="f"><span>Position</span><span>${sel("e.tpos", e.tpos || "center", [["left", "Left"], ["center", "Centre"], ["right", "Right"]])}${sel("e.tv", e.tv || (isShape ? "middle" : "above"), isShape ? [["top", "Top"], ["middle", "Middle"], ["bottom", "Bottom"]] : [["above", "Above the line"], ["below", "Below the line"]])}</span></div>`}`;
+    }
+    if (t === "coords") {
+      const P = cur.points || [], intra = [0, 1, 2, 6, 7, 8, 9, 10, 11].includes(kc.period ?? 3);
+      const dt = (ts) => { const d = new Date(ts); const z = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}${intra ? `T${z(d.getHours())}:${z(d.getMinutes())}` : ""}`; };
+      return P.map((p, i) => `<div class="h">POINT ${i + 1}</div><div class="f"><span>Price</span><span><input type="number" step="any" data-pv="${i}" value="${Number(p.value).toFixed(4).replace(/\.?0+$/, "")}"></span></div>
+        <div class="f"><span>${intra ? "Date and time" : "Date"}</span><span><input type="${intra ? "datetime-local" : "date"}" data-pt="${i}" value="${p.timestamp ? dt(p.timestamp) : ""}"></span></div>`).join("") || `<p class="note">This drawing has no points.</p>`;
+    }
+    const vis = cur.ui?.vis || {};
+    return `<p class="note" style="margin:6px 0 8px">Show this drawing on these timeframes:</p>${KT_TF.map(([k, l]) => chk(`v.${k}`, vis[k] ?? true, l)).join("")}`;
+  };
+  const m = kcModal(`<div class="kwh"><b>${esc(KT_NAME[name] || name)}</b><button class="x" data-a="cancel">✕</button></div><div class="kwt"></div><div class="kwb ktset"></div>
+    <div class="kwf"><details class="kwdd"><summary>Template ▾</summary><div><button data-a="savedef">Save as my default for ${esc(KT_NAME[name] || name)}</button><button data-a="usedef" ${ktDefs()[name] ? "" : "disabled"}>Apply my default</button><button data-a="reset">Reset to the original look</button></div></details>
+      <span class="sp"></span><button class="c" data-a="cancel">Cancel</button><button class="ok" data-a="ok">Ok</button></div>`, "kwind");
+  const draw = () => { m.querySelector(".kwt").innerHTML = tabs.map(([k, l]) => `<button class="${k === t ? "on" : ""}" data-tab="${k}">${l}</button>`).join(""); m.querySelector(".ktset").innerHTML = body(); };
+  draw();
+  const setE = (k, v) => { cur.extendData = { ...ext(), [k]: v }; };
+  const setL = (patch) => { cur.styles = { ...(cur.styles || {}), line: { ...ln(), ...patch } }; };
+  const setG = (patch) => { cur.styles = { ...(cur.styles || {}), polygon: { ...pg(), ...patch }, circle: { ...(cur.styles?.circle || {}), ...(patch.color ? { color: patch.color } : {}), ...(patch.borderColor ? { borderColor: patch.borderColor } : {}), ...(patch.borderSize ? { borderSize: patch.borderSize } : {}), ...(patch.style ? { style: patch.style } : {}) } }; };
+  const alpha = (hex, pct) => `${String(hex).slice(0, 7)}${Math.round((pct / 100) * 255).toString(16).padStart(2, "0")}`;
+  const onField = (el) => {
+    const d = el.dataset;
+    if (d.c || d.cs) { const [k, v] = d.cs ? d.cs.split(":") : [d.c, el.value];
+      if (k === "ln.color") setL({ color: v }); else if (k === "pg.borderColor") setG({ borderColor: v });
+      else if (k === "pg.color") setG({ color: alpha(v, Number(m.querySelector("[data-op]")?.value ?? 15)) }); else if (k === "e.tc") setE("tc", v); }
+    else if (d.op !== undefined) setG({ color: alpha(pg().color, Number(el.value)) });
+    else if (d.s) { const v = el.value;
+      if (d.s === "ln.size") setL({ size: +v }); else if (d.s === "ln.dash") setL({ style: v === "solid" ? "solid" : "dashed", dashedValue: v === "dot" ? [1, 3] : [6, 4] });
+      else if (d.s === "pg.borderSize") setG({ borderSize: +v }); else if (d.s === "pg.dash") setG({ borderStyle: v === "dash" ? "dashed" : "solid", borderDashedValue: [6, 4] });
+      else if (d.s === "riskT") setE("riskT", v); else if (d.s.startsWith("e.")) setE(d.s.slice(2), /^\d+$/.test(v) ? +v : v); }
+    else if (d.k) { const v = el.checked;
+      if (d.k === "pg.fill") setG({ style: v ? "stroke_fill" : "stroke" }); else if (d.k.startsWith("e.")) setE(d.k.slice(2), v);
+      else if (d.k.startsWith("v.")) { cur.ui = { ...(cur.ui || {}), vis: { ...(cur.ui?.vis || {}), [d.k.slice(2)]: v } }; } }
+    else if (d.n) setE(d.n, Number(el.value));
+    else if (d.t !== undefined) { if (name === "tvText") cur.extendData = { ...ext(), text: el.value || "Text" }; else setE("text", el.value); }
+    else if (d.pv !== undefined || d.pt !== undefined) {
+      const i = +(d.pv ?? d.pt), P = clone(cur.points || []); if (!P[i]) return;
+      if (d.pv !== undefined && Number.isFinite(+el.value)) P[i].value = +el.value;
+      if (d.pt !== undefined && el.value) { const ts = new Date(el.value).getTime(); if (Number.isFinite(ts)) { const list = c.getDataList(); let best = list[0]?.timestamp ?? ts; list.forEach((b) => { if (Math.abs(b.timestamp - ts) < Math.abs(best - ts)) best = b.timestamp; }); P[i].timestamp = best; } }
+      cur.points = P;
+    }
+    if (name === "tvText" && (d.s === "e.ts")) cur.extendData = { ...ext(), size: +el.value };
+    live();
+  };
+  m.addEventListener("input", (e) => onField(e.target));
+  m.addEventListener("change", (e) => { if (e.target.matches("select,input[type=checkbox],input[type=date],input[type=datetime-local]")) onField(e.target); });
+  m.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.tab) { t = b.dataset.tab; draw(); return; }
+    if (b.dataset.cs) { onField(b); draw(); return; }
+    const a = b.dataset.a; if (!a) return;
+    if (a === "savedef") { const d = ktDefs(); d[name] = { styles: cur.styles || {}, extendData: ["tvText", "simpleAnnotation", "simpleTag", "fibonacciLine"].includes(name) ? undefined : (() => { const { text: _t, ...rest } = ext(); return rest; })() }; safe(() => localStorage.setItem("ic_ktdef", JSON.stringify(d))); toast(`Saved as your default ${esc(KT_NAME[name] || name)}`); b.closest("details")?.removeAttribute("open"); return; }
+    if (a === "usedef") { const d = ktDefs()[name]; if (d) { cur.styles = clone(d.styles || {}); if (d.extendData) cur.extendData = { ...ext(), ...d.extendData }; live(); draw(); } b.closest("details")?.removeAttribute("open"); return; }
+    if (a === "reset") { cur.styles = {}; if (!["tvText", "simpleAnnotation", "simpleTag", "fibonacciLine"].includes(name)) cur.extendData = ext().text ? { text: ext().text } : undefined; c.overrideOverlay({ id, styles: { line: { style: "solid", smooth: false, size: 1, color: "#2962FF", dashedValue: [2, 2] } } }); live(); draw(); b.closest("details")?.removeAttribute("open"); return; }
+    if (a === "cancel") { ktApply(id, before); ktFloat(); m.remove(); return; }
+    if (a === "ok") { kc.ov.set(id, clone(cur)); if (JSON.stringify(before) !== JSON.stringify(cur)) { kc.hist.push({ t: "edit", id, before }); kc.redo = []; } kcSave(); ktFloat(); m.remove(); }
+  });
+}
+// ----- Object tree: every indicator and drawing on this chart (show / hide, lock, settings, remove; click = select) -----
+function ktTreeToggle() {
+  kc.treeOpen = !kc.treeOpen;
+  kc.box?.classList.toggle("tree", kc.treeOpen); ktTree(); render(false);
+  requestAnimationFrame(() => kc.chart?.resize());
+}
+function ktTree() {
+  const el = kc.box?.querySelector(".ktree"); if (!el) return;
+  el.hidden = !kc.treeOpen; if (!kc.treeOpen) return;
+  const c = kc.chart, list = [...kc.ov.entries()].reverse(), tf = ktTfNow();
+  const ind = (kc.active || []).map((a) => `<div class="tr2"><span class="ic">${chI("fx", 16)}</span><span class="nm">${esc(IND_NAME[a.name] || a.name)}<small>${esc((a.params || []).join(" "))}</small></span>
+      <button data-ti="eye:${esc(a.name)}" title="${a.hidden ? "Show" : "Hide"}">${ti(a.hidden ? "eyeoff" : "eye", 16)}</button><button data-ti="set:${esc(a.name)}" title="Settings">${ti("gear", 16)}</button><button data-ti="del:${esc(a.name)}" title="Remove">${ti("trash", 16)}</button></div>`).join("");
+  const dr = list.map(([id, p]) => { const ui = p.ui || {}, off = ui.hidden || (ui.vis && ui.vis[tf] === false), o = c?.getOverlayById(id), lock = o?.lock ?? p.lock, txt = p.name === "tvText" || p.name === "simpleAnnotation" ? (typeof p.extendData === "string" ? p.extendData : p.extendData?.text) : p.extendData?.text;
+    return `<div class="tr2${kc.sel === id ? " on" : ""}${off ? " off" : ""}" data-tsel="${esc(id)}"><span class="ic">${ti(p.name, 16)}</span><span class="nm">${esc(KT_NAME[p.name] || p.name)}${txt ? `<small>“${esc(String(txt).slice(0, 24))}”</small>` : ""}${ui.vis && ui.vis[tf] === false ? "<small>hidden on this timeframe</small>" : ""}${ui.alert?.on ? `<small class="al">🔔 alert</small>` : ""}</span>
+      <button data-td="eye:${esc(id)}" title="${ui.hidden ? "Show" : "Hide"}">${ti(ui.hidden ? "eyeoff" : "eye", 16)}</button><button data-td="lock:${esc(id)}" title="${lock ? "Unlock" : "Lock"}" class="${lock ? "on" : ""}">${ti(lock ? "lock" : "unlock", 16)}</button><button data-td="set:${esc(id)}" title="Settings">${ti("gear", 16)}</button><button data-td="del:${esc(id)}" title="Remove">${ti("trash", 16)}</button></div>`; }).join("");
+  el.innerHTML = `<div class="th"><b>Object tree</b><button data-tt="close" title="Close">✕</button></div>
+    <div class="tbody"><small>INDICATORS · ${(kc.active || []).length}</small>${ind || `<p class="note">None. Press Indicators to add one.</p>`}
+    <small>DRAWINGS · ${kc.ov.size}</small>${dr || `<p class="note">No drawings on ${esc(kc.sym || "this chart")} yet.</p>`}</div>
+    ${kc.ov.size ? `<div class="tf"><button data-tt="hide">${kc.hideAll ? "Show all" : "Hide all"}</button><button data-tt="lock">Lock / unlock all</button><button data-tt="clr">Remove all</button></div>` : ""}`;
+}
+function ktTreeClick(e) {
+  const b = e.target.closest("button,[data-tsel]"); if (!b) return;
+  const c = kc.chart; if (!c) return;
+  if (b.dataset.tt) { const a = b.dataset.tt; if (a === "close") return ktTreeToggle(); if (a === "hide" || a === "lock") return ktOption(a, b); if (a === "clr") { kcAction("clr"); return; } }
+  if (b.dataset.ti) { const [a, n] = b.dataset.ti.split(":"), x = kc.active.find((y) => y.name === n); if (!x) return;
+    if (a === "eye") { x.hidden = !x.hidden; kcVisApply(); prefs().list = kc.active.map(({ paneId: _, ...y }) => y); kcSavePrefs(); }
+    else if (a === "set") indWindow(n); else if (a === "del") kcRemoveInd(n);
+    ktTree(); return; }
+  if (b.dataset.td) { e.stopPropagation(); const [a, id] = [b.dataset.td.slice(0, b.dataset.td.indexOf(":")), b.dataset.td.slice(b.dataset.td.indexOf(":") + 1)], p = kc.ov.get(id); if (!p) return;
+    if (a === "eye") { p.ui = { ...(p.ui || {}), hidden: !p.ui?.hidden }; ktApplyVis(); kcSave(); }
+    else if (a === "lock") { const lk = !(c.getOverlayById(id)?.lock); c.overrideOverlay({ id, lock: lk }); p.lock = lk; kcSave(); }
+    else if (a === "set") { kc.sel = id; ktSettings(id); }
+    else if (a === "del") c.removeOverlay(id);
+    ktTree(); return; }
+  if (b.dataset.tsel) { const id = b.dataset.tsel, p = kc.ov.get(id); kc.sel = id; ktFloat(); ktTree();
+    const ts = p?.points?.[0]?.timestamp; if (ts) { const r = c.getVisibleRange(), list = c.getDataList(), first = list[r.from]?.timestamp, last = list[Math.min(list.length - 1, r.to - 1)]?.timestamp; if (!(ts >= first && ts <= last)) c.scrollToTimestamp(ts); } }
+}
+
+// ----- Compare symbols (round 47): extra lines on the price chart, all measured in % from the first candle on screen -----
+const CMP_COL = ["#FF9800", "#2962FF", "#E91E63", "#00BCD4", "#9C27B0"];
+const cmpList = () => (kc.cmp ||= safe(() => JSON.parse(localStorage.getItem("ic_cmp") || "[]"), []) || []);
+const cmpSave = () => safe(() => localStorage.setItem("ic_cmp", JSON.stringify(cmpList())));
+const cmpKey = (ts, timespan) => { const d = new Date(ts); return ["day", "week", "month"].includes(timespan) ? (timespan === "month" ? d.toISOString().slice(0, 7) : d.toISOString().slice(0, 10)) : Math.round(ts / 60000); };
+async function kcCmpApply() {   // fetch each compared symbol for the timeframe on screen, line its candles up with ours, draw
+  const c = kc.chart; if (!c) return;
+  const list = c.getDataList(), per = KC_PERIODS[kc.period ?? 3], [rng, itv, join] = KC_RANGE[per.timespan + per.multiplier] || ["10y", "1d", 1], seq = (kc.cmpSeq = (kc.cmpSeq || 0) + 1);
+  const cl = cmpList();
+  for (let i = cl.length; i < CMP_COL.length; i++) if (kc.cmpOn?.[i]) { c.removeIndicator("candle_pane", `TV_CMP${i + 1}`); kc.cmpOn[i] = 0; }
+  if (!cl.length || !list.length) { if (kc.cmpPct !== undefined) { kc.pct = kc.cmpPct; kc.cmpPct = undefined; kcStyle(); render(false); } return; }
+  if (kc.cmpPct === undefined) { kc.cmpPct = kc.pct; kc.pct = true; kc.log = false; kcStyle(); }
+  kc.cmpData ||= {};
+  for (let i = 0; i < cl.length; i++) {
+    const x = cl[i], key = `${x.y}|${rng}|${itv}`;
+    if (!kc.cmpData[key]) { const { data } = await sb.rpc("get_candles", { sym: x.y, rng, itv }); if (seq !== kc.cmpSeq) return; kc.cmpData[key] = data || {}; }
+    const d = kc.cmpData[key]; let bars = (d.t || []).map((t, j) => ({ timestamp: t * 1000, open: d.o?.[j], high: d.h?.[j], low: d.l?.[j], close: d.c?.[j], volume: d.v?.[j] || 0 })).filter((b) => typeof b.close === "number");
+    if (join > 1) bars = kcJoin(bars, join, per.timespan === "month", d.meta?.gmtoffset);
+    const m = new Map(bars.map((b) => [cmpKey(b.timestamp, per.timespan), b.close]));
+    const closes = list.map((b) => m.get(cmpKey(b.timestamp, per.timespan)) ?? null);
+    for (let j = 1; j < closes.length; j++) if (closes[j] === null && closes[j - 1] !== null && ["day", "week", "month"].includes(per.timespan)) closes[j] = closes[j - 1];   // holidays: carry the last close
+    const ext = { sym: x.t, color: x.color, closes, base: c.getVisibleRange().from };
+    if (kc.cmpOn?.[i]) c.overrideIndicator({ name: `TV_CMP${i + 1}`, extendData: ext }, "candle_pane");
+    else { c.createIndicator({ name: `TV_CMP${i + 1}`, extendData: ext, styles: { lines: [LN(x.color, 2)] } }, true, { id: "candle_pane" }); (kc.cmpOn ||= [])[i] = 1; }
+  }
+  render(false);
+}
+function kcCmpRebase() {   // the % start point follows the first candle on screen (like TradingView)
+  const c = kc.chart; if (!c || !kc.cmpOn?.some(Boolean)) return;
+  const from = c.getVisibleRange().from;
+  cmpList().forEach((x, i) => { if (!kc.cmpOn[i]) return; const ind = c.getIndicatorByPaneId("candle_pane", `TV_CMP${i + 1}`); const e = ind?.extendData; if (e && e.base !== from) c.overrideIndicator({ name: `TV_CMP${i + 1}`, extendData: { ...e, base: from } }, "candle_pane"); });
+}
+function kcCompareWindow() {
+  const m = kcModal(`<div class="kwh"><b>Compare symbol</b><button class="x" data-k="close">✕</button></div><div class="kws"><input placeholder="Search  e.g. SMH, SPY, AMD, BTC, gold" autofocus></div>
+    <div class="kwb cmpw"><div class="cur"></div><div class="res"></div></div><div class="kwf"><span class="note" style="margin:0">Up to ${CMP_COL.length}. The chart switches to % so every line starts at 0% on the left.</span><span class="sp"></span><button class="ok" data-k="close">Done</button></div>`);
+  const cur = () => { const cl = cmpList(); m.querySelector(".cur").innerHTML = cl.length ? `<div class="h">ON THE CHART</div>${cl.map((x, i) => `<div class="f"><span><i class="dot" style="background:${x.color}"></i><b>${esc(x.t)}</b> <small>${esc(x.n || "")}</small></span><button class="c" data-rm="${i}">Remove</button></div>`).join("")}` : `<p class="note">Nothing compared yet. Search a symbol above.</p>`; };
+  let seq = 0;
+  const search = async (q) => {
+    const my = ++seq, box = m.querySelector(".res");
+    if (!q.trim()) { box.innerHTML = `<div class="h">SUGGESTED</div>${[["SPY", "S&P 500 ETF"], ["QQQ", "Nasdaq 100 ETF"], ["SMH", "Semiconductor ETF"], ["^SET.BK", "SET index"], ["GC=F", "Gold"], ["BTC-USD", "Bitcoin"]].map(([y, n]) => `<button class="li" data-add="${esc(y)}" data-n="${esc(n)}"><b>${esc(plainOf(y))}</b><small>${esc(n)}</small></button>`).join("")}`; return; }
+    const { data } = await sb.rpc("search_symbols", { q: q.trim() }); if (my !== seq) return;
+    box.innerHTML = (Array.isArray(data) ? data : []).slice(0, 12).map((r) => `<button class="li" data-add="${esc(r.symbol)}" data-n="${esc(cleanName(r.name))}"><b>${esc(plainOf(r.symbol))}</b><small>${esc(cleanName(r.name))} · ${esc(r.exchange)}</small></button>`).join("") || `<p class="note">No match.</p>`;
+  };
+  cur(); search("");
+  m.querySelector("input").addEventListener("input", (e) => { clearTimeout(m._t); m._t = setTimeout(() => search(e.target.value), 250); });
+  m.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-add],[data-rm],[data-k]"); if (!b) return;
+    if (b.dataset.k === "close") { m.remove(); return; }
+    const cl = cmpList();
+    if (b.dataset.add) { const y = b.dataset.add; if (y === yahoo(kc.sym) || cl.some((x) => x.y === y)) return; if (cl.length >= CMP_COL.length) { toast(`Up to ${CMP_COL.length} symbols`); return; }
+      const used = cl.map((x) => x.color); cl.push({ y, t: plainOf(y), n: b.dataset.n || "", color: CMP_COL.find((c) => !used.includes(c)) || CMP_COL[0] }); }
+    if (b.dataset.rm !== undefined) { cl.splice(+b.dataset.rm, 1); kc.cmpOn = (kc.cmpOn || []).map(() => 0); CMP_COL.forEach((_, i) => kc.chart?.removeIndicator("candle_pane", `TV_CMP${i + 1}`)); }
+    cmpSave(); cur(); kcCmpApply();
+  });
+}
+
+// "Alert" button (Alt+A): a price alert from the chart, sent to Telegram by the robot (same table as Settings -> Price alerts)
+function kcAlertWindow() {
+  const c = kc.chart, t = kc.sym; if (!c || !t) return;
+  const last = c.getDataList().at(-1)?.close ?? 0;
+  const m = kcModal(`<div class="kwh"><b>Create alert on ${esc(t)}</b><button class="x" data-k="close">✕</button></div><div class="kwb">
+    <div class="f"><span>Condition</span><span><select data-ak><option value="above">Price goes above</option><option value="below">Price goes below</option><option value="move">Moves ± % in a day</option></select></span></div>
+    <div class="f"><span>Value</span><span><input type="number" step="any" data-av value="${last ? Number(last).toFixed(2) : ""}"></span></div>
+    <p class="note" style="margin:8px 0 0">Now ${fmtPx(last)}. Checked about every 30 minutes, sent once to Telegram.</p></div>
+    <div class="kwf"><span class="sp"></span><button class="c" data-k="close">Cancel</button><button class="ok" data-k="ok">Create</button></div>`);
+  m.addEventListener("click", async (e) => {
+    const k = e.target.closest("[data-k]")?.dataset.k; if (!k) return;
+    if (k === "ok") {
+      const kind = m.querySelector("[data-ak]").value, v = Number(m.querySelector("[data-av]").value);
+      if (!Number.isFinite(v) || v <= 0) { toast("Type a price above zero"); return; }
+      const { error } = await sb.from("price_alerts").insert({ user_id: state.user.id, ticker: t, kind, value: +v.toFixed(4) });
+      toast(error ? `Alert not saved: ${esc(error.message)}` : `Alert set: ${esc(t)} ${kind === "move" ? `moves ±${v}%` : `${kind} ${fmtPx(v)}`} (Telegram)`);
+      state.alerts = undefined;
+    }
+    m.remove();
+  });
+}
+
+// ----- windows: Indicators, indicator settings, Fibonacci settings, right-click menu -----
+function kcModal(html, cls = "") {
+  document.querySelector(".kcmodal")?.remove();
+  const m = document.createElement("div"); m.className = "kcmodal"; m.innerHTML = `<div class="kcwin ${cls}">${html}</div>`;
+  m.addEventListener("mousedown", (e) => { if (e.target === m) m.remove(); });
+  document.body.appendChild(m);
+  return m;
+}
+function indListWindow() {
+  const p = prefs(); let cat = "fav", q = "";
+  const m = kcModal(`<div class="kwh"><b>Indicators</b><button class="x" data-k="close">✕</button></div><div class="kws"><input placeholder="Search  e.g. RSI, MACD, Bollinger" autofocus></div><div class="kwb ind"><div class="cats"></div><div class="ls"></div></div>`, "kwind");
+  const draw = () => {
+    const all = Object.values(IND_CAT).flat(), on = new Set(kc.active.map((a) => a.name));
+    const list = q ? all.filter((n) => (IND_NAME[n] + " " + n).toLowerCase().includes(q)) : cat === "fav" ? p.fav.filter((n) => IND_NAME[n]) : cat === "all" ? all : IND_CAT[cat];
+    m.querySelector(".cats").innerHTML = `<small>PERSONAL</small><button data-cat="fav" class="${cat === "fav" && !q ? "on" : ""}">★ Favourites</button><small>BUILT-IN</small>${["all", ...Object.keys(IND_CAT)].map((c) => `<button data-cat="${c}" class="${cat === c && !q ? "on" : ""}">${c === "all" ? "All" : c}</button>`).join("")}`;
+    m.querySelector(".ls").innerHTML = list.map((n) => `<div class="li" data-add="${n}"><button class="star${p.fav.includes(n) ? " on" : ""}" data-fav="${n}" title="Favourite">${p.fav.includes(n) ? "★" : "☆"}</button><span>${esc(IND_NAME[n])}</span><em>${on.has(n) ? "added ✓" : isMain(n) ? "on price" : "own pane"}</em></div>`).join("")
+      + (cat === "fav" && !q ? IND_SOON.map(([n, w]) => `<div class="li no"><button class="star on" disabled>★</button><span>${esc(n)}</span><em>${esc(w)}</em></div>`).join("") : "")
+      || `<p class="note" style="margin:14px">Nothing found.</p>`;
+  };
+  draw();
+  m.querySelector("input").addEventListener("input", (e) => { q = e.target.value.trim().toLowerCase(); draw(); });
+  m.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-k],[data-cat],[data-fav],[data-add]"); if (!b) return;
+    if (b.dataset.k === "close") return m.remove();
+    if (b.dataset.cat) { cat = b.dataset.cat; q = ""; m.querySelector("input").value = ""; return draw(); }
+    if (b.dataset.fav) { const n = b.dataset.fav; p.fav = p.fav.includes(n) ? p.fav.filter((x) => x !== n) : [...p.fav, n]; kcSavePrefs(); return draw(); }
+    if (b.dataset.add) { const n = b.dataset.add; if (kc.active.some((a) => a.name === n)) { toast(`${esc(IND_NAME[n])} is already on the chart. Use its ⚙ to change it.`); return; }
+      kcAddInd({ name: n, ...clone(p.def[n] || IND_DEF[n] || { params: [] }) }); draw(); }
+  });
+}
+const SRC = ["close", "open", "high", "low", "hl2", "hlc3", "ohlc4"];
+function indWindow(name) {
+  const a = kc.active.find((x) => x.name === name); if (!a) return;
+  const e = clone({ params: a.params, ext: a.ext, style: a.style, hideOn: a.hideOn || [] }); let tab = "in";
+  const p = prefs();
+  const m = kcModal(`<div class="kwh"><b>${esc(IND_NAME[name] || name)}</b><button class="x" data-k="close">✕</button></div><div class="kwt"></div><div class="kwb"></div>
+    <div class="kwf"><details class="kwdd"><summary>Defaults</summary><div><button data-k="tvdef">Reset to TradingView default</button><button data-k="mydef">Save as my default</button><button data-k="myreset"${p.def[name] ? "" : " disabled"}>Reset to my default</button></div></details><span class="sp"></span><button class="c" data-k="close">Cancel</button><button class="ok" data-k="ok">Ok</button></div>`, "kwset");
+  const num = (k, v, lab) => `<label class="f">${lab}<input type="number" data-p="${k}" value="${v}" min="1" max="500"></label>`;
+  const sel = (k, v, opts, lab) => `<label class="f">${lab}<select data-x="${k}">${opts.map((o) => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("")}</select></label>`;
+  const ck = (k, v, lab, extra = "") => `<label class="f"><span class="ck"><input type="checkbox" data-s="${k}" ${v ? "checked" : ""}>${lab}</span>${extra ? `<span>${extra}</span>` : ""}</label>`;
+  const col = (k, v) => `<input type="color" data-c="${k}" value="${v}">`;
+  const wid = (k, v) => `<select data-w="${k}">${[1, 2, 3, 4].map((n) => `<option ${n === v ? "selected" : ""} value="${n}">${n}px</option>`).join("")}</select>`;
+  const draw = () => {
+    m.querySelector(".kwt").innerHTML = [["in", "Inputs"], ["st", "Style"], ["vi", "Visibility"]].map(([k, l]) => `<button class="${k === tab ? "on" : ""}" data-tab="${k}">${l}</button>`).join("");
+    const x = e.ext;
+    let h = "";
+    if (tab === "in") {
+      if (name === "TV_MACD") h = sel("src", x.src, SRC, "Source") + num(0, e.params[0], "Fast length") + num(1, e.params[1], "Slow length") + num(2, e.params[2], "Signal length") + sel("osc", x.osc, ["EMA", "SMA"], "Oscillator MA type") + sel("sig", x.sig, ["EMA", "SMA"], "Signal MA type");
+      else if (name === "TV_RSI") h = `<div class="h">RSI SETTINGS</div>` + num(0, e.params[0], "RSI length") + sel("src", x.src, SRC, "Source") + `<div class="h">SMOOTHING</div>` + sel("smooth", x.smooth, ["None", "SMA", "SMA + Bollinger Bands", "EMA", "RMA", "WMA"], "Type") + num(1, e.params[1], "Length") + num(2, e.params[2], "BB StdDev");
+      else if (name === "TV_VOL") h = num(0, e.params[0], "MA length") + ck("prev", x.prev, "Colour based on previous close");
+      else h = (e.params.length ? e.params.map((v, i) => num(i, v, (IND_INPUTS[name] || [])[i] || `Input ${i + 1}`)).join("") : `<p class="note">This one has no inputs.</p>`)
+        + (IND_FLAGS[name] || []).map(([k, l]) => ck(k, x?.[k], l)).join("");
+    } else if (tab === "st") {
+      if (name === "TV_MACD") h = ck("hist", x.show.hist, "Histogram") + ["h0|Growing above zero", "h1|Falling above zero", "h2|Growing below zero", "h3|Falling below zero"].map((s) => { const [k, l] = s.split("|"); return `<label class="f in">${l}<span>${col(k, x.col[k])}</span></label>`; }).join("")
+        + ck("macd", x.show.macd, "MACD", col("macd", x.col.macd) + wid("macd", x.w.macd)) + ck("signal", x.show.signal, "Signal line", col("signal", x.col.signal) + wid("signal", x.w.signal)) + ck("zero", x.show.zero, "Zero line", col("zero", x.col.zero));
+      else if (name === "TV_RSI") h = ck("rsi", x.show.rsi, "RSI", col("rsi", x.col.rsi) + wid("rsi", x.w.rsi)) + ck("ma", x.show.ma, "RSI-based MA", col("ma", x.col.ma) + wid("ma", x.w.ma))
+        + ck("bands", x.show.bands, "Bands", col("bands", x.col.bands)) + `<label class="f in">Upper · middle · lower<span class="b3">${x.bands.map((v, i) => `<input type="number" data-b="${i}" value="${v}" min="0" max="100">`).join("")}</span></label>` + ck("fill", x.show.fill, "Background fill", col("fill", x.col.fill));
+      else if (name === "TV_VOL") h = `<label class="f">Growing${col("up", x.col.up)}</label><label class="f">Falling${col("dn", x.col.dn)}</label>` + ck("showMA", x.showMA, "Volume MA", col("ma", x.col.ma));
+      else if (name === "TV_ZZ") h = `<label class="f">Line<span><input type="color" data-x="color" value="${x.color || "#2962FF"}"><select data-x="w">${[1, 2, 3, 4].map((n) => `<option ${n === Number(x.w || 2) ? "selected" : ""} value="${n}">${n}px</option>`).join("")}</select></span></label>`;
+      else { const st = (e.style ||= {}); st.lines ||= (kc.chart.getIndicatorByPaneId(a.paneId, name)?.styles?.lines || kc.pro.getStyles().indicator.lines).slice(0, Math.max(1, e.params.length || 3)).map((l) => ({ color: l.color, size: l.size || 1 }));
+        h = st.lines.map((l, i) => `<label class="f">Line ${i + 1}<span><input type="color" data-lc="${i}" value="${/^#/.test(l.color) ? l.color.slice(0, 7) : "#2962ff"}"><select data-lw="${i}">${[1, 2, 3, 4].map((n) => `<option ${n === l.size ? "selected" : ""} value="${n}">${n}px</option>`).join("")}</select></span></label>`).join(""); }
+    } else h = `<p class="note" style="margin:6px 0 10px">Show this indicator on these candle sizes:</p>` + KC_PERIODS.map((pp) => `<label class="f"><span class="ck"><input type="checkbox" data-v="${pp.text}" ${e.hideOn.includes(pp.text) ? "" : "checked"}>${pp.text === "D" ? "1 day" : pp.text === "W" ? "1 week" : pp.text === "M" ? "1 month" : pp.text}</span></label>`).join("");
+    m.querySelector(".kwb").innerHTML = h;
+  };
+  draw();
+  m.addEventListener("change", (ev) => {
+    const t = ev.target, d = t.dataset, x = e.ext;
+    if (d.p !== undefined) e.params[+d.p] = Math.max(1, Number(t.value) || 1);
+    else if (d.x) x[d.x] = t.value;
+    else if (d.s) { if (x.show && d.s in x.show) x.show[d.s] = t.checked ? 1 : 0; else x[d.s] = t.checked ? 1 : 0; }
+    else if (d.c) x.col[d.c] = t.value;
+    else if (d.w) x.w[d.w] = Number(t.value);
+    else if (d.b !== undefined) x.bands[+d.b] = Number(t.value);
+    else if (d.lc !== undefined) e.style.lines[+d.lc].color = t.value;
+    else if (d.lw !== undefined) e.style.lines[+d.lw].size = Number(t.value);
+    else if (d.v) e.hideOn = t.checked ? e.hideOn.filter((z) => z !== d.v) : [...e.hideOn, d.v];
+  });
+  m.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-k],[data-tab]"); if (!b) return;
+    if (b.dataset.tab) { tab = b.dataset.tab; return draw(); }
+    const k = b.dataset.k;
+    if (k === "close") return m.remove();
+    if (k === "tvdef" || k === "myreset") { const d = clone(k === "tvdef" ? IND_DEF[name] || { params: [] } : p.def[name]); e.params = d.params; e.ext = d.ext; e.style = d.style; b.closest("details").open = false; return draw(); }
+    if (k === "mydef") { p.def[name] = clone({ params: e.params, ext: e.ext, style: e.style }); kcSavePrefs(); toast("Saved as your default for new charts"); b.closest("details").open = false; return; }
+    if (k === "ok") { kcUpdateInd(name, { params: e.params, ext: e.ext, style: e.style, hideOn: e.hideOn }); m.remove(); }
+  });
+}
+function fibWindow(id) {
+  const ov = kc.chart?.getOverlayById(id); if (!ov) return;
+  const p = prefs(); let f = clone(ov.extendData || p.fib);
+  const m = kcModal(`<div class="kwh"><b>Fib retracement</b><button class="x" data-k="close">✕</button></div><div class="kwb fib"></div>
+    <div class="kwf"><details class="kwdd up"><summary>Template</summary><div class="tl"></div></details><span class="sp"></span><button class="c" data-k="close">Cancel</button><button class="ok" data-k="ok">Ok</button></div>`, "kwfib");
+  const draw = () => {
+    m.querySelector(".kwb").innerHTML = `<label class="f"><span class="ck"><input type="checkbox" data-t="on" ${f.trend.on ? "checked" : ""}>Trend line</span><span><input type="color" data-t="color" value="${f.trend.color}"><select data-t="dash"><option value="1" ${f.trend.dash ? "selected" : ""}>dashed</option><option value="0" ${f.trend.dash ? "" : "selected"}>solid</option></select></span></label>
+      <div class="lv">${f.levels.map(([v, c, on], i) => `<span class="${on ? "" : "off"}"><input type="checkbox" data-l="${i}" ${on ? "checked" : ""}><input type="number" step="0.001" data-lv="${i}" value="${v}"><input type="color" data-lc="${i}" value="${c}"></span>`).join("")}</div>
+      <button class="add" data-k="addlv">+ Add level</button>
+      <label class="f"><span class="ck"><input type="checkbox" data-o="prices" ${f.prices ? "checked" : ""}>Prices</span></label><label class="f"><span class="ck"><input type="checkbox" data-o="pct" ${f.pct ? "checked" : ""}>Levels as percents</span></label><label class="f"><span class="ck"><input type="checkbox" data-o="axis" ${f.axis === 0 || f.axis === false ? "" : "checked"}>Price labels on the price scale</span></label>
+      <label class="f">Font size<select data-o="size">${[10, 11, 12, 14, 16].map((n) => `<option ${n === f.size ? "selected" : ""}>${n}</option>`).join("")}</select></label>`;
+    m.querySelector(".tl").innerHTML = `<button data-k="saveT">Save as…</button><button data-k="defT">Apply defaults</button>${Object.keys(p.fibT).map((n) => `<button data-tn="${esc(n)}">${esc(n)}</button>`).join("")}<button data-k="mydefF">Use these for new Fibonacci</button>`;
+  };
+  draw();
+  m.addEventListener("change", (ev) => {
+    const t = ev.target, d = t.dataset;
+    if (d.t) f.trend[d.t] = d.t === "on" ? (t.checked ? 1 : 0) : d.t === "dash" ? Number(t.value) : t.value;
+    else if (d.l !== undefined) { f.levels[+d.l][2] = t.checked ? 1 : 0; t.parentNode.classList.toggle("off", !t.checked); }
+    else if (d.lv !== undefined) f.levels[+d.lv][0] = Number(t.value);
+    else if (d.lc !== undefined) f.levels[+d.lc][1] = t.value;
+    else if (d.o) f[d.o] = d.o === "size" ? Number(t.value) : t.checked ? 1 : 0;
+  });
+  m.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-k],[data-tn]"); if (!b) return;
+    if (b.dataset.tn) { f = clone(p.fibT[b.dataset.tn]); b.closest("details").open = false; return draw(); }
+    const k = b.dataset.k;
+    if (k === "close") return m.remove();
+    if (k === "addlv") { f.levels.push([1.382, "#F23645", 1]); return draw(); }
+    if (k === "defT") { f = clone(FIB_FOR_WAVE); b.closest("details").open = false; return draw(); }
+    if (k === "saveT") { const n = (prompt("Template name", "My Fibonacci") || "").trim().slice(0, 30); if (n) { p.fibT[n] = clone(f); kcSavePrefs(); draw(); } return; }
+    if (k === "mydefF") { p.fib = clone(f); kcSavePrefs(); toast("New Fibonacci drawings will use these levels"); b.closest("details").open = false; return; }
+    if (k === "ok") { kc.chart.overrideOverlay({ id, extendData: clone(f) }); const o = kc.chart.getOverlayById(id); if (o) { kc.ov.set(id, kcPlain(o)); kcSave(); } m.remove(); }
+  });
+}
+function kcMenu(e) {
+  if (!kc.chart) return;
+  e.preventDefault();
+  const r = kc.box.getBoundingClientRect(), y = e.clientY - r.top;
+  const v = kc.chart.convertFromPixel([{ x: e.clientX - r.left, y }], { paneId: "candle_pane" })?.[0]?.value, px = Number.isFinite(v) ? v : kc.chart.getDataList().at(-1)?.close;
+  document.querySelector(".kcctx")?.remove();
+  const m = document.createElement("div"); m.className = "kcctx"; m.style.left = Math.min(e.clientX, innerWidth - 250) + "px"; m.style.top = Math.min(e.clientY, innerHeight - 330) + "px";
+  const pr = px ? fmtPx(px) : "";
+  m.innerHTML = `<button data-m="reset">Reset chart view<span>Alt+R</span></button>${pr ? `<button data-m="alert">Add price alert at ${pr}</button>` : ""}<hr>
+    ${pr ? `<button data-m="hline">Horizontal line at ${pr}<span>Alt+H</span></button>` : ""}<button data-m="trend">Trend line<span>Alt+T</span></button><button data-m="fib">Fibonacci retracement<span>Alt+F</span></button><hr>
+    <button data-m="ind">Indicators…<span>Alt+I</span></button><button data-m="clr">Remove all drawings</button><button data-m="clri">Remove all indicators</button>`;
+  document.body.appendChild(m);
+  const close = () => { m.remove(); document.removeEventListener("mousedown", out, true); };
+  const out = (ev) => { if (!m.contains(ev.target)) close(); };
+  setTimeout(() => document.addEventListener("mousedown", out, true), 0);
+  m.addEventListener("click", async (ev) => {
+    const k = ev.target.closest("[data-m]")?.dataset.m; if (!k) return;
+    close(); kcAction(k, px);
+  });
+}
+async function kcAction(k, px) {
+  const c = kc.chart; if (!c) return;
+  px ??= kc.lastPrice ?? c.getDataList().at(-1)?.close;
+  if (k === "reset") { kcResetView(); render(false); }
+  else if (k === "hline" && px) kcAddDone({ name: "horizontalStraightLine", groupId: "drawing_tools", points: [{ value: px, timestamp: c.getDataList().at(-1)?.timestamp }] });
+  else if (k === "trend") c.createOverlay({ name: "segment", groupId: "drawing_tools" });
+  else if (k === "fib") c.createOverlay({ name: "fibonacciLine", groupId: "drawing_tools" });
+  else if (k === "ind") indListWindow();
+  else if (k === "clr") c.removeOverlay({ groupId: "drawing_tools" });
+  else if (k === "clri") [...kc.active].forEach((a) => kcRemoveInd(a.name));
+  else if (k === "alert" && px) {
+    const last = c.getDataList().at(-1)?.close ?? px, kind = px >= last ? "above" : "below", t = kc.sym;
+    const { error } = await sb.from("price_alerts").insert({ user_id: state.user.id, ticker: t, kind, value: +Number(px).toFixed(4) });
+    toast(error ? `Alert not saved: ${esc(error.message)}` : `Alert set: ${esc(t)} ${kind} ${fmtPx(px)} (Telegram)`);
+  }
+}
+function kcToolbar(el) {   // top bar, bottom bar and chart-type menu clicks
+  if (el.dataset.kcp !== undefined) return kcSetPeriod(Number(el.dataset.kcp));
+  if (el.dataset.kcr) return kcRangeClick(el.dataset.kcr);
+  if (el.dataset.kct) { kc.ctype = el.dataset.kct; el.closest("details")?.removeAttribute("open"); kcStyle(); return render(false); }
+  const a = el.dataset.kcact;
+  if (a === "ind") return indListWindow();
+  if (a === "undo" || a === "redo") return kcUndo(a === "redo");
+  if (a === "auto") { kcAutoY(); return render(false); }
+  if (a === "alertw") return kcAlertWindow();
+  if (a === "tree") return ktTreeToggle();
+  if (a === "cmp") return kcCompareWindow();
+  if (a === "pct" || a === "log") { kc[a] = !kc[a]; if (a === "pct" && kc.pct) kc.log = false; if (a === "log" && kc.log) kc.pct = false; kcStyle(); return render(false); }
+  if (a === "shot" && kc.chart) { const url = kc.chart.getConvertPictureUrl(true, "png", isDark() ? "#18181b" : "#ffffff"); const l = document.createElement("a"); l.href = url; l.download = `${kc.sym || "chart"}-${isoDay(new Date())}.png`; l.click(); return; }
+  if (a === "full") kcFull();
+}
+// Shortcuts on a stock chart (not while typing): Alt+T trend line, Alt+F Fibonacci, Alt+H horizontal line, Alt+I indicators, Alt+R reset,
+// Delete removes the selected drawing, Ctrl+Z undo, Ctrl+Y (or Ctrl+Shift+Z) redo
+document.addEventListener("keydown", (e) => {
+  if (!kc.chart || !(location.hash || "").startsWith("#/charts/") || (chOf().pane || "chart") !== "chart" || e.target.closest?.("input, textarea, select, [contenteditable]") || document.querySelector(".kcmodal")) return;
+  const k = e.key.toLowerCase();
+  if (e.altKey && ["t", "f", "h", "j", "v"].includes(k)) { e.preventDefault(); ktStart({ t: "segment", f: "fibonacciLine", h: "horizontalStraightLine", j: "horizontalRayLine", v: "verticalStraightLine" }[k]); }
+  else if (e.altKey && ["i", "r", "a"].includes(k)) { e.preventDefault(); if (k === "a") kcAlertWindow(); else kcAction({ i: "ind", r: "reset" }[k]); }
+  else if (e.key === "Escape" && (kc.tool || kc.measureArm)) { e.preventDefault(); ktStart("cursor"); }
+  else if (kc.hover && !e.altKey && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {   // only while the mouse is on the chart
+    e.preventDefault();
+    if (e.key === "ArrowUp") kcZoomBy(1.15); else if (e.key === "ArrowDown") kcZoomBy(1 / 1.15); else kcScrollBars((e.key === "ArrowLeft" ? 1 : -1) * (e.ctrlKey ? 20 : 1));
+  }
+  else if ((e.key === "Delete" || e.key === "Backspace") && kc.sel) { e.preventDefault(); kc.chart.removeOverlay(kc.sel); }
+  else if ((e.ctrlKey || e.metaKey) && k === "z") { e.preventDefault(); kcUndo(e.shiftKey); }
+  else if ((e.ctrlKey || e.metaKey) && k === "y") { e.preventDefault(); kcUndo(true); }
+});
+// Full screen (round 46): the whole page goes full screen and the chart box is pinned over it (body.kcfull).
+// Page redraws, settings windows, menus and the object tree then all keep working (before, any redraw or window left full screen).
+function kcFull() {
+  if ((chOf().pane || "chart") !== "chart") { chOf().pane = "chart"; render(false); }
+  if (document.body.classList.contains("kcfull")) { document.body.classList.remove("kcfull"); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); }
+  else { document.body.classList.add("kcfull"); document.documentElement.requestFullscreen?.().catch(() => {}); }   // if the browser says no, the chart still fills the window
+  setTimeout(() => kc.chart?.resize(), 250);
+}
+document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement) document.body.classList.remove("kcfull"); setTimeout(() => kc.chart?.resize(), 200); });
+addEventListener("hashchange", () => { if (!(location.hash || "").startsWith("#/charts/") && document.body.classList.contains("kcfull")) { document.body.classList.remove("kcfull"); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("kcfull") && !document.fullscreenElement && !document.querySelector(".kcmodal") && !kc.tool) { document.body.classList.remove("kcfull"); setTimeout(() => kc.chart?.resize(), 200); } });
+
+// ----- Stock heat map page (#/heatmap, design round 40/41): one tile per company, size = company value, colour = today's move -----
+const HM_IDX = [["@SP500", "S&P 500"], ["@SET50", "SET50"]];
+function squarify(items, x, y, w, h) {   // items sorted big -> small, each {v}; returns rectangles (squarified treemap)
+  const out = [], total = items.reduce((a, b) => a + b.v, 0) || 1, k = (w * h) / total;
+  let rest = items.map((o) => ({ ...o, a: Math.max(o.v * k, 0.0001) }));
+  const worst = (row, len) => { const s = row.reduce((a, b) => a + b.a, 0), mx = Math.max(...row.map((r) => r.a)), mn = Math.min(...row.map((r) => r.a)); return Math.max((len * len * mx) / (s * s), (s * s) / (len * len * mn)); };
+  while (rest.length) {
+    const len = Math.min(w, h); let row = [rest[0]], i = 1;
+    while (i < rest.length && worst([...row, rest[i]], len) <= worst(row, len)) { row.push(rest[i]); i++; }
+    const s = row.reduce((a, b) => a + b.a, 0);
+    if (w >= h) { const cw = s / h; let yy = y; row.forEach((r) => { const rh = r.a / cw; out.push({ ...r, x, y: yy, w: cw, h: rh }); yy += rh; }); x += cw; w -= cw; }
+    else { const rh = s / w; let xx = x; row.forEach((r) => { const rw = r.a / rh; out.push({ ...r, x: xx, y, w: rw, h: rh }); xx += rw; }); y += rh; h -= rh; }
+    rest = rest.slice(i);
+  }
+  return out;
+}
+const HM_COL = (v) => (v === null ? "var(--chip)" : isDark()
+  ? (v >= 3 ? "#0f9d58" : v >= 1 ? "#167a46" : v >= 0.1 ? "#1f5136" : v > -0.1 ? "#3a3a40" : v > -1 ? "#7a2532" : v > -3 ? "#b3263a" : "#e23b4f")
+  : (v >= 3 ? "#15803d" : v >= 1 ? "#22a35a" : v >= 0.1 ? "#6cbf8a" : v > -0.1 ? "#a3a3a3" : v > -1 ? "#f08b8b" : v > -3 ? "#e05252" : "#b91c1c"));
+async function loadHeatmap() {
+  const ch = chOf(), key = ch.hmIdx || "@SP500";
+  if (!ch.hm) {
+    const { data, error } = await sb.from("stock_stats").select("symbol,data,updated_at").in("symbol", HM_IDX.map((x) => x[0]));
+    ch.hm = {}; (data || []).forEach((r) => { ch.hm[r.symbol] = r.data; }); ch.hmErr = error?.message || null;
+  }
+  const mem = ch.hm[key]?.members || [], fresh = !ch.hmDrawn;
+  ch.hmDrawn = true;
+  if (!mem.length || Date.now() - (ch.hmAt?.[key] || 0) < 55e3) { if (fresh && (location.hash || "") === "#/heatmap") render("soft"); return; }
+  (ch.hmAt ||= {})[key] = Date.now();
+  const syms = mem.map((m) => m.s), parts = [];
+  for (let i = 0; i < syms.length; i += 40) parts.push(syms.slice(i, i + 40));
+  for (let i = 0; i < parts.length; i += 4) {   // 4 at a time, and draw as they arrive
+    const res = await Promise.all(parts.slice(i, i + 4).map((p) => sb.rpc("get_quotes", { syms: p })));
+    res.forEach(({ data }) => Object.assign(quotes, data || {}));
+    if ((location.hash || "") === "#/heatmap") render("soft");
+  }
+}
+function viewHeatmap() {
+  const ch = chOf(), key = ch.hmIdx || "@SP500", size = ch.hmSize || "cap", d = ch.hm?.[key], mem = d?.members || [];
+  const W = 1000, H = 600;
+  let body;
+  if (!ch.hm) body = `<div class="chempty">Loading…</div>`;
+  else if (!mem.length) body = `<div class="chempty">The heat map list arrives with the robot's next daily run.${ch.hmErr ? ` (${esc(ch.hmErr)})` : ""}</div>`;
+  else {
+    const groups = {};
+    mem.forEach((m) => { const v = size === "cap" ? m.cap || 0 : 1; if (v > 0) (groups[m.sec] ||= []).push({ ...m, v }); });
+    const secs = Object.entries(groups).map(([n, l]) => ({ n, l: l.sort((a, b) => b.v - a.v), v: l.reduce((a, b) => a + b.v, 0) })).sort((a, b) => b.v - a.v);
+    let html = "";
+    squarify(secs, 0, 0, W, H).forEach((b) => {
+      const pad = b.h > 40 && b.w > 60 ? 16 : 0;
+      html += `<div class="hmsec" style="left:${b.x / W * 100}%;top:${b.y / H * 100}%;width:${b.w / W * 100}%;height:${b.h / H * 100}%"><span>${esc(b.n)}</span></div>`;
+      squarify(b.l, b.x, b.y + pad, b.w, Math.max(1, b.h - pad)).forEach((t) => {
+        const v = chPct(t.s), q = quotes[t.s];
+        html += `<a class="hmt" href="${chHref(plainOf(t.s))}" style="left:${t.x / W * 100}%;top:${t.y / H * 100}%;width:${t.w / W * 100}%;height:${t.h / H * 100}%;background:${HM_COL(v)}"
+          title="${esc(t.t)} · ${esc(t.n)}${q ? ` · ${fmtPx(q.price)}` : ""}${v !== null ? ` · ${v > 0 ? "+" : ""}${v.toFixed(2)}%` : ""}${t.cap ? ` · market cap ${bigNum(t.cap)}` : ""}"><span class="in">${evLogo({ sym: plainOf(t.s) }, 40)}<b>${esc(t.t)}</b><small>${v === null ? "" : `${v > 0 ? "+" : ""}${v.toFixed(2)}%`}</small></span></a>`;
+      });
+    });
+    body = `<div class="hmtm">${html}</div>`;
+  }
+  const leg = [["−3%", -4], ["−1%", -2], ["0%", 0], ["+1%", 2], ["+3%", 4]];
+  return `${header("charts")}<div class="wrap chp">
+    <div class="chlay"><div class="chmain">
+      <div class="hmbar"><a class="chback" href="#/charts" title="Charts">‹</a><h1>Stock heat map</h1>
+        ${HM_IDX.map(([k, l]) => `<button class="pill${k === key ? " on" : ""}" data-hmidx="${k}">${l}</button>`).join("")}<i></i>
+        <span class="lab">Size</span>${[["cap", "Market cap"], ["eq", "Equal"]].map(([k, l]) => `<button class="pill${k === size ? " on" : ""}" data-hmsize="${k}">${l}</button>`).join("")}
+        <span class="sp"></span><span class="note" style="margin:0">Colour = today's move · live, every minute</span></div>
+      <div class="chc hmwrap">${body}</div>
+      <div class="hmleg">${leg.map(([l, v]) => `<span style="background:${HM_COL(v)}">${l}</span>`).join("")}<span class="note" style="margin:0 0 0 10px">${esc(d?.source || "")}${d?.at ? ` · members ${new Date(d.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : ""} · click a tile to open its chart</span></div>
+    </div>${chSide()}</div></div>`;
+}
+
+async function toggleChartWatch(t) {
+  const s = state.settings, w = [...(s.watchlist || [])], names = { ...(s.watch_names || {}) };
+  const has = w.includes(t);
+  if (!has && w.length >= MAX_WATCHLIST) { toast(`Your watchlist is full (${MAX_WATCHLIST}). Remove one in Topics & watchlist.`); return; }
+  const next = has ? w.filter((x) => x !== t) : [...w, t];
+  if (has) delete names[t]; else if (!known(t)) names[t] = cleanName(statsOf(yahoo(t))?.name || kc.meta?.name || quotes[yahoo(t)]?.name || t);
+  const { error } = await sb.from("user_settings").update({ watchlist: next, watch_names: names, updated_at: new Date().toISOString() }).eq("user_id", state.user.id);
+  if (error) { toast(`Could not save: ${esc(error.message)}`); return; }
+  s.watchlist = next; s.watch_names = names;
+  toast(has ? `${esc(t)} removed from your watchlist` : `${esc(t)} added to your watchlist ★`);
+  render(false);
+}
+
 // ---------- views ----------
 function header(active) {
   return `<header><div class="wrap nav">
@@ -1106,7 +3180,7 @@ function header(active) {
     <nav>
       <a class="${active === "news" ? "on" : ""}" href="#/">My News</a>
       <a class="${active === "world" ? "on" : ""}" href="#/world">World Brief</a>
-      <a class="soon">Charts<small>SOON</small></a>
+      <a class="${active === "charts" ? "on" : ""}" href="#/charts">Charts</a>
     </nav>
     <div class="r">
       <form class="hsearch" id="hsearch" role="search"><span>⌕</span><input id="hq" type="search" placeholder="Search news & notes" value="${esc(state.searchQ || "")}" autocomplete="off" maxlength="60"></form>
@@ -1130,6 +3204,7 @@ const ICO = {
   starOn: `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.8 2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/></svg>`,
   note: svgI('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
   search: svgI('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
+  chart: svgI('<path d="M4 4v16h16"/><path d="m7 15 4-5 3 3 5-6"/>'),
   globe: svgI('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5a13 13 0 0 1 0 17M12 3.5a13 13 0 0 0 0 17"/>'),
 };
 // Phone only (design round 18, option A): bottom tab bar instead of the desktop header links
@@ -1140,6 +3215,7 @@ function tabBar() {
   return `<nav class="tabbar" aria-label="Pages">
     <a class="${on("news")}" href="#/">${ICO.news}News</a>
     <a class="${h.startsWith("#/world") ? "on" : ""}" href="#/world">${ICO.globe}World</a>
+    <a class="${h.startsWith("#/charts") || h === "#/heatmap" ? "on" : ""}" href="#/charts">${ICO.chart}Charts</a>
     <a class="${on("cal")}" href="#/calendar">${ICO.cal}Calendar</a>
     <a class="${on("alerts")}" href="#/settings" data-tab-alerts="1">${ICO.bell}Alerts</a>
     <a class="${on("topics")}" href="#/settings" data-tab-topics="1">${ICO.topics}Topics</a></nav>`;
@@ -1181,7 +3257,7 @@ function viewFeed() {
     // Right column: Trending now (stories 2-6) normally; the Read first queue only in the "To read" view
     const reading = state.filter === "To read";
     const phone = isPhone(); // phone: one list in rank order (no "Trending" side column that would end up at the bottom)
-    const plain = nSort() !== "rec";
+    const plain = nSorts().join() !== "rec";
     trending = reading || phone ? [] : plain ? [...rest0].sort((a, b) => rank(b) - rank(a)).slice(0, 5) : rest0.slice(0, 5);
     const all = reading || phone || plain ? rest0 : rest0.slice(5);
     // Draw 30 cards at a time: drawing all ~140 froze the page for ~100 ms on every redraw (measured 2026-11-24)
@@ -1203,7 +3279,7 @@ function viewFeed() {
     ${mTicker()}
     ${filterRow}
     ${priceStrip()}
-    <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending, nSort() === "rec" ? 2 : 1)}${seasonNote()}${marketMood()}${upcomingPanel()}${econPanel()}</aside></div></div>${dock()}`;
+    <div class="page"><div class="left">${left}</div><aside class="right">${state.filter === "To read" ? queuePanel() : trendPanel(trending, nSorts().join() === "rec" ? 2 : 1)}${seasonNote()}${marketMood()}${upcomingPanel()}${econPanel()}</aside></div></div>${dock()}`;
 }
 
 // "The full story" (design round 16): 3-4 paragraphs the AI wrote from the full articles it could read.
@@ -1395,12 +3471,12 @@ function wTaste() {
   for (const k in t) t[k] = Math.max(-5, Math.min(5, t[k]));
   return t;
 }
-function sortWorld(items) {
-  const unread = ({ s }) => !wSt(s.id), t = ({ s }) => tNew(s);
-  const by = (key) => items.slice().sort((a, b) => key(b) - key(a) || t(b) - t(a));
-  const f = { latest: () => by(() => 0), covered: () => by(({ s }) => s.n_sources), growing: () => by(({ s }) => grow6(s)),
-    unread: () => items.slice().sort((a, b) => unread(b) - unread(a) || (unread(a) ? t(a) - t(b) : t(b) - t(a))) }[wSort()];
-  return f ? f() : items;
+function sortWorld(items) {   // items arrive in Recommended order; "rec" keeps that order for ties
+  const unread = ({ s }) => !wSt(s.id), t = ({ s }) => tNew(s), pos = new Map(items.map((x, i) => [x, i])), desc = (f) => (a, b) => f(b) - f(a);
+  const cmp = { rec: (a, b) => pos.get(a) - pos.get(b), latest: desc(t), covered: desc(({ s }) => s.n_sources), growing: desc(({ s }) => grow6(s)),
+    unread: (a, b) => unread(b) - unread(a) || (unread(a) && unread(b) ? t(a) - t(b) : 0) };
+  const keys = wSorts(); if (keys.join() === "rec") return items;
+  return chainSort(items.slice(), keys, cmp, t);
 }
 function wRanked() {
   const t = wTaste();
@@ -2252,6 +4328,13 @@ function render(animate = true) {
     if (!c.sel) c.sel = isoDay(today0());
     setApp(viewCalendar(), animate);
   }
+  else if (h === "#/heatmap") { setApp(viewHeatmap(), animate); if (Date.now() - (chOf().loadedAt || 0) > 55e3) { chOf().loadedAt = Date.now(); loadChartData(); } const c = chOf(); if (!c.hm || Date.now() - (c.hmAt?.[c.hmIdx || "@SP500"] || 0) > 55e3) loadHeatmap(); }
+  else if (h.startsWith("#/charts")) {
+    const t = decodeURIComponent(h.slice(9)).toUpperCase(), ch = chOf();
+    setApp(t ? viewChartStock(t) : viewCharts(), animate);
+    if (Date.now() - (ch.loadedAt || 0) > 55e3 || (t && ch.askedFor !== t && !quotes[yahoo(t)])) { ch.loadedAt = Date.now(); ch.askedFor = t; loadChartData(t ? [yahoo(t)] : []); }
+    if (t) { kcMount(t); requestAnimationFrame(() => kc.chart?.resize()); }
+  }
   else if (h === "#/prefs") app.innerHTML = viewPrefs();
   else if (h === "#/settings") {
     state.draft = state.draft || makeDraft(); app.innerHTML = viewSettings();
@@ -2309,7 +4392,7 @@ let priceTimer = null;
 function startPolling() {
   clearInterval(pollTimer); clearInterval(priceTimer);
   pollTimer = setInterval(checkNew, 120000);
-  priceTimer = setInterval(loadQuotes, 60000);
+  priceTimer = setInterval(() => { loadQuotes(); if ((location.hash || "").startsWith("#/charts") && !document.hidden) { chOf().loadedAt = Date.now(); loadChartData(kc.sym ? [yahoo(kc.sym)] : []); } if (location.hash === "#/heatmap" && !document.hidden) loadHeatmap(); }, 60000);
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { checkNew(); loadQuotes(); } });
 
@@ -2317,7 +4400,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { ch
 app.addEventListener("click", async (e) => {
   // Clicking outside the search box closes its results
   if (!e.target.closest(".search")) { const r = document.getElementById("res"); if (r) r.innerHTML = ""; }
-  const el = e.target.closest("[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-econf],[data-ecalsel],[data-ecalwk],[data-ecalday],[data-ecal],[data-nsort],[data-wsort],[data-follow],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief],[data-mascot],[data-bigalert],[data-season-pick]");
+  const el = e.target.closest("[data-chtab],[data-chsort],[data-chwatch],[data-chside],[data-hmidx],[data-hmsize],[data-chsel],[data-chrng],[data-chmv],[data-chjump],[data-chpane],[data-chfin],[data-scrmk],[data-scrsec],[data-scrsort],[data-scrmore],[data-chperf],[data-chfm],[data-chkf],[data-chtop],[data-chtf],[data-kcp],[data-kcr],[data-kct],[data-kcact],[data-kctfav],[data-theme-pick],[data-dark-pick],[data-light-pick],[data-motion],[data-lrange],[data-lpick],[data-calday],[data-calsel],[data-calf],[data-econf],[data-ecalsel],[data-ecalwk],[data-ecalday],[data-ecal],[data-nsort],[data-wsort],[data-follow],[data-calwk],[data-cal],[data-done],[data-later],[data-qdone],[data-brief],[data-sdone],[data-slater],[data-mute-topic],[data-mute-source],[data-unmute-topic],[data-unmute-source],[data-save],[data-go],[data-filter],[data-ptab],[data-dock],[data-scroll],[data-act],[data-rm],[data-rm-t],[data-add],[data-topic-add],[data-stopic-add],[data-rm-st],[data-stock],[data-pa-add],[data-pa-rm],[data-pa-on],[data-tab-alerts],[data-tab-topics],[data-wvote],[data-wreg],[data-wmore],[data-wgo],[data-wdone],[data-wnext],[data-mkt-pick],[data-wview],[data-wzoom],[data-wsit],[data-go-world],[data-wbrief],[data-mascot],[data-bigalert],[data-season-pick]");
   if (!el) return;
   if (el.dataset.wbrief) { const ids = wWaiting().map((s) => s.id); if (ids.length) { state.briefing = { ids, i: 0, res: {}, world: true }; drawBriefing(); } return; }
   if (el.dataset.goWorld) { location.hash = `#/world/${el.dataset.goWorld}`; return; }
@@ -2380,8 +4463,8 @@ app.addEventListener("click", async (e) => {
   if (el.dataset.calf) { state.cal.filter = el.dataset.calf; return render("soft"); }
   if (el.dataset.econf) { lsSet("ic_econf", el.dataset.econf); return render("soft"); }
   if (el.dataset.follow) { e.stopPropagation(); return toggleFollow(el.dataset.follow, el.dataset.fkey, el.dataset.flabel); }
-  if (el.dataset.nsort) { lsSet("ic_nsort", el.dataset.nsort); state.feedLimit = FEED_STEP; render("soft"); if (el.dataset.nsort === "price") loadQuotes(); return; }
-  if (el.dataset.wsort) { lsSet("ic_wsort", el.dataset.wsort); state.wlimit = 10; return render("soft"); }
+  if (el.dataset.nsort) { sortToggle("ic_nsort", NSORT, el.dataset.nsort); state.feedLimit = FEED_STEP; render("soft"); document.querySelector(".sortdd")?.setAttribute("open", ""); if (el.dataset.nsort === "price") loadQuotes(); return; }
+  if (el.dataset.wsort) { sortToggle("ic_wsort", WSORT, el.dataset.wsort); state.wlimit = 10; render("soft"); document.querySelector(".sortdd")?.setAttribute("open", ""); return; }
   if (el.dataset.calwk) { state.cal.wk = Math.max(0, Math.min(1, state.cal.wk + Number(el.dataset.calwk))); return render(false); }
   if (el.dataset.done) { e.preventDefault(); e.stopPropagation(); if (stOf({ id: el.dataset.done }) !== "done") burst(el); return changeStatus(el.dataset.done, "done"); }
   if (el.dataset.later) { e.preventDefault(); e.stopPropagation(); return changeStatus(el.dataset.later, "later"); }
@@ -2438,6 +4521,26 @@ app.addEventListener("click", async (e) => {
     el.textContent = state.dockOpen ? "▼ Less" : (state.settings.watchlist || []).length ? "▲ Markets" : "▲ More";
     return;
   }
+  if (el.dataset.chtab) { chOf().tab = el.dataset.chtab; return render(false); }
+  if (el.dataset.chsort) { chOf().sort = el.dataset.chsort; return render(false); }
+  if (el.dataset.chwatch) { return toggleChartWatch(el.dataset.chwatch); }
+  if (el.dataset.chside) return chSideClick(el.dataset.chside);
+  if (el.dataset.hmidx) { chOf().hmIdx = el.dataset.hmidx; render(false); return loadHeatmap(); }
+  if (el.dataset.hmsize) { chOf().hmSize = el.dataset.hmsize; return render(false); }
+  if (el.dataset.chsel || el.dataset.chrng || el.dataset.chmv) { const ch = chOf(), [k, v] = (el.dataset.chsel || el.dataset.chrng || el.dataset.chmv).split("|"); (el.dataset.chsel ? ch.sel : el.dataset.chrng ? ch.rng : ch.mv)[k] = v; return render(false); }
+  if (el.dataset.chjump) { e.preventDefault(); document.getElementById(el.dataset.chjump)?.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" }); return; }
+  if (el.dataset.chpane || el.dataset.chtop) {   // tabs; the slim bar's buttons also go back to the top (like TradingView)
+    e.preventDefault(); if (el.dataset.chpane) chOf().pane = el.dataset.chpane; render(false); requestAnimationFrame(() => kc.chart?.resize());
+    if (el.dataset.chtop) scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" }); return;
+  }
+  if (el.dataset.chperf) { kcRangeClick(el.dataset.chperf); render(false); document.querySelector(".chbox")?.scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "start" }); return; }
+  if (el.dataset.scrmk || el.dataset.scrsec || el.dataset.scrsort || el.dataset.scrmore) return scrClick(el);
+  if (el.dataset.chfm) { const [k, v] = el.dataset.chfm.split(":"); (chOf().fm ||= {})[k] = v; return render(false); }
+  if (el.dataset.chkf) { chOf().kfi = Number(el.dataset.chkf); return render(false); }
+  if (el.dataset.chfin) { chOf().fin = el.dataset.chfin; return render(false); }
+  if (el.dataset.chtf) { chOf().tf = el.dataset.chtf; return render(false); }
+  if (el.dataset.kctfav) { e.preventDefault(); const i = +el.dataset.kctfav, f = kcFavTf(); safe(() => localStorage.setItem("ic_kctf", JSON.stringify(f.includes(i) ? f.filter((x) => x !== i) : [...f, i]))); render(false); document.querySelector(".kctf")?.setAttribute("open", ""); return; }
+  if (el.dataset.kcp !== undefined || el.dataset.kcr || el.dataset.kct || el.dataset.kcact) { el.closest("details")?.removeAttribute("open"); return kcToolbar(el); }
   if (el.dataset.ptab) { state.priceTab = el.dataset.ptab; render(false); return loadQuotes(); }
   const d = state.draft;
   if (d && el.dataset.add) {
@@ -2500,6 +4603,7 @@ app.addEventListener("focusin", (e) => {
 });
 
 app.addEventListener("input", (e) => {
+  if (e.target.id === "chq") { clearTimeout(chTimer); const q = e.target.value; chTimer = setTimeout(() => chSearch(q), 250); return; }
   if (e.target.dataset?.note) { const m = document.getElementById("note-msg"); if (m) m.textContent = "Saving…"; return saveNote(e.target.dataset.note, e.target.value); }
   if (e.target.id !== "q") return;
   const q = e.target.value.trim();
@@ -2509,10 +4613,17 @@ app.addEventListener("input", (e) => {
 });
 
 app.addEventListener("keydown", (e) => {
+  if (e.target.id === "chq" && e.key === "Escape") { e.target.value = ""; const r = document.getElementById("chres"); if (r) r.hidden = true; }
   if (e.target.id === "q" && e.key === "Escape") { e.target.value = ""; document.getElementById("res").innerHTML = ""; }
 });
 
 app.addEventListener("submit", async (e) => {
+  if (e.target.id === "chsearch") {   // Enter: open the first match (or the ticker you typed)
+    e.preventDefault();
+    const first = document.querySelector("#chres a.chr"), q = document.getElementById("chq").value.trim().toUpperCase();
+    if (first) location.hash = first.getAttribute("href"); else if (/^[A-Z0-9.^=\-]{1,20}$/.test(q)) location.hash = chHref(q);
+    return;
+  }
   if (e.target.id === "hsearch") {
     e.preventDefault();
     const q = document.getElementById("hq").value.trim();
@@ -2658,4 +4769,7 @@ sb.auth.onAuthStateChange((event, session) => {
 });
 
 // Sort dropdown: a click anywhere else closes it
+document.addEventListener("click", (e) => { const r = document.getElementById("chres"); if (r && !e.target.closest("#chsearch")) r.hidden = true; });
+// "/" jumps to the chart search (Charts page only, not while typing)
+document.addEventListener("keydown", (e) => { if (e.key === "/" && (location.hash || "").startsWith("#/charts") && !e.target.closest?.("input, textarea, [contenteditable]")) { const i = document.getElementById("chq"); if (i) { e.preventDefault(); i.focus(); } } });
 document.addEventListener("click", (e) => document.querySelectorAll("details.sortdd[open]").forEach((d) => { if (!d.contains(e.target)) d.removeAttribute("open"); }));

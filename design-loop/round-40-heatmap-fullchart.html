@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Round 40 · Heat map page + full chart + sidebar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f10;--card:#18181b;--ink:#f4f4f5;--soft:#b4b4bb;--muted:#8a8a93;--line:#2a2a2f;--chip:#232327;--acc:#ff4500;--up:#22c55e;--dn:#f87171;--hover:#202024}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 Inter,sans-serif;color:#111;background:#e9e9e9}
+.top{padding:30px 40px 6px;max-width:1900px;margin:0 auto}
+h1{font:900 30px 'Inter Tight';letter-spacing:-1px;margin:0 0 6px}.lead{color:#555;margin:0;max-width:1150px}
+.sec{max-width:1900px;margin:34px auto 10px;padding:0 40px;font:900 21px 'Inter Tight'}
+.sec small{font:600 13.5px Inter;color:#555;display:block;margin-top:2px;max-width:1250px}
+.screen{width:1911px;height:950px;margin:0 auto;background:var(--bg);color:var(--ink);border:1px solid #cfcfcf;border-radius:10px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.tnum{font-variant-numeric:tabular-nums}.up{color:var(--up)}.dn{color:var(--dn)}
+.hd{height:64px;flex:none;border-bottom:1px solid var(--line)}
+.hd .in{max-width:1760px;height:100%;display:flex;align-items:center;gap:28px;margin:0 auto}
+.logo{font:900 22px 'Inter Tight';letter-spacing:-.6px}.logo i{color:var(--acc);font-style:normal}
+.hd a{font:600 15px Inter;color:var(--soft)}.hd a.on{color:var(--ink);box-shadow:inset 0 -2px var(--acc);padding-bottom:6px}
+.hd .r{margin-left:auto;display:flex;gap:10px}.hd .r span{border:1px solid var(--line);border-radius:99px;padding:7px 14px;font:600 13px Inter;color:var(--muted)}.hd .r b{background:var(--ink);color:var(--bg);border-radius:99px;padding:7px 14px;font:700 13px Inter}
+.body{flex:1;display:flex;min-height:0;max-width:1760px;width:100%;margin:0 auto}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;padding:14px 16px 12px 0}
+/* sidebar: icon strip + panel (TradingView-style) */
+.side{display:flex;flex:none;border-left:1px solid var(--line)}
+.panel{width:310px;display:flex;flex-direction:column;border-right:1px solid var(--line);overflow:hidden}
+.strip{width:46px;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:12px}
+.strip span{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--muted);font-size:16px}
+.strip span.on{background:var(--chip);color:var(--acc)}
+.strip hr{width:22px;border:0;border-top:1px solid var(--line);margin:4px 0}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 6px}.ph h2{font:800 15px 'Inter Tight';margin:0}.ph a{font:700 12px Inter;color:var(--acc)}
+.wl .h,.wl .r{display:grid;grid-template-columns:minmax(0,1fr) 70px 64px;align-items:center;padding:7px 14px;font-size:13px}
+.wl .h{font:700 10.5px Inter;color:var(--muted);letter-spacing:.7px}.wl .r b{font-weight:800}.wl .r small{display:block;color:var(--muted);font-size:11px}
+.wl .r.on{background:var(--chip);box-shadow:inset 3px 0 var(--acc)}.n{text-align:right}
+.cal .d{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid var(--line);font-size:12.5px}
+.cal .dt{text-align:center;border-radius:8px;background:var(--chip);padding:3px 0;font:900 14px 'Inter Tight';line-height:1.05}.cal .dt small{display:block;font:800 9px Inter;color:var(--acc)}
+.cal b{display:block}.cal span{color:var(--muted);font-size:11.5px}.tag{font:800 9.5px Inter;border-radius:5px;padding:2px 6px;background:#3a1a0d;color:var(--acc)}
+/* heat map page */
+.hmbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.hmbar h2{font:900 24px 'Inter Tight';margin:0 10px 0 0}
+.dd{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:600 13.5px Inter;color:var(--ink)}.dd small{color:var(--muted);font-weight:600}
+.hmbar .x{margin-left:auto;display:flex;gap:6px}.hmbar .x span{border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--soft);font:600 13px Inter}
+.tm{position:relative;flex:1;min-height:0}
+.tm .t{position:absolute;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1.15;outline:1px solid var(--bg);text-align:center}
+.tm .t .lg{border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;font-weight:900;margin-bottom:4px}
+.tm .sl{position:absolute;font:700 12px Inter;color:var(--soft);padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:2}
+.legend{display:flex;gap:0;margin-top:8px}.legend span{font:700 11px Inter;padding:3px 12px;color:#fff}
+/* stock page */
+.sh{display:flex;align-items:center;gap:14px;flex:none}
+.sh .lgx{width:46px;height:46px;border-radius:50%;background:#111;border:1px solid var(--line);display:grid;place-items:center;color:#76b900;font:900 14px Inter}
+.sh b{font:900 22px 'Inter Tight';letter-spacing:-.4px}.sh small{color:var(--muted);font:600 12.5px Inter;display:block}
+.sh .p{font:900 24px 'Inter Tight';margin-left:6px}.sh .p span{font:700 14px Inter;margin-left:6px}
+.sh .act{margin-left:auto;display:flex;gap:6px}.sh .act span{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:700 12.5px Inter}.sh .act span.pri{background:var(--ink);color:var(--bg)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:8px;flex:none}
+.tabs span{font:700 14px Inter;color:var(--soft);padding:9px 14px}.tabs span.on{color:var(--ink);box-shadow:inset 0 -2px var(--acc)}
+.ch{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;overflow:hidden;position:relative}
+.tbar{display:flex;align-items:center;gap:2px;height:40px;padding:0 8px;border-bottom:1px solid var(--line);font:600 13px Inter;color:var(--soft);flex:none}
+.tbar span{padding:5px 8px;border-radius:6px;white-space:nowrap}.tbar span.on{background:var(--chip);color:var(--ink)}.tbar i{width:1px;height:20px;background:var(--line);margin:0 4px}
+.tbar .sym{font:800 14px Inter;color:var(--ink)}
+.cbody{flex:1;display:grid;grid-template-columns:46px minmax(0,1fr);min-height:0}
+.dbar{border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;color:var(--soft)}
+.dbar span{width:34px;height:32px;display:grid;place-items:center;border-radius:6px;font-size:15px;position:relative}.dbar span.on{background:var(--chip);color:var(--acc)}
+.dbar span.x::after{content:"";position:absolute;right:2px;bottom:3px;border:3px solid transparent;border-right-color:var(--muted);border-bottom-color:var(--muted)}
+.dbar hr{width:22px;border:0;border-top:1px solid var(--line);margin:3px 0}
+.plot{position:relative;min-height:0}
+.plot svg{position:absolute;inset:0;width:100%;height:100%}
+.legendc{position:absolute;left:10px;top:8px;z-index:3;font:600 12.5px Inter;color:var(--soft)}
+.legendc .row{display:flex;align-items:center;gap:8px;padding:2px 6px;border-radius:6px;margin-bottom:2px}
+.legendc .row.hov{background:rgba(255,255,255,.06);outline:1px solid var(--line)}
+.legendc .row b{color:var(--ink);font-weight:700}.legendc .ic{display:inline-flex;gap:8px;color:var(--muted);margin-left:4px}
+.bbar{display:flex;align-items:center;gap:2px;height:34px;padding:0 8px;border-top:1px solid var(--line);font:600 12.5px Inter;color:var(--soft);flex:none}
+.bbar span{padding:4px 8px;border-radius:6px}.bbar span.on{background:var(--chip);color:var(--ink)}
+.bbar .r{margin-left:auto;display:flex;gap:10px;color:var(--muted)}
+.dlg{position:absolute;left:50%;top:70px;transform:translateX(-50%);width:640px;background:#1e1e22;border:1px solid var(--line);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.5);z-index:9;overflow:hidden}
+.dlg .dh{display:flex;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}.dlg .dh b{font:800 17px 'Inter Tight'}
+.dlg .ds{margin:12px 18px;border:1px solid var(--acc);border-radius:9px;padding:9px 12px;color:var(--muted);font-size:13.5px}
+.dlg .dc{display:grid;grid-template-columns:170px minmax(0,1fr);height:330px}
+.dlg .cats{border-right:1px solid var(--line);padding:4px 0}.dlg .cats div{padding:8px 18px;font:600 13px Inter;color:var(--soft)}.dlg .cats div.on{background:var(--chip);color:var(--ink)}
+.dlg .cats small{display:block;padding:10px 18px 4px;font:800 10px Inter;letter-spacing:.9px;color:var(--muted)}
+.dlg .list div{display:flex;gap:10px;align-items:center;padding:8px 18px;font-size:13.5px}.dlg .list div:hover,.dlg .list div.hl{background:var(--chip)}
+.dlg .list em{font-style:normal;color:#f5c518}.dlg .list span{margin-left:auto;color:var(--muted);font-size:12px}
+.ctx{position:absolute;z-index:8;width:230px;background:#1e1e22;border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.5);padding:6px 0;font:600 13px Inter}
+.ctx div{display:flex;justify-content:space-between;padding:7px 14px}.ctx div span{color:var(--muted)}.ctx hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.notes{max-width:1900px;margin:14px auto 0;padding:0 40px;color:#444;font-size:13.5px}.notes li{margin:4px 0}
+.callout{position:absolute;z-index:10;background:#2563eb;color:#fff;font:700 12px Inter;border-radius:7px;padding:4px 9px;white-space:nowrap}
+</style></head><body>
+<div class="top"><h1>Round 40 · Heat map page, full-screen chart, foldable sidebar</h1>
+<p class="lead">Width W1 (1760 px) as you chose, drawn in Dark like your screen. Blue labels explain what each part does; they are not part of the design.</p></div>
+
+<div class="sec">1 · Stock heat map page (Charts → Heat map)<small>Like TradingView: one tile per company, size = company value, colour = today's move, grouped by sector, logos on big tiles. Pick S&amp;P 500, Nasdaq 100 or SET50; size by market cap or volume; colour by 1 day / 1 week / 1 month. Click a tile = its chart. Sidebar folded here.</small></div>
+<div class="screen" id="hm"></div>
+
+<div class="sec">2 · Stock page: chart fills the screen, TradingView-style tools<small>The chart is the page. Key facts, Financials, Technicals, Forecasts, Seasonals, News and Dates are tabs (one click away, not below the chart). Sidebar open: watchlist + important dates. Shown with the Indicators window open (search, favourites ★, categories).</small></div>
+<div class="screen" id="st1"></div>
+
+<div class="sec">3 · Same page, sidebar folded (ย่อ)<small>Click the icon strip (or press the ‹ arrow) to fold the panel; the chart gets the extra 310 px. Your choice is remembered. Shown: hovering an indicator's name shows 👁 hide · ⚙ settings · ✕ remove (like TradingView); right-click on the chart opens the menu.</small></div>
+<div class="screen" id="st2"></div>
+
+<ul class="notes">
+  <li><b>Chart interaction like TradingView</b>: drag to move, mouse wheel to zoom, drag the price scale to stretch it, double-click an indicator to edit, crosshair with price + time labels, right-click menu, Delete removes the selected drawing, Ctrl+Z undo. Shortcuts: Alt+T trend line, Alt+F Fibonacci, Alt+H horizontal line, Alt+I indicators.</li>
+  <li><b>Top bar</b>: symbol (click to search), interval (5m … 1M), chart type (candles, hollow candles, bars, line, area), Indicators, undo/redo; right side: screenshot, full screen. <b>Bottom bar</b>: 1D 5D 1M 3M 6M YTD 1Y 5Y All jump buttons, time zone, % / log scale.</li>
+  <li><b>Heat map data</b>: the robot saves each index's member list with sector and company size once a day (S&amp;P 500 and Nasdaq 100 lists from Wikipedia, SET50 fixed list); today's moves come live from the same Yahoo prices we use now (refreshed every minute while the page is open).</li>
+</ul>
+<div style="height:60px"></div>
+
+<script>
+const rnd=(s)=>()=>((s=(s*9301+49297)%233280)/233280);
+const hdr=`<div class="hd"><div class="in"><span class="logo">investment<i>.</i>center</span><a>My News</a><a>World Brief</a><a class="on">Charts</a><div class="r"><span>⌕ Search news &amp; notes</span><span>Topics &amp; watchlist</span><b>Sign out</b></div></div></div>`;
+const W=[["NVDA","NVIDIA",153.22,-7.17],["AMD","Advanced Micro Devices",416.03,-8.25],["TSM","Taiwan Semiconductor",348.33,-4.2],["PTT","PTT",37.3,-.27],["GULF","Gulf Development",59.5,0],["AOT","Airports of Thailand",57.5,-4.17]];
+const panel=(on)=>`<div class="panel"><div class="ph"><h2>My watchlist</h2><span style="color:var(--muted)">‹ fold</span></div><div class="wl"><div class="h"><span>SYMBOL</span><span class="n">LAST</span><span class="n">CHG%</span></div>${W.map((s,i)=>`<div class="r${on&&i===0?" on":""}"><span><b>${s[0]}</b><small>${s[1]}</small></span><span class="n tnum">${s[2].toFixed(2)}</span><span class="n tnum ${s[3]<0?"dn":s[3]>0?"up":""}">${s[3]>0?"+":""}${s[3].toFixed(2)}%</span></div>`).join("")}</div>
+ <div class="cal" style="margin-top:10px"><div class="ph"><h2>Important dates</h2><a>Stock calendar →</a></div>${[["NOV","26","US market closed · Thanksgiving","NYSE / Nasdaq shut",0],["NOV","26","Dell, HP results","After US close",1],["DEC","2","Salesforce results","After US close",0],["DEC","11","Broadcom, Oracle results","After US close",1]].map(c=>`<div class="d"><div class="dt"><small>${c[0]}</small>${c[1]}</div><div><b>${c[2]}</b><span>${c[3]}</span></div>${c[4]?'<span class="tag">KEY</span>':""}</div>`).join("")}</div></div>`;
+const strip=(open)=>`<div class="strip"><span class="${open?"on":""}" title="Watchlist">☰</span><span title="Important dates">📅</span><span title="Price alerts">🔔</span><hr><span title="${open?"Fold":"Open"}">${open?"›":"‹"}</span></div>`;
+const side=(open,on)=>`<div class="side">${open?panel(on):""}${strip(open)}</div>`;
+
+// ---------- squarified treemap ----------
+function squarify(items,x,y,w,h){ // items: [{v,...}] sorted desc; returns rects
+ const out=[];let rest=items.slice();const total=rest.reduce((a,b)=>a+b.v,0),scale=w*h/total;rest=rest.map(o=>({...o,a:o.v*scale}));
+ function worst(row,len){const s=row.reduce((a,b)=>a+b.a,0),mx=Math.max(...row.map(r=>r.a)),mn=Math.min(...row.map(r=>r.a));return Math.max(len*len*mx/(s*s),(s*s)/(len*len*mn))}
+ while(rest.length){const len=Math.min(w,h);let row=[rest[0]],i=1;while(i<rest.length&&worst([...row,rest[i]],len)<=worst(row,len)){row.push(rest[i]);i++}
+  const s=row.reduce((a,b)=>a+b.a,0);if(w>=h){const cw=s/h;let yy=y;row.forEach(r=>{const rh=r.a/cw;out.push({...r,x,y:yy,w:cw,h:rh});yy+=rh});x+=cw;w-=cw}else{const rh=s/w;let xx=x;row.forEach(r=>{const rw=r.a/rh;out.push({...r,x:xx,y,w:rw,h:rh});xx+=rw});y+=rh;h-=rh}
+  rest=rest.slice(i)}return out}
+const SECT={"Electronic technology":[["AAPL",3900,1.14],["NVDA",3700,-7.5],["AVGO",1450,-3.07],["AMD",670,-8.25],["MU",190,-11.1],["CSCO",240,-2.62],["QCOM",180,.92],["TXN",170,-9.33],["INTC",160,-5.89],["DELL",90,-11],["ANET",130,1.88],["AMAT",150,-6.99],["LRCX",120,-7.85],["ADI",110,-1.2],["KLAC",100,-16.2],["GE",250,-1.1],["RTX",180,.6],["BA",140,-2.1],["LMT",120,1.1]],
+ "Technology services":[["MSFT",3700,.29],["GOOGL",3400,-1.62],["META",1490,-.88],["ORCL",450,-3.95],["PLTR",300,1.39],["NFLX",420,1.89],["CRM",280,4.02],["ADBE",190,-2.2],["NOW",190,5.02],["PANW",130,-1.11],["IBM",240,2.9],["INTU",180,2.6],["UBER",170,.73],["SHOP",150,.71]],
+ "Finance":[["BRK.B",1050,.67],["JPM",720,-.03],["V",680,1.59],["MA",520,1.73],["BAC",330,-2.2],["WFC",260,1.21],["GS",200,-2.24],["MS",210,.69],["C",170,-.5],["AXP",210,2.01],["SCHW",160,1.68],["BLK",160,1.43],["SPGI",150,-.25],["PGR",150,2.14]],
+ "Health technology":[["LLY",1300,3.58],["JNJ",660,2.16],["ABBV",400,4.1],["MRK",250,4.57],["AMGN",170,5.09],["PFE",150,1.51],["TMO",200,3.91],["ABT",220,2.2],["ISRG",190,5.04],["GILD",140,2.36],["VRTX",120,1.1],["BSX",150,4.11]],
+ "Retail trade":[["AMZN",2600,-1.37],["WMT",830,1.81],["COST",420,-.75],["HD",380,2.27],["TJX",150,3.1],["LOW",140,2.1],["TGT",50,-.4]],
+ "Energy minerals":[["XOM",500,1.26],["CVX",290,1.87],["COP",120,.6],["EOG",70,1.2]],
+ "Consumer durables":[["TSLA",1100,-.45],["GM",60,.8],["F",45,-.3]],
+ "Consumer non-durables":[["KO",310,1.98],["PG",380,1.51],["PM",250,1.48],["PEP",200,.93],["MDLZ",90,.4]],
+ "Producer manufacturing":[["CAT",230,-1.21],["HON",140,-6.2],["ETN",130,-6.13],["DE",130,-5.28],["MMM",80,-1.28]],
+ "Utilities":[["NEE",160,1.2],["SO",100,.8],["DUK",90,.5],["CEG",100,-2.1]],
+ "Communications":[["TMUS",280,1.69],["T",190,.9],["VZ",170,.4]]};
+function heat(w,h){
+ const secs=Object.entries(SECT).map(([n,l])=>({n,v:l.reduce((a,b)=>a+b[1],0),l})).sort((a,b)=>b.v-a.v);
+ const boxes=squarify(secs,0,0,w,h);let s="";
+ const col=v=>v>=3.5?"#0f9d58":v>=1.5?"#167a46":v>=.2?"#1f5136":v>-.2?"#3a3a40":v>-1.5?"#7a2532":v>-3.5?"#b3263a":"#e23b4f";
+ boxes.forEach(b=>{const pad=18;s+=`<div class="sl" style="left:${b.x}px;top:${b.y}px;width:${b.w}px">${b.n} ›</div>`;
+  const tiles=squarify(b.l.map(t=>({t:t[0],v:t[1],c:t[2]})).sort((a,c)=>c.v-a.v),b.x,b.y+pad,b.w,b.h-pad);
+  tiles.forEach(t=>{const m=Math.min(t.w,t.h);const f=Math.max(9,Math.min(34,m/4.2));const lg=m>70?Math.min(64,m/2.6):0;
+   s+=`<div class="t" style="left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${t.h}px;background:${col(t.c)};font-size:${f}px">${lg?`<span class="lg" style="width:${lg}px;height:${lg}px;font-size:${lg/3.2}px">${t.t.slice(0,2)}</span>`:""}${m>26?t.t:""}${m>34?`<span style="font-weight:700;font-size:${f*.85}px">${t.c>0?"+":""}${t.c.toFixed(2)}%</span>`:""}</div>`})});
+ return s}
+document.getElementById("hm").innerHTML=hdr+`<div class="body"><div class="main"><div class="hmbar"><h2>Stock heat map</h2><span class="dd">🇺🇸 S&amp;P 500 ▾</span><span class="dd"><small>Size</small> Market cap ▾</span><span class="dd"><small>Colour</small> Change 1 day ▾</span><span class="dd"><small>Group</small> Sector ▾</span><div class="x"><span>⟳ live · 1 min</span><span>⛶</span></div></div>
+ <div class="tm" id="tmh">${heat(1696,730)}</div>
+ <div class="legend">${[["-5.5%","#e23b4f"],["-3.5%","#b3263a"],["-1.5%","#7a2532"],["0%","#3a3a40"],["+1.5%","#1f5136"],["+3.5%","#167a46"],["+5.5%","#0f9d58"]].map(l=>`<span style="background:${l[1]}">${l[0]}</span>`).join("")}<span style="color:var(--muted);background:none">Click a tile to open its chart · hover for price and market cap</span></div></div>${side(false)}</div>
+ <span class="callout" style="right:60px;top:80px">Folded sidebar: just the icon strip</span>`;
+
+// ---------- chart ----------
+function chart(w,h,withPanes){const r=rnd(21);let v=120,a=[];for(let i=0;i<170;i++){const d=i<40?.7:i<60?-.8:i<110?1:i<135?.3:-1.7;const o=v;v+=d+(r()-.5)*5;a.push({o,c:v,hi:Math.max(o,v)+r()*3,lo:Math.min(o,v)-r()*3,vol:30+r()*60+(i>150?50:0)})}
+ const pa=withPanes?h*.62:h*.86,cw=(w-70)/a.length,X=i=>i*cw+cw/2,mx=Math.max(...a.map(x=>x.hi)),mn=Math.min(...a.map(x=>x.lo)),Y=p=>10+(mx-p)/(mx-mn)*(pa-20);let s="";
+ for(let k=0;k<7;k++){const y=10+k*(pa-20)/6;s+=`<line x1="0" x2="${w-70}" y1="${y}" y2="${y}" stroke="#222226"/><text x="${w-60}" y="${y+4}" font-size="11" fill="#8a8a93" font-family="Inter">${(mx-k*(mx-mn)/6).toFixed(1)}</text>`}
+ for(let k=1;k<8;k++){const x=k*(w-70)/8;s+=`<line x1="${x}" x2="${x}" y1="0" y2="${h-20}" stroke="#1c1c20"/>`}
+ a.forEach((x,i)=>{const c=x.c>=x.o?"#22c55e":"#f87171";s+=`<line x1="${X(i)}" x2="${X(i)}" y1="${Y(x.hi)}" y2="${Y(x.lo)}" stroke="${c}"/><rect x="${X(i)-cw*.33}" y="${Y(Math.max(x.o,x.c))}" width="${cw*.66}" height="${Math.max(1,Math.abs(Y(x.o)-Y(x.c)))}" fill="${c}"/>`;const vh=x.vol/140*(pa*.18);s+=`<rect x="${X(i)-cw*.33}" y="${pa-vh}" width="${cw*.66}" height="${vh}" fill="${c}" opacity=".25"/>`});
+ const ma=a.map((x,i)=>{const sl=a.slice(Math.max(0,i-19),i+1);return sl.reduce((q,z)=>q+z.c,0)/sl.length});s+=`<path d="${ma.map((m,i)=>(i?"L":"M")+X(i)+","+Y(m)).join("")}" fill="none" stroke="#f59e0b" stroke-width="1.5"/>`;
+ // fib + trend drawn
+ s+=`<line x1="${X(60)}" y1="${Y(a[60].lo)}" x2="${X(169)}" y2="${Y(a[60].lo)-(Y(a[60].lo)-Y(a[110].lo))/50*109}" stroke="#2962ff" stroke-width="1.6"/>`;
+ const lc=a[169].c;s+=`<line x1="0" x2="${w-70}" y1="${Y(lc)}" y2="${Y(lc)}" stroke="#f87171" stroke-dasharray="2 3"/><rect x="${w-68}" y="${Y(lc)-10}" width="64" height="20" rx="3" fill="#f87171"/><text x="${w-62}" y="${Y(lc)+4}" font-size="12" fill="#fff" font-weight="700" font-family="Inter">153.22</text>`;
+ // crosshair
+ const cx=X(128),cy=Y(a[128].c);s+=`<line x1="${cx}" x2="${cx}" y1="0" y2="${h-20}" stroke="#8a8a93" stroke-dasharray="4 4"/><line x1="0" x2="${w-70}" y1="${cy}" y2="${cy}" stroke="#8a8a93" stroke-dasharray="4 4"/><rect x="${w-68}" y="${cy-10}" width="64" height="20" rx="3" fill="#3a3a40"/><text x="${w-62}" y="${cy+4}" font-size="12" fill="#fff" font-family="Inter">${a[128].c.toFixed(2)}</text><rect x="${cx-46}" y="${h-20}" width="92" height="20" rx="3" fill="#3a3a40"/><text x="${cx-40}" y="${h-6}" font-size="11.5" fill="#fff" font-family="Inter">Thu 16 Oct '26</text>`;
+ if(withPanes){let y0=pa+6;s+=`<line x1="0" x2="${w}" y1="${y0}" y2="${y0}" stroke="#2a2a2f"/>`;const RY=v=>y0+6+(100-v)/100*(h*.17-12);s+=`<path d="${a.map((x,i)=>(i?"L":"M")+X(i)+","+RY(50+Math.sin(i/6)*18-(i>150?(i-150)*1.2:0))).join("")}" fill="none" stroke="#a78bfa" stroke-width="1.3"/><text x="8" y="${y0+16}" font-size="12" fill="#a78bfa" font-family="Inter" font-weight="700">RSI 14 · 31.42</text>`;
+  y0=pa+h*.17+12;s+=`<line x1="0" x2="${w}" y1="${y0}" y2="${y0}" stroke="#2a2a2f"/>`;const MY=v=>y0+(h*.17)/2+(-v)*6;a.forEach((x,i)=>{const hv=Math.sin(i/9)*2-(i>150?(i-150)*.2:0);s+=`<rect x="${X(i)-cw*.33}" y="${Math.min(MY(hv),MY(0))}" width="${cw*.66}" height="${Math.abs(MY(hv)-MY(0))}" fill="${hv>=0?"#22c55e":"#f87171"}" opacity=".5"/>`});s+=`<text x="8" y="${y0+16}" font-size="12" fill="#60a5fa" font-family="Inter" font-weight="700">MACD 12 26 9 · −2.41 −1.10 −1.31</text>`}
+ ["Jun","Jul","Aug","Sep","Oct","Nov"].forEach((m,i)=>s+=`<text x="${(i+.3)*(w-70)/6}" y="${h-6}" font-size="11.5" fill="#8a8a93" font-family="Inter">${m}</text>`);
+ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${s}</svg>`}
+const tbar=`<div class="tbar"><span class="sym">⌕ NVDA</span><i></i><span>5m</span><span>15m</span><span>1h</span><span class="on">D</span><span>W</span><span>M ▾</span><i></i><span class="on">▮▯ Candles ▾</span><i></i><span>ƒx Indicators</span><i></i><span>↶</span><span>↷</span><span style="margin-left:auto">📷</span><span>⛶</span></div>`;
+const dbar=`<div class="dbar"><span>✛</span><span class="x on">╱</span><span class="x">≡</span><span class="x">𝔉</span><span class="x">〰</span><span class="x">▭</span><span class="x">T</span><hr><span>📏</span><span>🔍</span><hr><span>🧲</span><span>🔒</span><span>👁</span><span>🗑</span></div>`;
+const bbar=`<div class="bbar">${["1D","5D","1M","3M","6M","YTD","1Y","5Y","All"].map(x=>`<span class="${x==="6M"?"on":""}">${x}</span>`).join("")}<span style="margin-left:10px">📅</span><div class="r"><span>02:41 (UTC+7)</span><span>%</span><span>log</span><span style="color:var(--acc)">auto</span></div></div>`;
+const legend=(hov)=>`<div class="legendc"><div class="row"><b>NVIDIA Corporation · 1D · NASDAQ</b> <span>O 159.06 H 159.92 L 150.50 C <span class="dn">153.30 −11.84 (−7.17%)</span></span></div>
+ <div class="row"><span style="color:#f59e0b">MA 20 close</span> <b style="color:#f59e0b">158.41</b></div><div class="row${hov?" hov":""}"><span>Vol</span> <b>278.1M</b>${hov?'<span class="ic">👁 ⚙ ✕ ⋯</span>':""}</div></div>`;
+const shead=`<div class="sh"><div class="lgx">NV</div><div><b>NVIDIA Corporation</b><small>NVDA · NASDAQ · Semiconductors · Market open</small></div><div class="p tnum">153.22<span class="dn">−11.84 (−7.17%)</span></div><div class="act"><span class="pri">★ In watchlist</span><span>🔔 Alert</span><span>TradingView ↗</span></div></div>
+ <div class="tabs">${["Chart","Key facts","Financials","Technicals","Forecasts","Seasonals","News","Dates"].map((x,i)=>`<span class="${i===0?"on":""}">${x}</span>`).join("")}</div>`;
+const dlg=`<div class="dlg"><div class="dh"><b>Indicators, metrics &amp; strategies</b><span style="color:var(--muted)">✕</span></div><div class="ds">⌕ Search  e.g. RSI, MACD, Bollinger</div><div class="dc"><div class="cats"><small>PERSONAL</small><div>★ Favourites</div><small>BUILT-IN</small><div class="on">All</div><div>Trend</div><div>Momentum</div><div>Volume</div><div>Volatility</div></div>
+ <div class="list"><div class="hl"><em>★</em>Relative Strength Index <span>Momentum · added</span></div><div><em>★</em>MACD <span>Momentum · added</span></div><div><em>☆</em>Bollinger Bands <span>Volatility · on price</span></div><div><em>★</em>Moving Average <span>Trend · on price</span></div><div><em>☆</em>Exponential Moving Average <span>Trend · on price</span></div><div><em>☆</em>Stochastic (KDJ) <span>Momentum</span></div><div><em>☆</em>Parabolic SAR <span>Trend · on price</span></div><div><em>☆</em>On Balance Volume <span>Volume</span></div><div><em>☆</em>Commodity Channel Index <span>Momentum</span></div></div></div></div>`;
+const ctx=`<div class="ctx" style="left:900px;top:300px"><div>Reset chart view <span>Alt+R</span></div><div>Add alert at 172.40 <span>Alt+A</span></div><hr><div>Draw horizontal line here <span>Alt+H</span></div><div>Trend line <span>Alt+T</span></div><div>Fibonacci retracement <span>Alt+F</span></div><hr><div>Remove all drawings</div><div>Remove indicators</div><hr><div>Chart settings… <span>⚙</span></div></div>`;
+const stock=(open,over)=>hdr+`<div class="body"><div class="main">${shead}<div class="ch">${tbar}<div class="cbody">${dbar}<div class="plot">${legend(over==="ctx")}${chart(open?1290:1600,600,true)}</div></div>${bbar}${over==="dlg"?dlg:over==="ctx"?ctx:""}</div></div>${side(open,true)}</div>`;
+document.getElementById("st1").innerHTML=stock(true,"dlg")+`<span class="callout" style="left:470px;top:166px">Tabs: everything else is one click away</span>`;
+document.getElementById("st2").innerHTML=stock(false,"ctx")+`<span class="callout" style="right:58px;top:78px">Sidebar folded → chart +310 px</span><span class="callout" style="left:420px;top:290px">Hover an indicator: hide · settings · remove</span>`;
+</script></body></html>
