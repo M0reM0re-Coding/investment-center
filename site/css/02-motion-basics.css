@@ -1,0 +1,32 @@
+/* Small motion (round 5) + reduced-motion rule. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ---------- motion: round 5 option 1 (snappy + live signals) ---------- */
+.tile .n b,.badge b{font:inherit}
+.enter .a{animation:rise .42s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+.enter .bars em{animation:grow .7s cubic-bezier(.2,.8,.2,1) .25s both}
+.card{border-radius:16px;transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.card:hover{transform:translateY(-4px)}
+.card .pic,.card>.tile{transition:box-shadow .2s}
+.card:hover .pic,.card:hover>.tile{box-shadow:0 12px 28px rgba(255,69,0,.22)}
+.chip,.btn{transition:background .18s,color .18s,transform .12s}
+.chip:active,.btn:active{transform:scale(.96)}
+.trend li{transition:padding-left .2s}
+.trend li:hover{padding-left:6px}
+.star.pop{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.live{display:flex;align-items:center;gap:6px;font:800 11px Inter;letter-spacing:1px;color:var(--accent);margin-right:6px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-out infinite}
+.fresh{animation:slidein .5s cubic-bezier(.2,.8,.2,1) backwards,flash 2.4s ease-out backwards}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;max-width:min(640px,calc(100vw - 32px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;background:var(--ink);color:#fff;font:700 14px Inter;padding:12px 20px;border-radius:99px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:40;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast b{color:#ff8a5c}
+
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-6px)}}
+@keyframes grow{from{width:0}}
+@keyframes pop{50%{transform:scale(1.45)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,69,0,.6)}100%{box-shadow:0 0 0 10px rgba(255,69,0,0)}}
+@keyframes flash{0%{background:#ffe3d6}100%{background:transparent}}
+@keyframes slidein{from{opacity:0;transform:translateY(-12px)}}
+
+/* Respect the "reduce motion" setting in Windows / iPhone / Android */
+.calm *,.calm *::before,.calm *::after{animation:none!important;transition:none!important}
+

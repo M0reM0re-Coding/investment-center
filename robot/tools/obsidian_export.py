@@ -1,6 +1,6 @@
 """Export saved stories + your notes to the Obsidian second-brain vault (design round 34, option A).
 
-Run on your PC (not on GitHub):   python robot/obsidian_export.py
+Run on your PC (not on GitHub):   python robot/tools/obsidian_export.py
   --all       export everything saved/noted, not only what's new since the last export
   --dry       print what would be written, write nothing
 
@@ -17,7 +17,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent.parent  # robot/ (this file lives in robot/tools/)
 STATE = HERE / ".obsidian_export_state.json"
 DEFAULT_RAW = Path(r"F:\Claude Project\Second brain base\second-brain\raw")
 

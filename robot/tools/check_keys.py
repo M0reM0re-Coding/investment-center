@@ -1,7 +1,7 @@
 """Check that every key in .env works. Prints only pass/fail, never the keys themselves.
 
 Run from the "Investment Center" folder:
-  python robot/check_keys.py
+  python robot/tools/check_keys.py
 """
 import json
 import os
@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # robot/
 from analyze import load_env  # reuse the same .env reader
 
 

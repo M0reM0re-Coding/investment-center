@@ -1,0 +1,63 @@
+/* Full story, for-you line, term explainer, phone header, topic row. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ---------- The full story (design round 16) ---------- */
+.fs{border-left:4px solid var(--accent)}
+.fs .by{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);font-weight:600;margin:-2px 0 14px}
+.fs .by .pill2{background:var(--chip);color:var(--soft);border-radius:99px;padding:3px 9px}
+.fs p{font-size:16.5px;line-height:1.72;max-width:68ch;margin-bottom:14px}
+.fs p:last-child{margin-bottom:0}
+.thin{border:1px dashed var(--line);border-radius:14px;padding:12px 16px;font-size:13px;color:var(--muted);margin-bottom:18px}
+
+/* ---------- Round 17: for-you line, term explainer, stock filter, price alerts ---------- */
+.foryou{margin-top:10px;font-size:15px;line-height:1.5;color:var(--ink);background:var(--t-acc,rgba(255,69,0,.08));border-radius:12px;padding:10px 14px}
+.foryou b{display:inline-block;font:800 11px Inter;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-right:8px}
+.foryou.sm{font-size:13px;padding:7px 10px;margin-top:6px}
+.detail .foryou{margin:0 0 18px}
+.term{position:relative;border-bottom:2px dotted var(--accent);cursor:help;outline:none}
+.term .tip{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%,4px);width:max-content;max-width:min(280px,80vw);
+  background:var(--ink);color:var(--bg);font:500 13px/1.45 Inter;padding:10px 12px;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s,transform .15s,visibility .15s;z-index:30;text-align:left;white-space:normal}
+.term .tip b{display:block;font:800 12px Inter;margin-bottom:3px;color:var(--bg)}
+.term .tip::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--ink)}
+.term:hover .tip,.term:focus .tip{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.serif .fs .term .tip,[data-light="newsprint"] .fs .term .tip{font:500 13px/1.45 Inter}
+.clk{cursor:pointer}
+.mk.clk:hover{border-color:var(--ink)}
+button.tag{border:0;font:inherit;font-size:12px;font-weight:700;color:inherit}
+button.tag.clk:hover{background:var(--ink);color:var(--bg)}
+.dock .clk:hover b,.dock .cell.clk:hover b{text-decoration:underline}
+.pa-row{display:grid;grid-template-columns:90px 1fr auto auto 32px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.pa-row b{font:800 15px 'Inter Tight'}
+.pa-row .pa-st{font-size:12px;color:var(--muted)}
+.pa-row.off{opacity:.6}
+.pa-x{border:0;background:var(--chip);color:var(--soft);border-radius:50%;width:28px;height:28px;font-size:16px;line-height:1}
+.btn.sm{padding:6px 12px;font-size:12px}
+.pa-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pa-add select,.pa-add input{font:inherit;padding:9px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink)}
+.pa-add input{width:110px}
+@media (max-width:640px){.pa-row{grid-template-columns:70px 1fr 32px}.pa-row .pa-st{grid-column:1/-1;order:5}}
+
+/* ---------- Header at phone width (measured 2026-11-24: it was ~970px wide on a 384px screen) ----------
+   Row 1: logo + Topics, settings, Sign out. Row 2: page tabs. Row 3: search. Not sticky on phones (saves screen). */
+@media (max-width:760px){
+  header{position:static}
+  header .wrap.nav{padding:10px 16px;height:auto;flex-wrap:wrap;gap:10px 6px}
+  .nav .r{display:contents}
+  .nav .logo{order:1;margin-right:auto;font-size:17px}
+  .nav .r>a,.nav .r>button,.nav .r>.gear{order:2}
+  .nav .r .btn{padding:6px 10px;font-size:13px}
+  .nav .r .gear{width:34px;height:34px}
+  .nav .live,.hide-sm{display:none}
+  .nav nav{order:3;width:100%;gap:20px;font-size:14px}
+  .nav nav a{padding:4px 0 8px}
+  .nav .hsearch{order:4;width:100%}
+}
+
+/* ---------- Topic row: ‹ button + left fade once scrolled (mirror of the › button) ---------- */
+.filters .scroller::before{content:"";position:absolute;left:0;top:0;bottom:0;width:80px;background:linear-gradient(270deg,rgba(255,255,255,0),var(--bg) 70%);pointer-events:none;opacity:0;transition:opacity .2s;z-index:1}
+.filters .scroller.less::before{opacity:1}
+.filters .arrow.prev{right:auto;left:0}
+.filters .scroller.less .arrow.prev{opacity:1;pointer-events:auto;transform:translateY(-50%) scale(1)}
+.filters .scroller:not(.more) .arrow:not(.prev){opacity:0;pointer-events:none}
+.filters .scroller::after{background:linear-gradient(90deg,rgba(255,255,255,0),var(--bg) 70%)}
+.filters .scroller:not(.less) .arrow.prev{opacity:0;pointer-events:none}
+

@@ -8,12 +8,62 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=__V__">
+<link rel="stylesheet" href="css/01-base.css?v=__V__">
+<link rel="stylesheet" href="css/02-motion-basics.css?v=__V__">
+<link rel="stylesheet" href="css/03-prices-filters.css?v=__V__">
+<link rel="stylesheet" href="css/04-reading.css?v=__V__">
+<link rel="stylesheet" href="css/05-calendar.css?v=__V__">
+<link rel="stylesheet" href="css/06-motion.css?v=__V__">
+<link rel="stylesheet" href="css/07-settings-themes.css?v=__V__">
+<link rel="stylesheet" href="css/08-story-extras.css?v=__V__">
+<link rel="stylesheet" href="css/09-phone.css?v=__V__">
+<link rel="stylesheet" href="css/10-world.css?v=__V__">
+<link rel="stylesheet" href="css/11-big-alert.css?v=__V__">
+<link rel="stylesheet" href="css/12-seasons-mascots.css?v=__V__">
+<link rel="stylesheet" href="css/13-login-misc.css?v=__V__">
+<link rel="stylesheet" href="css/14-econ-sort-follow.css?v=__V__">
+<link rel="stylesheet" href="css/15-charts.css?v=__V__">
+<link rel="stylesheet" href="css/16-charts-pro.css?v=__V__">
+<link rel="stylesheet" href="css/17-stock-overview.css?v=__V__">
+<link rel="stylesheet" href="css/18-chart-tools.css?v=__V__">
 <script>try{var t=localStorage.getItem("ic_theme")||"auto",d=t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";document.documentElement.dataset.dark=localStorage.getItem("ic_dark")||"graphite";document.documentElement.dataset.light=localStorage.getItem("ic_light")||"crisp"}catch(e){}</script>
 </head>
 <body>
 <div id="app"><p class="loading">Loading…</p></div>
 <script src="config.js?v=__V__"></script>
-<script type="module" src="app.js?v=__V__"></script>
+<!-- Supabase library, then the site code in a fixed order (README.md explains each file) -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script defer src="js/core/setup.js?v=__V__"></script>
+<script defer src="js/core/helpers.js?v=__V__"></script>
+<script defer src="js/news/sort.js?v=__V__"></script>
+<script defer src="js/news/prices.js?v=__V__"></script>
+<script defer src="js/news/reading.js?v=__V__"></script>
+<script defer src="js/news/developing.js?v=__V__"></script>
+<script defer src="js/calendar/stock-calendar.js?v=__V__"></script>
+<script defer src="js/calendar/econ-calendar.js?v=__V__"></script>
+<script defer src="js/news/follow-mood-earnings.js?v=__V__"></script>
+<script defer src="js/news/briefing.js?v=__V__"></script>
+<script defer src="js/core/search.js?v=__V__"></script>
+<script defer src="js/charts/home.js?v=__V__"></script>
+<script defer src="js/charts/stock-page.js?v=__V__"></script>
+<script defer src="js/charts/chart.js?v=__V__"></script>
+<script defer src="js/charts/indicators.js?v=__V__"></script>
+<script defer src="js/charts/drawings.js?v=__V__"></script>
+<script defer src="js/charts/navigation.js?v=__V__"></script>
+<script defer src="js/charts/toolbar.js?v=__V__"></script>
+<script defer src="js/charts/compare.js?v=__V__"></script>
+<script defer src="js/charts/windows.js?v=__V__"></script>
+<script defer src="js/charts/heatmap.js?v=__V__"></script>
+<script defer src="js/core/views.js?v=__V__"></script>
+<script defer src="js/world/brief.js?v=__V__"></script>
+<script defer src="js/world/map.js?v=__V__"></script>
+<script defer src="js/alerts/price-alerts.js?v=__V__"></script>
+<script defer src="js/pages/topics-watchlist.js?v=__V__"></script>
+<script defer src="js/core/login.js?v=__V__"></script>
+<script defer src="js/core/motion.js?v=__V__"></script>
+<script defer src="js/core/router.js?v=__V__"></script>
+<script defer src="js/core/events.js?v=__V__"></script>
+<script defer src="js/alerts/big-alert.js?v=__V__"></script>
+<script defer src="js/core/start.js?v=__V__"></script>
 </body>
 </html>

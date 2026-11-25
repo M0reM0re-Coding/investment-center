@@ -1,0 +1,78 @@
+/* Login split screen, World finish line, summer fish, logo, particles. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ---------- Login: split screen with a market chart (design round 31, option 3) ---------- */
+.login2{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh}
+.login2 .lart{position:relative;overflow:hidden;background:#0b0b0d;color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between}
+.login2 .lart h2{font:900 clamp(30px,3.4vw,46px)/1.05 'Inter Tight';letter-spacing:-1px;max-width:480px}
+.login2 .lart p{margin-top:12px;font-size:16px;line-height:1.5;color:#c8c8cf;max-width:420px}
+.login2 .lch{position:absolute;left:0;right:0;bottom:130px;width:100%;height:42%}
+.login2 .lch line{stroke:#1d1d22}
+.login2 .lch .ln{fill:none;stroke:var(--accent);stroke-width:3;vector-effect:non-scaling-stroke;stroke-dasharray:1600;stroke-dashoffset:1600;animation:ldraw 2.4s .2s cubic-bezier(.5,0,.2,1) forwards}
+.login2 .lch .ar{opacity:0;animation:lfade 1s 1.8s forwards}
+@keyframes ldraw{to{stroke-dashoffset:0}}@keyframes lfade{to{opacity:1}}
+.login2 .lqs{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.login2 .lq{background:#151518;border:1px solid #232327;border-radius:12px;padding:12px 14px;font-size:12.5px;color:#a8a8b0}
+.login2 .lq b{display:block;color:#fff;font:800 19px 'Inter Tight';margin:2px 0}
+.login2 .lq .u{color:#22c55e;font-weight:700}.login2 .lq .d{color:#f87171;font-weight:700}
+.login2 .lform{display:flex;flex-direction:column;justify-content:center;padding:40px min(8vw,96px);max-width:620px}
+.login2 .logo{font:900 34px 'Inter Tight';letter-spacing:-1.2px}
+.login2 .logo em{font-style:normal;color:var(--accent)}
+.login2 .login-form{margin-top:22px}
+.login2 .msg{margin-top:10px}
+.login2 .linkbtn{margin-top:6px;align-self:flex-start}
+.calm .login2 .lch .ln{stroke-dashoffset:0}.calm .login2 .lch .ar{opacity:1}
+@media(max-width:760px){
+  .login2{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .login2 .lart{padding:24px 16px 16px;min-height:300px}
+  .login2 .lart p{display:none}
+  .login2 .lch{bottom:86px;height:120px}
+  .login2 .lqs{gap:6px}.login2 .lq{padding:8px}.login2 .lq b{font-size:14px}
+  .login2 .lform{padding:24px 16px 40px}
+}
+
+/* ---------- World "Read first", all read: finish line (design round 31, option 4) ---------- */
+.wrfall{display:flex;align-items:center;gap:14px}
+.wrfall .wpill{flex:none;display:inline-flex;align-items:center;gap:7px;background:rgba(34,197,94,.14);color:var(--up);border:1px solid rgba(34,197,94,.4);border-radius:999px;padding:7px 13px;font:800 13.5px Inter}
+.wrfall .wpill svg{width:15px;height:15px}
+.wrfall .wtrack{position:relative;flex:1;height:10px;border-radius:99px;background:var(--chip)}
+.wrfall .wtrack i{position:absolute;inset:0;border-radius:99px;background:linear-gradient(90deg,#16a34a,#22c55e);transform-origin:left;animation:wfill 1s cubic-bezier(.3,0,.2,1) both}
+.wrfall .wtrack b{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#fff;border:3px solid #16a34a}
+@keyframes wfill{from{transform:scaleX(.8)}}
+.wrfall .wnext{flex:none;font-size:13px;color:var(--muted);white-space:nowrap}
+.wrfall .wnext b{color:var(--ink)}
+@media(max-width:760px){.wrfall{flex-wrap:wrap}.wrfall .wtrack{order:3;flex-basis:100%}}
+
+/* ---------- Summer intro: fish leap out of the sea ---------- */
+.i-s .ssun{z-index:0}.i-s .swave{z-index:2}.i-s .sbrand{z-index:4}
+.i-s .sfish{position:absolute;top:calc(56% + 10px);width:calc(clamp(70px,8vw,120px) * var(--k));z-index:1;animation:sfx 1.2s var(--w) linear both}
+.i-s .sfish i{display:block;animation:sfy 1.2s var(--w) both}
+.i-s .sfish svg{display:block;width:100%;height:auto}
+@keyframes sfx{to{transform:translateX(var(--dx))}}
+@keyframes sfy{0%{transform:translateY(0) rotate(-55deg);animation-timing-function:cubic-bezier(.2,.75,.45,1)}
+  50%{transform:translateY(calc(-30vh * var(--k))) rotate(0);animation-timing-function:cubic-bezier(.55,0,.8,.25)}
+  100%{transform:translateY(0) rotate(60deg)}}
+.i-s .ssplash{position:absolute;top:56%;z-index:3;width:calc(90px * var(--k));height:calc(22px * var(--k));margin:calc(-11px * var(--k)) 0 0 calc(-45px * var(--k));border-radius:50%;border:4px solid #fff;box-shadow:0 0 0 3px rgba(255,255,255,.35);opacity:0;animation:ssplash .6s var(--w) ease-out}
+@keyframes ssplash{0%{opacity:.95;transform:scale(.3)}100%{opacity:0;transform:scale(1.6)}}
+/* logo mark: the cat reading the paper, orange, before the name (header + login) */
+.logo{display:inline-flex;align-items:center;gap:8px}
+.lmark{flex:none;width:1.25em;height:1.1em;background:var(--accent,#ff4500);-webkit-mask:url(../logo.svg) center/contain no-repeat;mask:url(../logo.svg) center/contain no-repeat}
+/* ---------- Performance, part 2 (measured 2026-11-24) ----------
+   1. The ✓ / Later buttons on cards (62 on My News) had a blur behind them: re-blurred on every scroll frame.
+      Same look over photos with a slightly darker circle instead.
+   2. LIVE dot and "market open" dot pulsed with box-shadow, which repaints every frame. Now a ring that only
+      scales and fades (transform + opacity), which the graphics card does on its own.
+   3. The mini-chart "now" ring was an SVG circle (redraws the whole chart each frame). Now an HTML ring on top. */
+.chk,.lat{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(0,0,0,.45)}
+.chk:hover,.chk.on{background:var(--up)}
+.live i,.mkt.open i{position:relative;animation:none}
+.live i::after,.mkt.open i::after{content:"";position:absolute;inset:0;border-radius:50%;background:inherit;animation:dotring var(--rd,1.4s) ease-out infinite;will-change:transform,opacity}
+.mkt.open i::after{--rd:1.6s}
+.live i::after{--rs:3.5}
+@keyframes dotring{0%{transform:scale(1);opacity:.6}70%,100%{transform:scale(var(--rs,3));opacity:0}}
+.sp{position:relative}
+.nring{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border:1.5px solid currentColor;border-radius:50%;box-sizing:border-box;opacity:0;pointer-events:none;animation:iring 1.8s 1.3s ease-out infinite}
+/* Season particles: two plain strips in the side margins instead of one full-screen layer with a fade mask
+   (the mask was re-drawn on every scroll frame: 34 fps -> 53 fps measured, median of 5 runs) */
+.sfx{-webkit-mask-image:none;mask-image:none}
+.sfs{position:absolute;top:0;bottom:0;width:max(0px,calc(50% - 650px));overflow:hidden}
+.sfs.l{left:0}.sfs.r{right:0}
+

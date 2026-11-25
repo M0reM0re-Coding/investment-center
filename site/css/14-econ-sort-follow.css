@@ -1,0 +1,169 @@
+/* Economic calendar, Sort, follow / mood / earnings, released results. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ---------- Forex Factory economic calendar (design round 32: A calendar + B box + C strip) ---------- */
+.kt small.fp{display:block;margin-top:1px}
+.kc.first .kt small.fp{opacity:.8}
+.erow .dot,.estrip .dot{display:inline-block;width:8px;height:8px;border-radius:2px;flex:none}.erow .dot.H,.estrip .dot.H{background:#e5383b}.erow .dot.M,.estrip .dot.M{background:#f59e0b}
+/* B: box under Upcoming */
+.econp{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface)}
+.econp .mh{display:flex;justify-content:space-between;align-items:baseline}
+.econp .mh h2{font:800 20px 'Inter Tight'}
+.econp .mh a{font:700 13px Inter;color:var(--accent)}
+.echips{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}
+.echips button{font:700 12px Inter;border:1px solid var(--line2);border-radius:99px;padding:5px 10px;background:var(--surface);color:var(--ink);cursor:pointer}
+.echips button.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.eday{font:800 11px Inter;letter-spacing:1px;color:var(--muted);margin:12px 0 2px}
+.eday.today{color:var(--accent)}
+.erow{display:grid;grid-template-columns:40px 36px 8px 1fr;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.erow .tm{font:700 12px ui-monospace,Consolas,monospace;color:var(--soft)}
+.erow .cc{font:800 10.5px Inter;background:var(--chip);border-radius:5px;padding:2px 0;text-align:center}
+.erow .et{min-width:0}
+.erow .et b{font-weight:600;display:block;line-height:1.25}
+.erow .et em{display:block;margin-top:1px;font:800 10px Inter;font-style:normal;color:var(--accent);letter-spacing:.4px;white-space:nowrap}
+.erow .et small{display:block;color:var(--muted);font-size:11px}
+.erow.past{opacity:.45}
+.erow.next{background:color-mix(in srgb,var(--accent) 9%,transparent);margin:0 -8px;padding:7px 8px;border-radius:8px;border-top-color:transparent}
+.erow.next .et b{font-weight:800}
+.erow.next + .erow{border-top-color:transparent}
+.esrc{font-size:11px;color:var(--muted);margin:10px 0 0}
+/* C: strip under the brief bar */
+.estrip{display:flex;align-items:stretch;background:#111;color:#fff;border-radius:14px;overflow:hidden;margin-top:12px}
+.estrip .lab{padding:10px 14px;font:800 10.5px/1.3 Inter;letter-spacing:1px;color:#ff8a5c;display:flex;align-items:center;border-right:1px solid #2a2a2a;flex:none}
+.estrip .ei{padding:9px 14px;border-right:1px solid #2a2a2a;min-width:0;flex:1}
+.estrip .ei.first{flex:1.5;background:#1c1c1c}
+.estrip .ei b{display:flex;align-items:center;gap:7px;font:700 13px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.estrip .ei.first b{font-size:14px}
+.estrip .ei small{display:block;font-size:11.5px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.estrip .cd{color:#ff8a5c;font-weight:800}
+.estrip .ff{display:grid;place-items:center;padding:0 14px;color:#888;font-weight:700;flex:none}
+.estrip .ff:hover{color:#fff}
+@media (max-width:760px){
+  .estrip{border-radius:12px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+  .estrip::-webkit-scrollbar{display:none}
+  .estrip .ei{flex:none;width:62%}.estrip .ei.first{flex:none;width:72%}
+  .estrip .lab{padding:8px 10px}
+}
+[data-theme="dark"] .estrip{box-shadow:inset 0 0 0 1px var(--line2)}
+
+/* ---------- Sort dropdown (design round 33, S1) ---------- */
+.sortdd{position:relative;flex:none;margin-left:auto}
+.sortdd summary{list-style:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;border:1px solid var(--line2);border-radius:99px;padding:7px 13px;font:700 13px Inter;background:var(--surface);color:var(--ink);transition:border-color .2s}
+.sortdd summary::-webkit-details-marker{display:none}
+.sortdd summary:hover,.sortdd[open] summary{border-color:var(--ink)}
+.sortdd .si{color:var(--accent);font-weight:800}
+.sortdd .sl{color:var(--muted);font-weight:600}
+.sortdd .sc{font-size:10px;color:var(--muted)}
+.sortdd .smenu{position:absolute;right:0;top:calc(100% + 6px);width:260px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:6px;z-index:30}
+.sortdd .smenu button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:8px 10px;border-radius:9px;cursor:pointer;font:600 13px Inter}
+.sortdd .smenu button:hover{background:var(--chip)}
+.sortdd .smenu button.on{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.sortdd .smenu button.on b{color:var(--accent)}
+.sortdd .smenu b{font-weight:700;display:block}
+.sortdd .smenu small{display:block;color:var(--muted);font:500 11.5px Inter;margin-top:1px}
+.sortdd .smenu i{font-style:normal;width:14px;flex:none;color:var(--accent);font-weight:800}
+/* filter row + Sort: the filters may swipe sideways (phone) while Sort stays visible on the right, and its menu is never clipped */
+.fbar{display:flex;align-items:center;gap:10px;margin-top:24px}
+.fbar>.filters{margin-top:0;flex:1;min-width:0}
+@media (max-width:760px){
+  .fbar{margin-top:12px;gap:8px}
+  .fbar>.filters{margin:0 0 0 -16px;padding-left:16px}
+  .sortdd .sl{display:none}
+  .sortdd summary{padding:6px 11px;font-size:12.5px}
+  .sortdd .smenu{width:min(260px,calc(100vw - 32px))}
+}
+
+/* ---------- Design round 34: follow, market mood (Fear & Greed + stock mood), earnings cards, places ---------- */
+.sbtn svg,.pl svg{width:14px;height:14px;vertical-align:-2px;margin-right:5px}
+.sbtn.on-follow{background:#fff3ea;border-color:#fdba8c;color:#c2410c}
+[data-theme="dark"] .sbtn.on-follow{background:#3a1d0c;border-color:#9a3412;color:#fdba74}
+.fol{position:absolute;top:12px;right:100px;width:36px;height:36px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;z-index:3;opacity:0;transform:scale(.8);transition:opacity .2s,transform .2s,background .2s}
+.fol svg{width:16px;height:16px}
+.mwrap:hover .fol,.fol.on{opacity:1;transform:none}
+.fol.on{background:var(--accent);border-color:var(--accent)}
+@media (max-width:760px){.grid2 .card .fol{display:none}}
+.wplaces{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 16px}
+.pl{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:99px;padding:6px 12px;font:700 13px Inter;background:var(--surface);color:var(--ink);cursor:pointer}
+.pl em{font-style:normal;color:var(--muted);font-weight:600;margin-left:4px}
+.pl.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.placeadd{display:flex;gap:8px;margin-top:10px;max-width:520px}
+.placeadd input{flex:1;font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink)}
+/* Market mood box */
+.mmood{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface)}
+.mmood .mh h2{font:800 20px 'Inter Tight'}
+.fgrow{display:flex;align-items:center;gap:12px;margin-top:8px}
+.fgg{width:120px;flex:none}
+.fgg g path{stroke-linecap:butt}
+.fgg line{stroke:var(--ink);stroke-width:3;stroke-linecap:round}.fgg circle{fill:var(--ink)}
+.fgv b{display:block;font:900 34px/1 'Inter Tight'}
+.fgv span{display:block;font:800 14px Inter;margin-top:2px}
+.fgv small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.fgago{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted);margin-top:6px}
+.fgago b{color:var(--ink)}
+.fgcr{display:flex;align-items:baseline;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+.fgcr span{font-weight:700}.fgcr b{font:900 18px 'Inter Tight'}.fgcr em{font-style:normal;font-weight:700;font-size:12.5px}
+.fgcr small{margin-left:auto;color:var(--muted);font-size:11px}
+.mml{font:800 10.5px Inter;letter-spacing:1px;color:var(--muted);margin:14px 0 2px;padding-top:12px;border-top:1px solid var(--line)}
+.smood{display:grid;grid-template-columns:54px 1fr 60px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);cursor:pointer}
+.mml + .smood{border-top:0}
+.smood b{font:800 13.5px 'Inter Tight'}
+.smood.few{grid-template-columns:54px 1fr}
+.sbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--chip)}
+.sbar i{display:block}.sbar .u{background:#16a34a}.sbar .n{background:#cfcfcf}.sbar .d{background:#dc2626}
+[data-theme="dark"] .sbar .n{background:#555}
+.smood small{font:700 11px Inter;text-align:right}
+.smood small.up{color:#16a34a}.smood small.dn{color:#dc2626}.smood small.fl{color:var(--muted)}
+.smood .ssub{grid-column:2/4;font-size:11px;color:var(--muted);margin-top:-3px}
+/* Earnings cards */
+.earns{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:start}
+.earns:not(:has(.ear2s)){grid-template-columns:minmax(0,1fr)}
+.ear{border-radius:14px;padding:14px;background:linear-gradient(135deg,#0f2a1a,#111);color:#fff;cursor:pointer}
+.ear .hd{display:flex;align-items:center;gap:10px}
+.ear .tt b{display:block;font:800 16px 'Inter Tight'}.ear .tt small{color:#9ca3af;font-size:11.5px}
+.vd{margin-left:auto;font:900 11.5px Inter;letter-spacing:1px;border-radius:8px;padding:5px 10px;color:#fff;flex:none}
+.vd.beat{background:#16a34a}.vd.miss{background:#dc2626}.vd.inl{background:#6b7280}
+.ear .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.ear .nums div{background:rgba(255,255,255,.06);border-radius:10px;padding:9px 10px}
+.ear .nums small{display:block;color:#9ca3af;font:700 10px Inter;letter-spacing:.8px}
+.ear .nums b{font:900 20px 'Inter Tight'}.ear .nums b.beat{color:#4ade80}.ear .nums b.miss{color:#f87171}
+.ear .ft{margin-top:10px;font-size:11.5px;color:#9ca3af}.ear .ft .up{color:#4ade80}.ear .ft .down{color:#f87171}
+.ear2s{display:grid;gap:8px}
+.ear2{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;background:var(--surface);cursor:pointer}
+.ear2 b.beat{color:#16a34a}.ear2 b.miss{color:#dc2626}
+.ear2 .vd{padding:4px 8px;font-size:10.5px}
+@media (max-width:760px){.earns{grid-template-columns:1fr}.ear .nums b{font-size:17px}}
+
+/* ---------- Round 35: released results (A cards, B Actual column, C "Just out") ---------- */
+.ehead,.econp .erow{display:grid;grid-template-columns:34px 30px 7px minmax(0,1fr) 44px 38px 38px;gap:6px;align-items:center}
+.ehead{font:800 9.5px Inter;letter-spacing:.7px;color:var(--muted);padding:8px 0 0}
+.ehead span:nth-child(n+5),.econp .erow .n{text-align:right}
+.econp .erow .tm{font-size:11px}
+.econp .erow .cc{font-size:9.5px}
+.econp .erow .et b{font-size:12.5px}
+.econp .erow .n{font:600 11.5px Inter;color:var(--soft);white-space:nowrap}
+.econp .erow .n.a{font-weight:800;color:var(--ink)}
+.econp .erow .n.a.good{color:#16a34a}.econp .erow .n.a.bad{color:#dc2626}.econp .erow .n.a.wait{color:var(--muted);font-weight:600}
+.ffl{color:var(--accent);font-weight:800;text-decoration:none;white-space:nowrap}
+.ffl:hover{text-decoration:underline}
+/* A: result cards reuse the earnings card look; red when worse, grey when no verdict */
+.eres{background:linear-gradient(135deg,#1f1f1f,#111);cursor:default}
+.eres.good{background:linear-gradient(135deg,#0f2a1a,#111)}
+.eres.bad{background:linear-gradient(135deg,#2a0f0f,#111)}
+.eres .ccb{width:42px;height:42px;border-radius:10px;background:#2b2b2b;display:grid;place-items:center;font:900 12px Inter;flex:none}
+.eres .nums b.good{color:#4ade80}.eres .nums b.bad{color:#f87171}
+.eres .nums .ffl{font-size:15px;color:#ff8a5c}
+.eres .ft a{color:#ff8a5c}
+.vd.good{background:#16a34a}.vd.bad{background:#dc2626}
+.ear2 b.good{color:#16a34a}.ear2 b.bad{color:#dc2626}
+.ear2 .dot{display:inline-block;width:8px;height:8px;border-radius:2px;flex:none}.ear2 .dot.H{background:#e5383b}.ear2 .dot.M{background:#f59e0b}
+.ear2 > span:not(.vd){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.econres.only-small{grid-template-columns:minmax(0,1fr)}
+/* C */
+.estrip .lab.sep{border-left:1px solid #2a2a2a}
+.estrip .ei.jout{background:#1c1c1c}
+.estrip .g{color:#4ade80;font-weight:800}.estrip .r{color:#f87171;font-weight:800}
+.estrip .ffl{color:#ff8a5c}
+/* Economic calendar page: "+3 more" on a busy day; the day table uses the same columns as the box */
+.big .c .more{display:block;font:700 10.5px Inter;color:var(--muted);padding:2px 4px 0}
+.dayb.econp{border:0;padding:0;background:none}
+.calv .why a{color:var(--accent);font-weight:700}
+.econp .mh h2{white-space:nowrap}
+

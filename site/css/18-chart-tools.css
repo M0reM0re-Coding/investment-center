@@ -1,0 +1,117 @@
+/* Chart toolbar, drawing settings, Object tree, sorts + stocks by market. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ===== Chart works like TradingView (round 44): our drawing toolbar, navigation, measure, timeframes — site look ===== */
+.chbox:fullscreen{display:flex;flex-direction:column;background:var(--surface);border-radius:0}
+.chbox:fullscreen .kchost{flex:1;height:auto!important;min-height:0}
+.kcbox .klinecharts-pro-drawing-bar{display:none!important}
+.kcbox .klinecharts-pro-content{padding-left:48px;box-sizing:border-box}
+.kctools{position:absolute;left:0;top:0;bottom:0;width:48px;z-index:6;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-right:1px solid var(--line);background:var(--surface);overflow-y:auto;scrollbar-width:none}
+.kctools hr{width:24px;border:0;border-top:1px solid var(--line);margin:4px 0}
+.ktg{position:relative;width:40px;flex:none}
+.ktb{width:40px;height:36px;border:0;border-radius:9px;background:none;color:var(--soft);display:grid;place-items:center;cursor:pointer;position:relative}
+.ktb:hover{background:var(--hover);color:var(--ink)}.ktg.on .ktb{background:var(--chip);color:var(--accent)}
+.ktb b{position:absolute;right:3px;bottom:2px;font:800 8px Inter;color:var(--accent)}
+.ktx{position:absolute;right:-2px;top:0;bottom:0;width:10px;border:0;background:none;cursor:pointer;opacity:0;padding:0}
+.ktg:hover .ktx,.ktx:focus-visible{opacity:1}
+.ktx i{position:absolute;right:2px;bottom:5px;border:3.5px solid transparent;border-right-color:var(--muted);border-bottom-color:var(--muted)}
+.ktx:hover i{border-right-color:var(--accent);border-bottom-color:var(--accent)}
+.ktfly{position:fixed;z-index:220;min-width:260px;background:var(--surface);color:var(--ink);border:1px solid var(--line2);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.25);padding:6px 0;font-family:Inter}
+.ktfly small{display:block;padding:8px 14px 4px;font:800 10px Inter;letter-spacing:.9px;color:var(--muted)}
+.ktfly button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:7px 14px;font:600 13px Inter;color:var(--ink);cursor:pointer;text-align:left}
+.ktfly button:hover{background:var(--hover)}.ktfly button.on{background:var(--chip);color:var(--accent)}
+.ktfly button em{margin-left:auto;font:600 11.5px Inter;font-style:normal;color:var(--muted)}
+.kttip{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:7;background:var(--ink);color:var(--bg);font:700 12.5px Inter;padding:6px 14px;border-radius:99px;pointer-events:none;white-space:nowrap}
+.ktfloat{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:2px;padding:4px 6px;background:var(--surface);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.ktfloat[hidden]{display:none}
+.ktfloat .ktn{font:700 12.5px Inter;color:var(--soft);padding:0 6px;white-space:nowrap}.ktfloat>i{width:1px;height:20px;background:var(--line);margin:0 2px}
+.ktfloat>button,.ktdd>summary{height:32px;min-width:32px;border:0;border-radius:8px;background:none;color:var(--soft);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 7px;cursor:pointer;font:700 12.5px Inter}
+.ktfloat>button:hover,.ktdd>summary:hover{background:var(--hover);color:var(--ink)}
+.ktdd{position:relative}.ktdd>summary{list-style:none}.ktdd>summary::-webkit-details-marker{display:none}
+.ktdd>div{position:absolute;top:38px;left:0;z-index:10;background:var(--surface);border:1px solid var(--line2);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.2);padding:6px;min-width:120px}
+.ktdd>div button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 10px;border-radius:8px;font:600 13px Inter;color:var(--ink);cursor:pointer;white-space:nowrap}
+.ktdd>div button:hover,.ktdd>div button.on{background:var(--chip)}
+.ktdd .sws{display:grid;grid-template-columns:repeat(6,22px);gap:6px;min-width:0}.ktdd .sws button{width:22px;height:22px;padding:0;border-radius:6px;border:1px solid var(--line2)}
+.sw{width:16px;height:16px;border-radius:5px;border:1px solid var(--line2);display:inline-block}
+.lw{display:inline-block;width:18px;background:currentColor;border-radius:2px}
+.kttext{width:100%;border:1.5px solid var(--line2);border-radius:10px;padding:10px 12px;font:500 14px Inter;background:var(--bg);color:var(--ink);resize:vertical}
+.kcnav{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);z-index:6;display:flex;gap:4px;padding:4px;border-radius:99px;background:var(--surface);border:1px solid var(--line2);box-shadow:0 6px 20px rgba(0,0,0,.15);opacity:0;transition:opacity .15s;pointer-events:none}
+.kcbox:hover .kcnav{opacity:.92;pointer-events:auto}
+.kcnav button{width:30px;height:30px;border:0;border-radius:99px;background:none;color:var(--ink);font:700 17px Inter;line-height:1;cursor:pointer;display:grid;place-items:center}
+.kcnav button:hover{background:var(--chip);color:var(--accent)}
+.kclatest{position:absolute;right:72px;bottom:44px;z-index:6;width:30px;height:30px;border-radius:99px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);font:800 16px Inter;cursor:pointer;display:none;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.kclatest.on{display:grid;place-items:center}.kclatest:hover{color:var(--accent)}
+.kcmeasure{position:absolute;z-index:5;pointer-events:none;border-radius:2px}
+.kcmeasure.up{background:rgba(41,98,255,.16);outline:1px solid rgba(41,98,255,.7)}.kcmeasure.dn{background:rgba(242,54,69,.16);outline:1px solid rgba(242,54,69,.7)}
+.kcmeasure span{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;text-align:center;font:700 12px/1.35 Inter;color:#fff;padding:5px 10px;border-radius:8px}
+.kcmeasure.up span{background:#2962FF}.kcmeasure.dn span{background:#F23645}
+.kcmeasure span.t{bottom:calc(100% + 6px)}.kcmeasure span.b{top:calc(100% + 6px)}
+.kctf>summary{padding:6px 7px!important}
+.kctf>div{min-width:220px!important;max-height:70vh;overflow:auto}
+.kctf>div small{display:block;padding:8px 14px 4px;font:800 10px Inter;letter-spacing:.9px;color:var(--muted)}
+.kctf .tfr{display:flex;align-items:center}.kctf .tfr>button:first-child{flex:1;text-align:left;border:0;background:none;padding:7px 14px;font:600 13px Inter;color:var(--ink);cursor:pointer}
+.kctf .tfr:hover{background:var(--chip)}.kctf .tfr.on>button:first-child{color:var(--accent);font-weight:800}
+.kctf .st{border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px 12px}.kctf .st.on{color:#f5c518}
+@media (max-width:760px){.kctools{width:40px}.kcbox .klinecharts-pro-content{padding-left:40px}.ktg,.ktb{width:34px}.kcnav{bottom:40px}.ktfloat .ktn{display:none}}
+.kctf .st,.kctf .tfr>button:first-child{width:auto}
+.kcbox .klinecharts-pro-widget{width:auto!important;flex:1;min-width:0}
+
+/* ===== Round 45: drawing settings window + Object tree (site look) ===== */
+.kcbox.tree .klinecharts-pro-content{padding-right:290px}
+.ktree{position:absolute;top:0;right:0;bottom:0;width:290px;z-index:7;background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;font-family:Inter}
+.ktree[hidden]{display:none}
+.ktree .th{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}.ktree .th b{font:800 15px 'Inter Tight'}
+.ktree .th button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:15px}
+.ktree .tbody{flex:1;overflow:auto;padding-bottom:8px}
+.ktree small{display:block;padding:10px 14px 4px;font:800 10px Inter;letter-spacing:.9px;color:var(--muted)}
+.ktree .note{margin:2px 14px 6px}
+.tr2{display:flex;align-items:center;gap:6px;padding:5px 8px 5px 14px;cursor:pointer;border-left:2px solid transparent}
+.tr2:hover{background:var(--hover)}.tr2.on{background:var(--chip);border-left-color:var(--accent)}.tr2.off .nm,.tr2.off .ic{opacity:.45}
+.tr2 .ic{color:var(--soft);display:grid;place-items:center;width:20px;flex:none}
+.tr2 .nm{flex:1;min-width:0;font:600 13px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr2 .nm small{display:inline;padding:0 0 0 6px;font:600 11.5px Inter;letter-spacing:0;color:var(--muted)}
+.tr2 button{width:26px;height:26px;border:0;border-radius:7px;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer;flex:none;opacity:.55}
+.tr2:hover button,.tr2 button.on{opacity:1}.tr2 button:hover{background:var(--chip);color:var(--ink)}.tr2 button.on{color:var(--accent)}
+.ktree .tf{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ktree .tf button{border:1px solid var(--line2);border-radius:99px;padding:5px 11px;font:700 12px Inter;background:none;color:var(--ink);cursor:pointer}
+.ktree .tf button:hover{border-color:var(--ink)}
+.ktset{max-height:58vh}
+.ktset .f>span:last-child{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ktset select{width:auto!important;min-width:84px}
+.ktset input[type=date],.ktset input[type=datetime-local]{border:1px solid var(--line2);border-radius:10px;padding:6px 10px;font:600 13px Inter;background:var(--bg);color:var(--ink)}
+.ktset input[type=range]{width:160px;accent-color:var(--accent)}
+.kwsw{width:18px;height:18px;border-radius:5px;border:1px solid var(--line2);padding:0;cursor:pointer}
+.ktset .note{margin:6px 0}
+@media (max-width:760px){.ktree{width:100%}.kcbox.tree .klinecharts-pro-content{padding-right:0}}
+/* full screen (round 46): the page is full screen, the chart box is pinned over everything; windows and menus sit above it */
+body.kcfull{overflow:hidden}
+body.kcfull .chbox{position:fixed;inset:0;z-index:150;border-radius:0;border:0;margin:0;display:flex;flex-direction:column;background:var(--surface)}
+body.kcfull .chbox .kchost{flex:1;height:auto!important;min-height:0}
+body.kcfull .stmini{display:none}
+body.kcfull .toast{z-index:300}
+
+/* ===== Round 47: combinable sorts + Charts "Stocks by market & industry" ===== */
+.sortdd .smenu .shint{margin:2px 10px 6px;font:600 11.5px Inter;color:var(--muted)}
+.sortdd .smenu button i{min-width:16px;font:800 12px Inter;font-style:normal;color:var(--accent);text-align:center}
+.sortdd .smenu .sreset{border-top:1px solid var(--line)!important;border-radius:0 0 9px 9px;margin-top:4px}.sortdd .smenu .sreset b{color:var(--accent)}
+.sortdd summary{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scr{padding-top:6px}
+.scrf{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 14px}
+.scrf .lab{font:800 10.5px Inter;letter-spacing:.7px;color:var(--muted);width:66px;flex:none;text-transform:uppercase}
+.scp em{font-style:normal;display:inline-grid;place-items:center;width:16px;height:16px;border-radius:99px;background:var(--accent);color:#fff;font:800 10px Inter;margin-right:6px}
+.scrt{margin-top:8px;border-top:1px solid var(--line)}
+.scrt .h,.scrt .r{display:grid;grid-template-columns:minmax(0,1.6fr) 90px minmax(0,1fr) 96px 84px 96px;gap:8px;align-items:center;padding:8px 14px;font-size:13px}
+.scrt .h{font:700 10.5px Inter;letter-spacing:.7px;color:var(--muted);border-bottom:1px solid var(--line)}
+.scrt .r{border-bottom:1px solid var(--line)}.scrt .r:hover{background:var(--hover)}
+.scrt .nm{display:flex;align-items:center;gap:10px;min-width:0}.scrt .nm>span{min-width:0}.scrt .nm b{display:block;font-weight:800}
+.scrt .nm small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scrt .sec{color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scrt .n{text-align:right}
+.scrt .g{padding:10px 14px 6px;font:800 11px Inter;letter-spacing:.6px;color:var(--accent);text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--line)}
+.scrb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}
+@media (max-width:760px){.scrt .h,.scrt .r{grid-template-columns:minmax(0,1fr) 80px 70px}.scrt .h>:nth-child(2),.scrt .h>:nth-child(3),.scrt .h>:nth-child(6),.scrt .r>:nth-child(2),.scrt .r>:nth-child(3),.scrt .r>:nth-child(6){display:none}.scrf .lab{width:100%}}
+.scp{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:99px;padding:5px 12px;font:700 12.5px Inter;color:var(--ink);background:var(--surface);cursor:pointer;white-space:nowrap}
+.scp:hover{border-color:var(--ink)}.scp.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.scp.on em{background:var(--accent)}
+.ktfloat>button.on{color:var(--accent);background:var(--chip)}.tr2 .nm small.al{color:var(--accent)}
+.cmpw .f>span{display:flex;align-items:center;gap:8px;min-width:0}.cmpw small{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmpw .dot{width:10px;height:10px;border-radius:99px;display:inline-block;flex:none}
+.cmpw .li{display:flex;align-items:baseline;gap:10px;width:100%;border:0;background:none;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--ink);font:600 13.5px Inter;text-align:left}
+.cmpw .li:hover{background:var(--chip)}.cmpw .c{border:1px solid var(--line2);border-radius:99px;padding:4px 12px;font:700 12px Inter;background:none;color:var(--ink);cursor:pointer}

@@ -3,7 +3,7 @@
 growth   = [{"t": time, "n": outlets}]      one point each time the robot finds more outlets (max 30)
 timeline = [{"t": time, "text": headline}]  a new angle on the story: an outlet headline that reads
                                             differently from the ones we have, at most one per 2 hours (max 8)
-The website decides what counts as "Developing" (see devInfo in site/app.js), so the rule can change
+The website decides what counts as "Developing" (see devInfo in site/js/news/developing.js), so the rule can change
 without touching saved data. Needs the columns from supabase/008_world.sql; before that, nothing is saved.
 """
 from datetime import datetime, timedelta, timezone

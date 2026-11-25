@@ -1,0 +1,108 @@
+/* Season themes + theme characters. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ---------- Season themes (design round 29, PREVIEW: localhost ?season=winter|spring|summer|autumn) ---------- */
+#app{position:relative;z-index:1}
+.sfx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(50% - 640px),transparent calc(50% - 590px),transparent calc(50% + 590px),#000 calc(50% + 640px));mask-image:linear-gradient(90deg,#000 0,#000 calc(50% - 640px),transparent calc(50% - 590px),transparent calc(50% + 590px),#000 calc(50% + 640px))}
+.sfx i{position:absolute;top:-24px;display:block;animation:sfall var(--d) linear var(--w) infinite}
+@keyframes sfall{to{transform:translate(var(--dx),110vh) rotate(var(--r))}}
+.sfx b{display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.sfx .snow b{width:var(--s);height:var(--s);border-radius:50%;background:var(--flake)}
+.sfx .petal b{width:13px;height:9px;border-radius:13px 0 13px 0;background:var(--petal)}
+.sfx .leaf b{width:15px;height:15px;border-radius:0 15px 0 15px;background:var(--lc)}
+.sfx .sun{position:absolute;right:-160px;top:-180px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,var(--glow),transparent 65%);animation:sglow 7s ease-in-out infinite}
+@keyframes sglow{50%{transform:scale(1.08);opacity:.75}}
+.calm .sfx{display:none}
+/* WINTER: icy blue accent, cool white, snowfall */
+:root[data-season="winter"][data-theme]{--bg:#eef4fa;--surface:#fff;--head:#fbfdff;--hover:#f3f8fd;--ink:#0f2233;--soft:#465a6e;--muted:#7a8da0;--line:#dce7f1;--line2:#d2dfeb;--chip:#e4eef8;--accent:#2b7de9;--flake:#b9d3f0}
+:root[data-season="winter"][data-theme="dark"]{--bg:#0a1420;--surface:#101d2c;--surface2:#16263a;--head:#0c1826;--hover:#16263a;--ink:#e6f0fb;--soft:#a6bacd;--muted:#7489a0;--line:#1c2c40;--line2:#1c2c40;--chip:#14233a;--accent:#5aa7ff;--flake:#ffffff}
+/* SPRING: blossom pink, warm white, petals */
+:root[data-season="spring"][data-theme]{--bg:#fcf6f5;--surface:#fff;--head:#fffafa;--hover:#fdf1f3;--ink:#2a1f22;--soft:#68585d;--muted:#9f8e93;--line:#f1e2e4;--line2:#ead8db;--chip:#f8e9ec;--accent:#dd4f7a;--up:#2f9e5b;--petal:#f5a9c1}
+:root[data-season="spring"][data-theme="dark"]{--bg:#161117;--surface:#201822;--surface2:#2a2030;--head:#1a141c;--hover:#2a2030;--ink:#f7ecf0;--soft:#c8b3bd;--muted:#947e89;--line:#30243a;--line2:#30243a;--chip:#291f2e;--accent:#ff7aa2;--up:#4ade80;--petal:#e88aa8}
+/* SUMMER: keeps the orange, sunny sand page, sun glow, sea-teal gains */
+:root[data-season="summer"][data-theme]{--bg:#fff9ee;--surface:#fff;--head:#fffdf7;--hover:#fff4df;--ink:#1d1a12;--soft:#5a5341;--muted:#968c72;--line:#f0e6cf;--line2:#e9dcc0;--chip:#fbf0d8;--accent:#ff6a00;--up:#0f9f8a;--glow:rgba(255,190,60,.40)}
+:root[data-season="summer"][data-theme="dark"]{--bg:#0b1517;--surface:#112024;--surface2:#173034;--head:#0d1a1d;--hover:#173034;--ink:#f2f0e7;--soft:#b6c2bd;--muted:#7e908b;--line:#1c2f33;--line2:#1c2f33;--chip:#16282c;--accent:#ffa23a;--up:#2dd4bf;--glow:rgba(255,162,58,.18)}
+/* AUTUMN: rust accent, warm paper, serif headlines, falling leaves */
+:root[data-season="autumn"][data-theme]{--bg:#f7efe3;--surface:#fffaf2;--head:#fbf4ea;--hover:#f4e8d6;--ink:#2b1d12;--soft:#674f3c;--muted:#9d846e;--line:#e8d9c4;--line2:#e0ceb5;--chip:#f0e2cd;--accent:#c2541b;--up:#5b8a2f}
+:root[data-season="autumn"][data-theme="dark"]{--bg:#16100b;--surface:#201711;--surface2:#2a1f16;--head:#1a130d;--hover:#2a1f16;--ink:#f6eadc;--soft:#c6b09b;--muted:#917a65;--line:#32251b;--line2:#32251b;--chip:#2a1f16;--accent:#ff8a3d;--up:#9ccc65}
+:root[data-season="autumn"] h1,:root[data-season="autumn"] .card h2,:root[data-season="autumn"] .card h3,:root[data-season="autumn"] .lead h2,:root[data-season="autumn"] .wtop h3{font-family:Georgia,"Times New Roman",serif;letter-spacing:-.2px}
+
+/* season picture in the dark brief bar (item 1) */
+.brief .sart{position:absolute;left:30%;bottom:0;height:100%;width:min(420px,40%);pointer-events:none}
+@media(max-width:760px){.brief .sart{left:auto;right:0;width:70%;opacity:.6}}
+.brief>*:not(.sart):not(.bgline){position:relative;z-index:1}
+/* market season note (item 2) */
+.snote{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--surface);margin-bottom:16px}
+.snote h4{font:800 16px 'Inter Tight';letter-spacing:-.2px;margin-bottom:8px}
+.snote ul{list-style:none}
+.snote li{font-size:13.5px;line-height:1.45;color:var(--soft);padding:8px 0;border-top:1px solid var(--line)}
+.snote li span{display:block;font:700 11px Inter;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.snote li.now{color:var(--ink)}.snote li.now span{color:var(--accent)}
+.snote .note{margin:8px 0 0}
+/* season intro (item 4) */
+.i-s{display:grid;place-items:center}
+.i-s.s-winter{background:linear-gradient(#050d1a,#0e2442 60%,#1d3b63)}.i-s.s-spring{background:linear-gradient(#ffe3ec,#fff3e6 55%,#f3f9ec)}
+.i-s.s-summer{background:linear-gradient(#ffe7b8,#ffd08a 55%,#7dd3c7 56%,#5bbfb2)}.i-s.s-autumn{background:linear-gradient(#3b1f4a,#a3442f 50%,#f2a65a 78%)}
+.i-s i{position:absolute;top:-20px;display:block;animation:sdrop var(--d) cubic-bezier(.3,.1,.5,1) var(--w) forwards}
+@keyframes sdrop{to{transform:translate(var(--dx),calc(100vh + 20px)) rotate(var(--r))}}
+.i-s .snow{width:var(--s);height:var(--s);border-radius:50%;background:#fff}
+.i-s .petal{width:14px;height:10px;border-radius:14px 0 14px 0;background:#f39ab6}
+.i-s .leaf{width:17px;height:17px;border-radius:0 17px 0 17px;background:var(--lc)}
+.i-s .sbrand{position:relative;z-index:2;font:900 clamp(34px,6vw,64px) 'Inter Tight';letter-spacing:-2px;opacity:0;transform:scale(.92);animation:sbrand .7s .9s cubic-bezier(.2,.9,.2,1.1) forwards}
+.i-s.s-winter .sbrand,.i-s.s-autumn .sbrand{color:#fff}.i-s.s-spring .sbrand{color:#2a1f22}.i-s.s-summer .sbrand{color:#3b2306}
+.i-s.s-winter .sbrand{text-shadow:0 -3px 0 rgba(255,255,255,.9),0 0 30px rgba(120,180,255,.5)}
+@keyframes sbrand{to{opacity:1;transform:none}}
+.i-s .ssun{position:absolute;left:50%;top:56%;width:220px;height:220px;margin-left:-110px;border-radius:50%;background:radial-gradient(circle,#fff6d5,#ffb347 60%,#ff8a1f);transform:translateY(60%);animation:srise 1.4s .1s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes srise{to{transform:translateY(-62%)}}
+.i-s .swave{position:absolute;left:0;right:0;top:56%;bottom:0;background:linear-gradient(#7dd3c7,#5bbfb2)}
+
+/* season intro scenes: layers rise one after another, flowers and leaves pop, the branch draws itself */
+.i-s .sscene{position:absolute;inset:0;width:100%;height:100%}
+.i-s .slay{transform:translateY(45%);animation:slay .9s var(--dl) cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes slay{to{transform:none}}
+.i-s .smoon{transform:translateY(160px);opacity:0;animation:smoon 1.2s .1s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes smoon{to{transform:none;opacity:1}}
+.i-s .saur{opacity:0;animation:saur 2.4s .4s ease-out forwards}
+@keyframes saur{40%{opacity:.9}100%{opacity:.75;transform:translateX(-60px)}}
+.i-s .sdraw{stroke-dasharray:1400;stroke-dashoffset:1400;animation:sdraw 1s .15s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes sdraw{to{stroke-dashoffset:0}}
+.i-s .spop>g{transform-box:fill-box;transform-origin:center;transform:scale(0);animation:spop .4s var(--dl) cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes spop{to{transform:scale(1)}}
+.i-s.s-spring i,.i-s.s-autumn i{top:-30px}
+.i-s.s-spring .sbrand{text-shadow:0 2px 24px rgba(255,255,255,.9)}
+.i-s.s-autumn .sbrand{text-shadow:0 4px 30px rgba(60,20,10,.6)}
+/* Settings -> Season picker (same cards as the light/dark style pickers) */
+.spick{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.spick .sw{grid-template-columns:2fr 1fr 1fr}
+.spick .sw.auto{grid-template-columns:repeat(4,1fr);background:var(--chip)}
+
+/* ---------- Theme characters (the user's own mascots, site/mascot/<theme>/<pose>.png) ---------- */
+.mimg{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.bigal .bg-mas .mimg{filter:drop-shadow(0 8px 18px rgba(0,0,0,.35))}
+.bigal .bg-mas:has(.mimg){width:min(260px,38vw);bottom:calc(58% - 16px)}
+.msc .mimg.pick{max-width:110px;aspect-ratio:1;object-fit:contain;background:#f4f4f6;border-radius:10px}
+/* caught-up spots */
+.brief .bmas{display:block;width:84px;margin:-18px 0 -22px}
+.brief .bmas .mimg{width:84px}
+.wrfdone{display:flex;align-items:center;gap:14px;margin-top:8px;font-weight:600;color:var(--soft)}
+.wrfdone .mimg{width:92px}
+.sheet .end .mimg.mend{width:150px;margin:0 auto 6px}
+.empty .mimg.mempty{width:150px;margin:0 auto 6px}
+/* waiting / loading */
+.mwait{display:flex;flex-direction:column;align-items:center;padding-top:12vh}
+.mwait .mimg{width:170px;animation:mbob 1.6s ease-in-out infinite}
+@keyframes mbob{50%{transform:translateY(-8px)}}
+/* login */
+.login .mimg.mlogin{width:150px;margin:0 auto 4px}
+/* 5th intro: the mascot holds up the sign with the logo */
+.i-m{background:var(--bg);display:grid;place-items:center}
+.i-m .mstage{position:relative;width:min(560px,82vmin);aspect-ratio:1;transform:translateY(60%) scale(.9);opacity:0;animation:mrise .8s .1s cubic-bezier(.2,.9,.25,1.1) forwards}
+.i-m .mstage img{width:100%;height:100%;display:block}
+.i-m .msign{position:absolute;display:grid;place-items:center;text-align:center;font-family:'Inter Tight',Inter,sans-serif;font-weight:900;line-height:1.02;letter-spacing:-.03em;color:#111}
+.i-m .msign span{opacity:0;transform:scale(.6);animation:msign .4s 1s cubic-bezier(.3,1.6,.5,1) forwards}
+.i-m .msign em{font-style:normal;color:#ff4500}
+@keyframes mrise{to{transform:none;opacity:1}}
+@keyframes msign{to{opacity:1;transform:none}}
+/* small mascot head on impact 8+ news cards */
+.mhead{display:inline-block;width:22px;height:22px;border-radius:50%;vertical-align:-6px;margin-right:6px;background-color:var(--chip);background-size:250%;background-position:50% 9%;background-repeat:no-repeat;box-shadow:0 0 0 1.5px var(--accent)}
+.calm .mwait .mimg{animation:none}
+@media(max-width:760px){.bigal .bg-mas:has(.mimg){width:150px;bottom:calc(76% - 14px)}.brief .bmas,.brief .bmas .mimg{width:64px}}
+

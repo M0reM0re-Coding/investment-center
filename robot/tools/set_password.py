@@ -1,8 +1,8 @@
 """Set (or reset) a website login password, without sending any email.
 
 Run on your PC from the "Investment Center" folder:
-  python robot/set_password.py                 (your own account)
-  python robot/set_password.py someone@email   (another existing account)
+  python robot/tools/set_password.py                 (your own account)
+  python robot/tools/set_password.py someone@email   (another existing account)
 
 You type the password in this terminal; it is hidden and never stored in any file.
 Uses the Supabase secret key from .env (admin access), so only run it on your own PC.
@@ -15,7 +15,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # robot/
 from analyze import load_env  # noqa: E402
 
 

@@ -1,0 +1,57 @@
+/* Big news alert + mascot picker. Part of the site styles: index.html loads site/css files in number order (later files win). */
+/* ---------- Big news alert (design round 25 B + mascots rounds 26-27) ---------- */
+.bigal{position:fixed;inset:0;z-index:300;overflow:hidden;font-family:Inter,system-ui,sans-serif}
+.bigal .bg-dim{position:absolute;inset:0;background:rgba(0,0,0,0);cursor:pointer}
+.bigal.play .bg-dim{animation:bgDim .35s forwards}
+.bigal .bg-mas{position:absolute;left:5%;bottom:calc(58% - 4px);width:min(210px,32vw);transform:translateY(130%);pointer-events:none}
+.bigal .bg-mas svg{width:100%;height:auto;display:block}
+.bigal.play .bg-mas{animation:bgHop .6s .05s cubic-bezier(.3,1.5,.5,1) forwards}
+.bigal.play .bg-mas .blink{animation:bgBlink 3.2s 1.6s infinite}
+.bigal.play .bg-mas .wave{animation:bgWave .6s 1s 2 ease-in-out;transform-origin:var(--o)}
+.bigal .blink{transform-box:fill-box;transform-origin:center}
+.bigal .bg-band{position:absolute;left:0;right:0;top:42%;background:var(--accent);color:#fff;display:flex;align-items:stretch;transform:translateX(-102%);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.bigal.play .bg-band{animation:bgSlide .45s .5s cubic-bezier(.2,.8,.2,1) forwards}
+.bigal .bg-label{background:#fff;color:var(--accent);font:900 28px/1 "Inter Tight",Inter,sans-serif;letter-spacing:.02em;padding:16px 22px;display:flex;align-items:center;white-space:nowrap}
+.bigal .bg-hl{padding:14px 22px;font:800 clamp(20px,2.4vw,30px)/1.2 "Inter Tight",Inter,sans-serif;letter-spacing:-.3px;align-self:center}
+.bigal .bg-low{position:absolute;left:0;right:0;top:calc(42% + var(--bandh,62px));background:#111;color:#ddd;padding:16px 22px 18px;opacity:0;transform:translateY(-8px)}
+.bigal.play .bg-low{animation:bgUp .4s 1s forwards}
+.bigal .bg-low p{font-size:15px;line-height:1.55;max-width:860px;color:#cfcfd4;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.bigal .bg-meta{font-size:13px;color:#9a9aa2;margin-bottom:14px}
+.bigal .bg-btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bigal .bg-read{background:var(--accent);color:#fff;border:0;padding:11px 18px;border-radius:10px;font:700 14px Inter,sans-serif;cursor:pointer}
+.bigal .bg-later{background:none;color:#ddd;border:1px solid #555;padding:10px 16px;border-radius:10px;font:600 14px Inter,sans-serif;cursor:pointer}
+.bigal .bg-read:hover{filter:brightness(1.08)}.bigal .bg-later:hover{border-color:#999;color:#fff}
+.bigal .bg-n{font-size:12px;color:#777}
+.bigal .bg-tick{position:absolute;left:0;right:0;bottom:0;height:40px;background:#111;border-top:2px solid var(--accent);color:#eee;display:flex;align-items:center;overflow:hidden;opacity:0;pointer-events:none}
+.bigal.play .bg-tick{animation:bgFade .3s .5s forwards}
+.bigal .bg-tick div{white-space:nowrap;font-size:13px;font-weight:600;animation:bgMarq 30s linear infinite}
+.bigal .bg-tick span{margin-right:28px}.bigal .bg-tick em{font-style:normal;margin-left:4px}.bigal .bg-tick em.u{color:#22c55e}.bigal .bg-tick em.d{color:#ef4444}
+.bigal.out{animation:bgFadeOut .25s forwards}
+@keyframes bgDim{to{background:rgba(0,0,0,.74)}}
+@keyframes bgSlide{to{transform:none}}
+@keyframes bgHop{to{transform:none}}
+@keyframes bgUp{to{opacity:1;transform:none}}
+@keyframes bgFade{to{opacity:1}}
+@keyframes bgFadeOut{to{opacity:0}}
+@keyframes bgBlink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes bgWave{50%{transform:rotate(-22deg)}}
+@keyframes bgMarq{to{transform:translateX(-50%)}}
+/* reduced motion: everything appears at once, nothing moves */
+.calm .bigal .bg-dim{background:rgba(0,0,0,.74)}
+.calm .bigal .bg-mas,.calm .bigal .bg-band,.calm .bigal .bg-low,.calm .bigal .bg-tick{transform:none;opacity:1}
+@media(max-width:760px){
+  .bigal .bg-band{top:24%;flex-direction:column}
+  .bigal .bg-label{font-size:18px;padding:10px 16px}
+  .bigal .bg-hl{font-size:20px;padding:10px 16px 14px}
+  .bigal .bg-low{top:calc(24% + var(--bandh,110px));padding:14px 16px 16px}
+  .bigal .bg-mas{width:130px;left:16px;bottom:calc(76% - 4px)}
+}
+/* Settings: mascot picker */
+.mscpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.msc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);color:var(--ink);cursor:pointer;text-align:center}
+.msc svg{width:100%;max-width:110px;height:auto;display:block;background:#f4f4f6;border-radius:10px}
+.msc:hover{border-color:var(--muted)}
+.msc.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.msc b{font-size:14px;margin-top:4px}.msc small{font-size:12px;color:var(--muted)}
+.msc-none{display:grid;place-items:center;width:100%;max-width:110px;aspect-ratio:220/190;font:900 15px "Inter Tight",Inter,sans-serif;color:var(--accent);border:2px dashed var(--line);border-radius:10px}
+
