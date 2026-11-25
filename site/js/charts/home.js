@@ -174,7 +174,7 @@ function viewCharts() {
   return `${header("charts")}<div class="wrap chp">
     ${chSearchBox()}
     <div class="chlay"><div class="chmain">
-      <nav class="chcnav">${cats.map(([k], i) => `<a href="#/charts" data-chjump="cat-${i}">${esc(k)}</a>`).join("")}<a href="#/charts" data-chjump="cat-heat">Heat map</a><a class="hm" href="#/stocks">${chI("list", 16)} Stocks by industry</a><a class="hm" href="#/heatmap">${chI("grid", 16)} Stock heat map</a></nav>
+      <nav class="chcnav">${cats.map(([k], i) => `<a href="#/charts" data-chjump="cat-${i}">${esc(k)}</a>`).join("")}<a href="#/charts" data-chjump="cat-heat">Heat map</a><span class="chseg"><a href="#/stocks">${chI("list", 15)}Stocks by industry</a><a href="#/heatmap">${chI("grid", 15)}Stock heat map</a></span></nav>
       ${cats.map(chCat).join("")}${chHeat()}
       <p class="note">Prices: Yahoo Finance, may be delayed (Thai stocks ~15 min). Click anything to open its chart.</p>
     </div>${chSide()}</div></div>`;

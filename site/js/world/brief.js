@@ -114,7 +114,14 @@ function wBar(s, big = false) {
 const wTags = (s) => `${devTag(devInfo(s, 3))}<span class="wrg r-${WREG[s.region] || "gl"}">${esc(s.region || "Global")}</span><span class="wrg">${esc(s.category || "")}</span>${wLean(s)}`;
 // "Thailand & your stocks" box: one AI line + your related stocks with today's move (tap = that stock's My News)
 const wThai = (s) => (s.thailand ? `<div class="wthai a"><h4>Thailand &amp; your stocks</h4><p>${esc(s.thailand)}</p>${(s.stocks || []).length
-  ? `<div class="wstk">${s.stocks.map((t) => `<button class="tag clk" data-stock="${esc(t)}" title="Show ${esc(t)} news in My News">${esc(t)} ${chSpan(yahoo(t))}</button>`).join("")}</div>` : ""}</div>` : "");
+  ? `<div class="wstk">${s.stocks.map((t) => `<button class="tag clk" data-stock="${esc(t)}" title="Show ${esc(t)} news in My News">${esc(t)} ${chSpan(yahoo(t))}</button>`).join("")}</div>${wOwn(s.stocks)}` : ""}</div>` : "");
+// Round 49-50 I1: "You own NVDA · 31.5% of portfolio" for the named stocks you hold (Portfolio page); watchlist-only ones get a grey note
+function wOwn(list) {
+  if (state.trades === undefined && !state.tradesLoading) setTimeout(loadTrades, 0);
+  const own = pfOwned(), held = list.filter((t) => own[t] !== undefined), rest = list.filter((t) => own[t] === undefined);
+  if (!held.length) return "";
+  return `<div class="wown">${held.map((t) => `<a class="own" href="#/portfolio">You own ${esc(t)}${own[t] === null ? "" : ` · ${own[t].toFixed(1)}% of portfolio`}</a>`).join("")}${rest.length ? `<span class="note">${esc(rest.join(", "))}: watchlist only</span>` : ""}</div>`;
+}
 // BBC feeds give 240 px thumbnails; the same picture exists at 976 px (sharp on the big top-3 cards)
 const bigImg = (u) => String(u || "").replace("ichef.bbci.co.uk/ace/standard/240/", "ichef.bbci.co.uk/ace/standard/976/");
 function wPic(s) {

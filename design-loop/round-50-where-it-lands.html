@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Round 50: where the new features land</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#f4f4f5;color:#111;margin:0;padding:28px 40px 80px}
+h1{font:800 22px Inter;margin:0 0 4px}h1+p{color:#666;font-size:13.5px;max-width:1000px;line-height:1.5;margin:0 0 20px}
+h2{font:800 17px Inter;margin:34px 0 4px}h2 b{color:#ff4500}
+.d{color:#555;font-size:13px;max-width:1100px;line-height:1.55;margin:0 0 10px}
+img{width:100%;max-width:1568px;display:block;border:1px solid #ddd;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.box{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.55;max-width:1100px}
+.box.warn{border-color:#f59e0b;background:#fffbeb}
+code{background:#f1f1f1;border-radius:4px;padding:1px 5px}
+</style></head><body>
+<h1>Round 50 · Where each new feature lands</h1>
+<p>Real screenshots of your site on localhost (light "crisp" theme). The new parts were added to the page only for the screenshot and are marked with an <b style="color:#ff4500">orange dashed outline + NEW label</b>. Stock names, story headlines and story counts are real. <b>Holdings, P&amp;L, P/E, yields and the 7-day moves are sample numbers.</b></p>
+
+<h2><b>1</b> · My News: "This week for your stocks" (W1) + "Portfolio" in the top bar</h2>
+<p class="d">The card sits right under the "You're caught up" bar, above the filter row. It folds away like the briefing card. The story counts and top headlines are real (last 3 days, your watchlist NVDA / AMD / TSM). "Portfolio" becomes the 4th link in the top bar.</p>
+<img src="round-50/1-my-news.jpg" alt="My News with the weekly card">
+
+<h2><b>2</b> · Portfolio page (P2): new page 4</h2>
+<p class="d">Full width, same frame as Charts. Top: 4 number tiles. Middle: holdings table + allocation bars (by stock, market, industry). Bottom: the trade ledger. "+ Add trade" opens the window from round 49 (Buy / Sell / Dividend / Opening).
+<br>On phone: the bottom tab bar already has 6 buttons, so Portfolio would go <b>inside the Charts tab</b> as a link instead of a 7th button.</p>
+<img src="round-50/2-portfolio.jpg" alt="Portfolio page">
+
+<h2><b>3</b> · World Brief story page: holding badges (I1)</h2>
+<p class="d">Inside the existing "Thailand &amp; your stocks" box, under the price chips. Badges appear only for stocks you <b>own</b>. Watchlist-only stocks get a small grey note.</p>
+<img src="round-50/3-world.jpg" alt="World story with holding badges">
+
+<h2><b>4</b> · Stocks page: "+ Filter" (S1) + ready-made screens (S2)</h2>
+<p class="d">"+ Filter" joins the Market / Industry dropdowns, and active filters show as amber tokens. The preset cards sit between the filter bar and the table. Columns for active filters (P/E, Div yield) are added and lightly tinted.</p>
+<img src="round-50/4-stocks.jpg" alt="Stocks page with screener">
+
+<h2><b>5</b> · Long / Short position tool (T1): <b>already built</b></h2>
+<div class="box warn">I found that your chart toolbar already has <b>Long position</b> and <b>Short position</b> under "Forecasting &amp; measuring tools" (built in round 44). Its settings window already has <b>Account size</b> and <b>Risk per trade</b>, and its labels show quantity and profit/loss. So T1 shrinks to one small addition: a <b>"Use my Portfolio value"</b> tick box next to Account size, so you don't type it. No new page placement.</div>
+</body></html>

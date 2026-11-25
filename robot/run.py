@@ -129,6 +129,17 @@ def news_events(saved_rows):
             print(f"  Events not saved: {str(e)[:120]}")
 
 
+def _with_holdings(settings):
+    """Watchlist + stocks you own (Portfolio ledger), so World Brief's "Thailand & your stocks" line covers both."""
+    wl = list(settings.get("watchlist") or [])
+    try:
+        held = db.held_tickers(settings.get("user_id"))
+    except Exception as e:
+        print(f"  Portfolio holdings not read ({str(e)[:80]})")
+        held = []
+    return wl + [t for t in held if t not in wl]
+
+
 def maybe_refresh_earnings(watchlist):
     """Next earnings / ex-dividend dates (Yahoo), checked once a day PER STOCK.
     A stock you just added gets its dates on the next run (within 30 minutes), not the next day."""
@@ -292,7 +303,7 @@ def main():
         except Exception as e:  # none of these may stop the rest of the run
             print(f"{name} skipped: {str(e)[:150]}")
     try:
-        world.run(reader={"watchlist": settings.get("watchlist") or []})  # World Brief (page 2): at most once an hour
+        world.run(reader={"watchlist": _with_holdings(settings)})  # World Brief (page 2): at most once an hour; + stocks you own (Portfolio)
     except Exception as e:  # a World Brief problem must never break My News
         print(f"World Brief skipped: {str(e)[:150]}")
     try:

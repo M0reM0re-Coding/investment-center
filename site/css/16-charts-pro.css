@@ -15,7 +15,6 @@
 /* home */
 .chcnav{display:flex;gap:2px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:6;margin-top:16px;overflow-x:auto;scrollbar-width:none}
 .chcnav a{font:700 14px Inter;color:var(--soft);padding:10px 14px;white-space:nowrap}.chcnav a:hover{color:var(--ink)}
-.chcnav a.hm{margin-left:auto;display:flex;gap:6px;align-items:center;color:var(--accent)}
 .chcat{margin-top:26px;scroll-margin-top:50px}
 .chcat h3{font:900 24px 'Inter Tight';letter-spacing:-.5px;margin:0 0 12px}.chcat h3 a{color:var(--muted)}
 .chchips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}

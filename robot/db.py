@@ -74,6 +74,24 @@ def user_settings():
     return rows[0] if rows else None
 
 
+def held_tickers(user_id=None):
+    """Stocks the owner holds now, from the Portfolio ledger (supabase/016_portfolio.sql). [] before that SQL is run."""
+    params = {"select": "ticker,kind,shares", "kind": "in.(buy,open,sell)"}
+    uid = user_id or os.environ.get("OWNER_USER_ID")
+    if uid:
+        params["user_id"] = f"eq.{uid}"
+    try:
+        rows = _req("GET", "trades", params=params) or []
+    except RuntimeError as e:
+        if "trades" in str(e) or "42P01" in str(e) or "PGRST205" in str(e):
+            return []
+        raise
+    net = {}
+    for r in rows:
+        net[r["ticker"]] = net.get(r["ticker"], 0) + (-1 if r["kind"] == "sell" else 1) * float(r["shares"])
+    return sorted(t for t, n in net.items() if n > 1e-9)
+
+
 def bump_usage(field, limit):
     """Add 1 to today's counter. Returns the new value, or None if the limit is already reached."""
     today = date.today().isoformat()

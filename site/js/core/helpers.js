@@ -73,5 +73,11 @@ function matches(s) {
   const t = new Set(myTopics()), w = new Set(state.settings.watchlist || []);
   return !muted(s) && ((s.topics || []).some((x) => t.has(x)) || (s.tickers || []).some((x) => w.has(x)));
 }
-const rank = (s) => s.impact_score * 3 + Math.min(s.n_sources, 10) - hoursAgo(when(s)) / 6;
+// + a small lift (= 1 impact point) for stories about a stock you own (Portfolio, round 49 I1)
+const rank = (s) => s.impact_score * 3 + Math.min(s.n_sources, 10) - hoursAgo(when(s)) / 6 + ((s.tickers || []).some((t) => ownedSet().has(t)) ? 3 : 0);
+let ownedCache = { at: 0, set: new Set() };
+const ownedSet = () => {   // recomputed at most every 5 s (rank runs for every story on each redraw)
+  if (Date.now() - ownedCache.at > 5000) ownedCache = { at: Date.now(), set: new Set(typeof pfOwned === "function" && state.trades ? Object.keys(pfOwned()) : []) };
+  return ownedCache.set;
+};
 

@@ -10,6 +10,7 @@ function header(active) {
       <a class="${active === "news" ? "on" : ""}" href="#/">My News</a>
       <a class="${active === "world" ? "on" : ""}" href="#/world">World Brief</a>
       <a class="${active === "charts" ? "on" : ""}" href="#/charts">Charts</a>
+      <a class="${active === "portfolio" ? "on" : ""}" href="#/portfolio">Portfolio</a>
     </nav>
     <div class="r">
       <form class="hsearch" id="hsearch" role="search"><span>⌕</span><input id="hq" type="search" placeholder="Search news & notes" value="${esc(state.searchQ || "")}" autocomplete="off" maxlength="60"></form>
@@ -44,7 +45,7 @@ function tabBar() {
   return `<nav class="tabbar" aria-label="Pages">
     <a class="${on("news")}" href="#/">${ICO.news}News</a>
     <a class="${h.startsWith("#/world") ? "on" : ""}" href="#/world">${ICO.globe}World</a>
-    <a class="${h.startsWith("#/charts") || h === "#/heatmap" || h === "#/stocks" ? "on" : ""}" href="#/charts">${ICO.chart}Charts</a>
+    <a class="${h.startsWith("#/charts") || h === "#/heatmap" || h === "#/stocks" || h === "#/portfolio" ? "on" : ""}" href="#/charts">${ICO.chart}Charts</a>
     <a class="${on("cal")}" href="#/calendar">${ICO.cal}Calendar</a>
     <a class="${on("alerts")}" href="#/settings" data-tab-alerts="1">${ICO.bell}Alerts</a>
     <a class="${on("topics")}" href="#/settings" data-tab-topics="1">${ICO.topics}Topics</a></nav>`;
@@ -104,6 +105,7 @@ function viewFeed() {
   }
   return `${header("news")}<div class="wrap">
     ${briefBar()}
+    ${weekCard()}
     ${earnCards()}
     ${mTicker()}
     ${filterRow}

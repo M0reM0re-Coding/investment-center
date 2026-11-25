@@ -19,6 +19,7 @@ async function start(session) {
     render();
     pageReady = true;
     startPolling();
+    loadTrades();   // Portfolio ledger: "you own" lift in My News, weekly card, World badges (redraws once when it arrives)
     if (bigOn()) afterIntro(() => { try { showBig(bigQueue()); } catch (e) { console.warn("big news alert", e); } });
     if ((location.hash || "").startsWith("#/search/")) window.dispatchEvent(new HashChangeEvent("hashchange"));
   } catch (err) {

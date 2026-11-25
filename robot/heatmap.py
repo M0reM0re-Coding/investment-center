@@ -86,12 +86,18 @@ def members(key):
     return out
 
 
+VALUATION = {"pe": "trailingPE", "fpe": "forwardPE", "dy": "dividendYield", "h52": "fiftyTwoWeekHigh", "l52": "fiftyTwoWeekLow"}
+
+
 def caps(op, crumb, syms):
-    """Market cap in US dollars (Yahoo gives it in the stock's own currency)."""
+    """Per stock: market cap in US dollars (Yahoo gives it in the stock's own currency) + the screener numbers
+    (Stocks page, round 49 S1): P/E, forward P/E, dividend yield in % (Yahoo's forward yield), 52-week high / low
+    (in the stock's own price units, e.g. pence for London). All from the same batch request, no extra calls."""
     raw, out = {}, {}
     for i in range(0, len(syms), 100):
         chunk = syms[i:i + 100]
-        url = ("https://query2.finance.yahoo.com/v7/finance/quote?fields=marketCap,currency,regularMarketPrice&crumb=" + urllib.parse.quote(crumb)
+        url = ("https://query2.finance.yahoo.com/v7/finance/quote?fields=marketCap,currency,regularMarketPrice," + ",".join(VALUATION.values())
+               + "&crumb=" + urllib.parse.quote(crumb)
                + "&symbols=" + urllib.parse.quote(",".join(chunk)))
         try:
             for q in json.loads(op.open(url, timeout=20).read())["quoteResponse"]["result"]:
@@ -110,7 +116,16 @@ def caps(op, crumb, syms):
         if cur == "GBp":   # London prices are in pence, but Yahoo's market cap for them is in pounds (checked: 3i ~ $35B)
             cur = "GBP"
         rate = fx.get(cur.upper())
-        out[s] = round(cap / rate) if cap and rate else None
+        row = {"cap": round(cap / rate) if cap and rate else None}
+        if isinstance(q.get("regularMarketPrice"), (int, float)):
+            row["px"] = q["regularMarketPrice"]   # price at the daily run: 52-week filters work before live prices load
+        for k, f in VALUATION.items():
+            v = q.get(f)
+            # skip NaN; P/E of 1 or below = no number (loss-makers have negative forward P/E; MKS.L came as 0.35 next to a
+            # forward P/E of 12, a Yahoo pence/pound slip), so a "P/E below 8" filter doesn't list them as cheap
+            if isinstance(v, (int, float)) and v == v and (k not in ("pe", "fpe") or v > 1):
+                row[k] = round(v, 2)
+        out[s] = row
     return out
 
 
@@ -129,10 +144,11 @@ def run(force=False):
             print(f"  Heat map {key}: member list looks wrong ({len(m)} rows), kept the old one"); continue
         c = caps(op, crumb, [x["s"] for x in m])
         for x in m:
-            x["cap"] = c.get(x["s"])
-        src = "Nikkei Inc. + Yahoo Finance" if key == "@N225" else "Wikipedia + Yahoo Finance"
+            x.update(c.get(x["s"]) or {"cap": None})
+        src ="Nikkei Inc. + Yahoo Finance" if key == "@N225" else "Wikipedia + Yahoo Finance"
         rows.append({"symbol": key, "data": {"members": m, "at": now, "source": src, "cap_cur": "USD"}, "updated_at": now})
-        print(f"Heat map {key}: {len(m)} members, {sum(1 for x in m if x.get('cap'))} with company size (USD)")
+        print(f"Heat map {key}: {len(m)} members, {sum(1 for x in m if x.get('cap'))} with company size (USD), "
+              f"{sum(1 for x in m if x.get('pe'))} with P/E, {sum(1 for x in m if x.get('dy') is not None)} with dividend yield")
     if rows:
         db._req("POST", "stock_stats", rows, params={"on_conflict": "symbol"}, prefer="resolution=merge-duplicates")
         db.mark_seen({mark: None})
@@ -147,7 +163,8 @@ def preview():
         secs = sorted({x["sec"] for x in m})
         print(f"{key}: {len(m)} members, {len(secs)} sectors e.g. {secs[:4]}")
         for x in m[:3]:
-            print(f"   {x['t']:8} {x['s']:10} {x['n'][:28]:28} {x['sec'][:26]:26} cap ${c.get(x['s']) or 0:,.0f}")
+            v = c.get(x["s"]) or {}
+            print(f"   {x['t']:8} {x['s']:10} {x['n'][:28]:28} {x['sec'][:26]:26} cap ${v.get('cap') or 0:,.0f} pe {v.get('pe')} dy {v.get('dy')}")
 
 
 if __name__ == "__main__":

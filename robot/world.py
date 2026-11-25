@@ -543,4 +543,4 @@ if __name__ == "__main__":
             fix_situations()
         else:
             st = db.user_settings() or {}
-            run(force="--force" in sys.argv, reader={"watchlist": st.get("watchlist") or []})
+            run(force="--force" in sys.argv, reader={"watchlist": robot_run._with_holdings(st)})

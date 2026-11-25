@@ -255,7 +255,7 @@ function ktSettings(id, tab = "style") {
       let h = "";
       if (isShape) h += `<div class="h">BORDER</div>${colorRow("Colour", "pg.borderColor", G.borderColor)}<div class="f"><span>Width · style</span><span>${sel("pg.borderSize", G.borderSize, [[1, "1px"], [2, "2px"], [3, "3px"], [4, "4px"]])}${sel("pg.dash", G.borderStyle === "dashed" ? "dash" : "solid", [["solid", "Solid"], ["dash", "Dashed"]])}</span></div>
         <div class="h">BACKGROUND</div>${chk("pg.fill", G.style !== "stroke", "Fill the shape")}${colorRow("Colour", "pg.color", G.color)}<div class="f"><span>Opacity</span><span><input type="range" min="0" max="100" data-op value="${Math.round(((parseInt(String(G.color).slice(7, 9), 16) || 38) / 255) * 100)}"></span></div>`;
-      else if (isPos) h += `<div class="h">YOUR ACCOUNT (for position size)</div><div class="f"><span>Account size</span><span><input type="number" min="0" step="any" data-n="acct" value="${e.acct ?? 100000}"></span></div>
+      else if (isPos) h += `<div class="h">YOUR ACCOUNT (for position size)</div><div class="f"><span>Account size</span><span><input type="number" min="0" step="any" data-n="acct" value="${e.acct ?? 100000}"></span></div>${pfAcctBtn()}
         <div class="f"><span>Risk per trade</span><span><input type="number" min="0" step="0.1" data-n="risk" value="${e.risk ?? 1}"> ${sel("riskT", e.riskT || "pct", [["pct", "% of account"], ["amt", "amount"]])}</span></div>
         <p class="note">Labels then show the quantity and the profit / loss at the target and stop.</p>`;
       else {
