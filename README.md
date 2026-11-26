@@ -80,6 +80,19 @@ Website files are under `site/js/` and `site/css/`. Robot files are under `robot
 | Big news alert + mascots | all pages | `alerts/big-alert.js` | `11-big-alert`, `12-seasons-mascots` | `notify.py` | – |
 | Seasons, dark/light styles | Settings | `core/setup.js`, `core/views.js` | `07-settings-themes`, `12-seasons-mascots` | – | – |
 | Phone + tablet layout | all pages | (inside each file) | `09-phone` | – | – |
+| **Pro mode** switch, terminal top bar, F1-F11 (Alt + 1…9, 0, -), PRO / BOT mode switch, command line, Pro Settings (Amber / Phosphor / Arctic / Paper), LEARN boxes, data loading | `#/pro` (PRO button top right) | `pro/shell.js` | `21-pro` | `pro_data.py` | `017` |
+| Pro HOME (one line from every module) | `#/pro` | `pro/home.js` | `21-pro` | – | – |
+| Pro MACRO: overall reading for stocks + WHAT IT MEANS on each panel, regime, recession lights, surprise index, curve, liquidity, credit, bond math (price, duration, convexity, FN351), central banks + IMF, CFTC positioning | `#/pro/macro` | `pro/macro.js` | `21-pro` | `pro_data.py` (FRED, Treasury, OECD, BIS, IMF, CFTC) | `017` |
+| Pro FX: the full chart (draw / write / indicators, same as Charts; HIDE / SHOW, hidden = one-line strip) for any pair, economic calendar (Forex Factory + FRED actuals), event study (FN471), forward rates + hedge calculator (FN313), currency board, strength, carry, CFTC, what moves the baht | `#/pro/fx` | `pro/fx.js` (+ `charts/*`) | `21-pro` | `pro_data.py` (`cb`, `cot`, `evdates`), `econ.py` | `017`, `011` |
+| Pro IDEAS: stocks ranked by your MUST / PREFER rules + 8 data factors incl. TECHNICAL (reads your chart drawings) (thesis is one factor), conflicts flagged | `#/pro/ideas` | `pro/ideas.js` | `21-pro` | `pro_data.py` (fund for watchlist + holdings + theses + scan list) | `017` (`theses` row `#IDEAS`) |
+| BOT mode (switch PRO / BOT): B1 SIGNALS buy / short / wait (your thresholds) + levels + 1%-risk size, B2 MY BOTS (up to 8 bots: stocks, Thai stocks, crypto, forex trend / carry, gold; long + short, leverage, forex swap, sessions, news pause, 4-hour candles), B3 PAPER (all bots or one), B4 JOURNAL. PAPER ONLY | `#/pro/bot`, `/bots`, `/botp`, `/botj` | `pro/bot.js` | `21-pro` | `pro_bot.py` (same engine, every robot run) | `017` (`theses` row `#BOT`) |
+| Pro ROT: sector + style rotation, ALL ASSETS view (bonds, commodities, currencies, crypto, countries vs ACWI, risk-on/off), rotation map, regime link | `#/pro/rot` | `pro/rot.js` | `21-pro` | – (Yahoo via get_candles) | `013` |
+| Pro VAL: DCF + reverse DCF + sensitivity, residual income (banks, FN451), red flags (Piotroski, Altman, Beneish, accruals), estimates + revisions, peers | `#/pro/val/<T>` | `pro/val.js` | `21-pro` | `pro_data.py` (Yahoo `fund_<SYM>`) | `017` |
+| Pro THESIS: bull/base/bear, evidence, rules, thesis map (events, stocks, supply chain, scenarios) | `#/pro/thesis/<T>` | `pro/thesis.js` | `21-pro` | – | `017` (`theses`) |
+| Pro RISK: volatility, beta, drawdown, VaR, correlation, exposure, stress test, Long/Short trade plans, efficient frontier (FN452) | `#/pro/risk` | `pro/risk.js` | `21-pro` | – | `016`, `014` |
+| Pro CHART: the normal chart with Pro colours + macro lines (10Y, dollar, oil, VIX, gold, BTC) | `#/charts/<T>` while Pro is on | `pro/shell.js` (overlay bar), `charts/*` | `21-pro` | – | – |
+| Pro CRYPTO: WHOLE MARKET or one coin; market verdict, breadth, leverage, new money, BTC share, coin heat strip; ON-CHAIN: exchange flows, coins on exchanges, network use (CoinMetrics), whale transfers 100+ BTC (robot scans every block) + details: funding, open interest, long/short, stablecoins, MVRV, TVL, hashrate (live, in the browser) | `#/pro/crypto` | `pro/crypto.js` | `21-pro` | – | – |
+| Pro SMART: WHOLE MARKET (all-US short %, SPY/QQQ/IWM options, dark pools, leaderboard of unusual stocks: yours + 30 biggest) or ONE STOCK: 4 cards + options lab (Black-Scholes, Greeks, payoff, FN456) + details: FINRA short volume, unusual options, dark-pool (ATS) weekly volume (US) | `#/pro/smart/<T>` | `pro/smart.js` | `21-pro` | `pro_data.py` (`smart_<SYM>`) | `017` |
 | Robot upkeep (model memory, 90-day cleanup) | – | – | – | `run.py`, `db.py` | `010` |
 
 **Adding a new website file:** put it in the right folder and add a `<script defer src="js/…?v=__V__">` line in `index.html`
@@ -95,6 +108,8 @@ Run from the project folder in PowerShell, for example `python robot/tools/check
 | `set_password.py` | Sets a website login password without email. |
 | `build_site_config.py` | Rebuilds `site/config.js` from `.env` + `catalog.json` (public values only). |
 | `obsidian_export.py` | Exports saved stories + notes to the Obsidian vault. |
+
+`robot/pro_data.py --local` (not in tools/: the robot also runs it) writes Pro data to `site/data/pro/*.json` for a local preview before `017_pro.sql` is run. That folder is git-ignored.
 
 ## Run locally
 

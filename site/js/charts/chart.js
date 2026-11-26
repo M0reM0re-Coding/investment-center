@@ -11,6 +11,8 @@ const KC_FILES = {
 const kc = { pro: null, chart: null, box: null, sym: null, ov: new Map(), restoring: false, restoredFor: null, meta: null, metaFor: null, loaded: "", sub: null, saveT: null,
   period: 3, ctype: "candle_solid", range: null, pct: false, log: false, active: [], indFor: null, hist: [], redo: [], sel: null, lastPrice: null, pendingBars: 0 };
 let kcLoading = null;
+// Pages that show the big chart: the chart page, and Pro F3 FX (round 55: the same chart, drawings and all, inside FX)
+const kcLive = () => /^#\/(charts\/|pro\/fx)/.test(location.hash || "");
 function kcLoad() {
   if (kcLoading) return kcLoading;
   const tag = (kind, [url, sri]) => new Promise((ok, bad) => {
@@ -76,7 +78,7 @@ const kcDatafeed = {
   subscribe(symbol, period, cb) {   // keep the last candle live: our cached price, once a minute
     clearInterval(kc.sub);
     kc.sub = setInterval(async () => {
-      if (document.hidden || !kc.chart || !(location.hash || "").startsWith("#/charts/")) return;
+      if (document.hidden || !kc.chart || !kcLive()) return;
       const { data } = await sb.rpc("get_quotes", { syms: [symbol.ticker] });
       const p = Number(data?.[symbol.ticker]?.price), last = kc.chart.getDataList().at(-1);
       if (Number.isFinite(p) && last) cb({ ...last, close: p, high: Math.max(last.high, p), low: Math.min(last.low, p) });

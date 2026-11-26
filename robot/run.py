@@ -35,6 +35,8 @@ import earnings  # noqa: E402
 import follows  # noqa: E402
 import gauges  # noqa: E402
 import stock_stats  # noqa: E402
+import pro_data  # noqa: E402
+import pro_bot  # noqa: E402
 import heatmap  # noqa: E402
 
 GEMINI_DAILY_CAP = int(os.environ.get("GEMINI_DAILY_CAP", "300"))  # safety cap; free tier limits are separate
@@ -297,7 +299,9 @@ def main():
     for name, job in (("Earnings results", lambda: earnings.run(settings.get("watchlist") or [])),   # once a day per stock
                       ("Crypto Fear & Greed", gauges.run),                                          # once an hour
                       ("Stock stats", lambda: stock_stats.run(settings.get("watchlist") or [])),     # Charts: once a day per stock
-                      ("Heat map members", heatmap.run)):                                            # Charts heat map: once a day                                          # once an hour
+                      ("Heat map members", heatmap.run),
+                      ("Pro data", pro_data.scheduled),
+                      ("Paper bot", pro_bot.scheduled)):                                           # Pro BOT: paper trades only, Telegram on each                                            # Pro: macro every 6 h, company data daily                                            # Charts heat map: once a day                                          # once an hour
         try:
             job()
         except Exception as e:  # none of these may stop the rest of the run

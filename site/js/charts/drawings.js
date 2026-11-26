@@ -70,7 +70,7 @@ function kcSave() {
     if (error) toast(`Drawing not saved: ${esc(/chart_drawings/.test(error.message) ? "run supabase/013_charts.sql first" : error.message)}`);
   }, 700);
 }
-const kcTheme = () => (isDark() ? "dark" : "light");
+const kcTheme = () => (typeof proOn === "function" && proOn() ? (proIsLight() ? "light" : "dark") : isDark() ? "dark" : "light");
 function kcStyle() {   // site colours + Inter (the library asks for Helvetica Neue, which Windows doesn't have -> serif)
   const up = "#089981", dn = "#F23645", F = "Inter, system-ui, sans-serif", t = { family: F };   // TradingView's candle colours, as on your TradingView
   kc.pro?.setStyles({

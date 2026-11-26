@@ -25,7 +25,7 @@ function setApp(html, animate) {
   swapChanged(app, t.content);
 }
 function render(animate = true) {
-  applyMotion();
+  applyMotion(); if (typeof applyPro === "function") applyPro();
   app.classList.remove("enter", "soft"); void app.offsetWidth;
   // Opening a story or coming back from one: a short, quick rise instead of the slow page entrance (felt like lag)
   const viewNow = viewKey();
@@ -42,7 +42,12 @@ function render(animate = true) {
   }
   const h = location.hash || "#/";
   if (h !== "#/settings") { state.draft = null; state.toAlerts = false; }
-  if (h.startsWith("#/story/")) {
+  if (h.startsWith("#/pro")) {
+    if (proPhone()) { location.hash = "#/"; return; }
+    if (!proOn()) { proSet("ic_pro", "1"); applyPro(); }
+    setApp(viewPro(), animate);
+    if (proMod() === "fx" && typeof fxMountChart === "function") fxMountChart();
+  } else if (h.startsWith("#/story/")) {
     const id = decodeURIComponent(h.slice(8)), s = findStory(id);
     app.innerHTML = viewStory(id);
     if (s && !stOf(s)) setStatus(id, "seen");            // opening a story marks it as seen

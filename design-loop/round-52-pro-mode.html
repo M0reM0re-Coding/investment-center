@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 52 - Pro mode styles</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9ec;color:#111;padding:28px 0 80px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 24px}
+.intro h1{font-size:22px;font-weight:800}.intro p{color:#555;font-size:14px;margin-top:6px;line-height:1.5;max-width:900px}
+.lbl{display:flex;align-items:baseline;gap:12px;margin:40px 0 10px}
+.lbl b{font-size:20px}.lbl span{color:#555;font-size:13.5px}
+.frame{border-radius:10px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.14);border:1px solid #ccc}
+.tabsbar{position:sticky;top:0;z-index:50;background:#e9e9ec;padding:10px 0;display:flex;gap:8px}
+.tabsbar a{font-size:13px;font-weight:600;color:#111;text-decoration:none;background:#fff;border:1px solid #ccc;border-radius:6px;padding:6px 12px}
+
+/* ---------- placement strip (current look) ---------- */
+.cur{background:#fff;font-family:Inter}
+.cur .hd{display:flex;align-items:center;gap:22px;padding:14px 22px;border-bottom:1px solid #eee}
+.cur .logo{font-weight:800;font-size:17px}.cur .logo i{color:#ff4500;font-style:normal}
+.cur nav{display:flex;gap:18px;font-size:14px;color:#555}.cur nav b{color:#111}
+.cur .sp{flex:1}.cur .srch{width:220px;height:32px;border:1px solid #e5e5e5;border-radius:16px;font-size:13px;color:#999;display:flex;align-items:center;padding:0 12px}
+.cur .av{width:30px;height:30px;border-radius:50%;background:#ff4500;color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.cur .gear{font-size:17px;color:#888}
+.probtn{height:30px;padding:0 12px;border-radius:15px;border:1px solid #111;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px;background:#fff;white-space:nowrap}
+.probtn .k{width:26px;height:15px;border-radius:8px;background:#ddd;position:relative}
+.probtn .k:after{content:"";position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.ring{outline:2px dashed #ff4500;outline-offset:4px;border-radius:16px}
+.note{font-size:12px;color:#ff4500;font-weight:600;padding:6px 22px 12px}
+
+/* ---------- shared page skeleton ---------- */
+.pg{min-height:640px}
+.pg .hd{display:flex;align-items:center;gap:22px}
+.pg .sp{flex:1}
+.pg .tick{display:flex;overflow:hidden;white-space:nowrap}
+.pg .tick .t{display:flex;gap:8px;align-items:baseline}
+.pg .body{display:grid;grid-template-columns:1fr 330px}
+.pg .row{display:grid;align-items:center}
+.pg .up{color:var(--up)}.pg .dn{color:var(--dn)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ===== A. TERMINAL ===== */
+.A{--up:#3ddc84;--dn:#ff5c5c;background:#000;color:#e6e6e6;font-family:'IBM Plex Mono',Consolas,monospace;font-size:12.5px}
+.A .hd{background:#000;padding:8px 14px;border-bottom:1px solid #333;gap:14px}
+.A .logo{color:#ffb000;font-weight:600;letter-spacing:1px}
+.A nav{display:flex;gap:2px}.A nav span{padding:3px 9px;background:#1a1a1a;color:#aaa}
+.A nav span.on{background:#ffb000;color:#000;font-weight:600}
+.A nav span em{font-style:normal;color:#ffb000;margin-right:4px}.A nav span.on em{color:#000}
+.A .cmd{flex:1;background:#0d0d0d;border:1px solid #333;color:#777;padding:4px 10px}
+.A .cmd b{color:#ffb000;font-weight:500}
+.A .clock{color:#888}
+.A .pro{background:#ffb000;color:#000;font-weight:600;padding:4px 10px;letter-spacing:1px;display:flex;gap:6px;align-items:center}
+.A .pro i{width:7px;height:7px;background:#000;border-radius:50%;display:inline-block}
+.A .tick{background:#0a0a0a;border-bottom:1px solid #333;padding:5px 14px;gap:26px}
+.A .tick .n{color:#ffb000}.A .tick .v{color:#fff}
+.A .body{grid-template-columns:1fr 340px}
+.A .main{border-right:1px solid #333}
+.A .sec{color:#ffb000;padding:8px 14px;border-bottom:1px solid #333;display:flex;justify-content:space-between;letter-spacing:.5px}
+.A .sec span{color:#777}
+.A .row{grid-template-columns:44px 52px 1fr 150px 54px;padding:7px 14px;border-bottom:1px solid #1c1c1c;gap:10px}
+.A .row:hover,.A .row.sel{background:#1a1400}
+.A .row.sel{box-shadow:inset 3px 0 #ffb000}
+.A .imp{font-weight:600}.A .imp.h{color:#000;background:#ff5c5c;text-align:center}.A .imp.m{color:#000;background:#ffb000;text-align:center}.A .imp.l{color:#aaa;background:#262626;text-align:center}
+.A .tm{color:#777}.A .hl{color:#fff}.A .tk{color:#5fb3ff}.A .src{color:#777;text-align:right}
+.A .det{padding:12px 14px;border-bottom:1px solid #333;background:#0a0a0a}
+.A .det h2{font-size:14px;color:#fff;font-weight:600}.A .det p{color:#bbb;margin-top:6px;line-height:1.55}
+.A .det .tg{margin-top:8px;display:flex;gap:14px;color:#777}.A .det .tg b{color:#ff5c5c;font-weight:500}
+.A .side .box{border-bottom:1px solid #333}
+.A .wl{grid-template-columns:70px 1fr 80px 70px;padding:6px 14px;border-bottom:1px solid #1c1c1c}
+.A .wl .s{color:#5fb3ff}.A .wl .p{text-align:right;color:#fff}.A .wl .c{text-align:right}
+.A .ev{padding:7px 14px;border-bottom:1px solid #1c1c1c;display:grid;grid-template-columns:52px 1fr 64px;gap:8px}
+.A .ev .w{color:#777}.A .ev .r{text-align:right}
+
+/* ===== B. PRIVATE BANK / RESEARCH NOTE ===== */
+.B{--up:#1f6b45;--dn:#a83232;background:#f8f6f1;color:#14213d;font-family:'IBM Plex Sans',Inter,sans-serif}
+.B .hd{padding:20px 44px 16px;border-bottom:1px solid #14213d}
+.B .logo{font-family:'Source Serif 4',Georgia,serif;font-size:22px;font-weight:700;letter-spacing:-.3px}
+.B .logo small{font-family:'IBM Plex Sans';font-size:10px;letter-spacing:2.5px;color:#8a7346;font-weight:600;margin-left:10px;vertical-align:3px}
+.B nav{display:flex;gap:26px;font-size:13px;letter-spacing:.4px;color:#5a6378;text-transform:uppercase}
+.B nav b{color:#14213d;font-weight:600;border-bottom:1.5px solid #8a7346;padding-bottom:3px}
+.B .srch{width:200px;border-bottom:1px solid #b9b3a5;font-size:13px;color:#8d8778;padding:4px 0}
+.B .pro{border:1px solid #14213d;padding:5px 12px;font-size:11px;letter-spacing:2px;font-weight:600;display:flex;gap:8px;align-items:center;background:#14213d;color:#f8f6f1}
+.B .pro i{width:6px;height:6px;background:#c9a961;border-radius:50%}
+.B .tick{padding:9px 44px;gap:34px;border-bottom:1px solid #ddd6c6;font-size:12.5px;color:#5a6378}
+.B .tick .n{font-weight:600;color:#14213d}
+.B .body{padding:0 44px;grid-template-columns:1fr 300px;gap:48px}
+.B .date{font-size:11px;letter-spacing:2px;color:#8a7346;font-weight:600;margin-top:30px;text-transform:uppercase}
+.B .lead h2{font-family:'Source Serif 4',Georgia,serif;font-size:34px;line-height:1.15;font-weight:600;margin-top:10px;letter-spacing:-.4px;max-width:720px}
+.B .lead p{font-size:15.5px;line-height:1.65;color:#3d4659;margin-top:14px;max-width:680px}
+.B .lead .meta{font-size:12px;color:#8d8778;margin-top:14px;display:flex;gap:18px}
+.B .lead .meta b{color:#a83232;font-weight:600}
+.B .list{margin-top:30px;border-top:1px solid #14213d}
+.B .row{grid-template-columns:40px 1fr 140px;padding:16px 0;border-bottom:1px solid #ddd6c6;gap:16px;align-items:start}
+.B .imp{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;color:#8a7346}
+.B .hl{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;line-height:1.3}
+.B .sub{font-size:12px;color:#8d8778;margin-top:4px}
+.B .tk{font-size:11.5px;color:#5a6378;text-align:right;letter-spacing:.5px}
+.B .side{padding-top:30px}
+.B .sh{font-size:11px;letter-spacing:2px;color:#8a7346;font-weight:600;padding-bottom:8px;border-bottom:1px solid #14213d;text-transform:uppercase}
+.B .wl{grid-template-columns:60px 1fr 70px;padding:10px 0;border-bottom:1px solid #ddd6c6;font-size:13.5px}
+.B .wl .s{font-weight:600}.B .wl .p,.B .wl .c{text-align:right}
+.B .box+.box{margin-top:30px}
+.B .ev{padding:10px 0;border-bottom:1px solid #ddd6c6;font-size:13px}
+.B .ev .w{font-size:11px;color:#8d8778}.B .ev .r{font-weight:600;margin-top:2px}
+
+/* ===== C. WORKSTATION (graphite panels) ===== */
+.C{--up:#2fbf71;--dn:#f0525c;background:#0e1116;color:#d7dce4;font-family:Inter,sans-serif;font-size:13px}
+.C .hd{padding:10px 16px;background:#0e1116;border-bottom:1px solid #222833}
+.C .logo{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center}
+.C .logo i{width:18px;height:18px;border-radius:4px;background:linear-gradient(135deg,#4c8dff,#2a5bd7);display:inline-block}
+.C nav{display:flex;gap:4px}.C nav span{padding:6px 11px;border-radius:6px;color:#8a93a3;font-weight:500}
+.C nav span.on{background:#1b212b;color:#fff}
+.C .srch{width:260px;height:30px;border-radius:6px;background:#161b22;border:1px solid #262d38;color:#6b7484;font-size:12.5px;display:flex;align-items:center;padding:0 10px;justify-content:space-between}
+.C .srch kbd{font-family:inherit;font-size:11px;border:1px solid #343c49;border-radius:4px;padding:0 5px;color:#8a93a3}
+.C .seg{display:flex;background:#161b22;border:1px solid #262d38;border-radius:7px;padding:2px;font-size:12px;font-weight:600}
+.C .seg span{padding:4px 10px;border-radius:5px;color:#6b7484}.C .seg span.on{background:#4c8dff;color:#fff}
+.C .tick{padding:8px 16px;gap:10px;border-bottom:1px solid #222833}
+.C .tick .t{background:#161b22;border:1px solid #222833;border-radius:6px;padding:5px 10px;font-size:12px}
+.C .tick .n{color:#8a93a3}.C .tick .v{color:#fff;font-weight:600}
+.C .body{padding:14px 16px;gap:14px;grid-template-columns:1fr 340px}
+.C .panel{background:#151a21;border:1px solid #222833;border-radius:8px;overflow:hidden}
+.C .ph{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #222833;font-weight:600;font-size:12.5px;color:#fff}
+.C .ph span{color:#6b7484;font-weight:500}
+.C .row{grid-template-columns:70px 1fr 150px 60px;padding:10px 14px;border-bottom:1px solid #1d232c;gap:14px}
+.C .row:hover{background:#1a2029}
+.C .meter{display:flex;gap:2px;align-items:center}
+.C .meter i{width:4px;height:12px;border-radius:1px;background:#2a313c}
+.C .meter i.f{background:#f0525c}.C .meter.m i.f{background:#f5a524}
+.C .meter b{font-size:11.5px;margin-left:6px;color:#fff;font-weight:600}
+.C .hl{color:#e8ecf2;font-weight:500}.C .sub{font-size:11.5px;color:#6b7484;margin-top:3px}
+.C .tk{display:flex;gap:4px;flex-wrap:nowrap}.C .tk span{font-size:10.5px;font-weight:600;background:#1e2633;color:#8fb4ff;border-radius:4px;padding:2px 6px}
+.C .sent{font-size:11px;font-weight:600;text-align:right}
+.C .side{display:flex;flex-direction:column;gap:14px}
+.C .wl{grid-template-columns:64px 1fr 70px 64px;padding:8px 14px;border-bottom:1px solid #1d232c}
+.C .wl .s{font-weight:600;color:#fff}.C .wl .p{text-align:right}.C .wl .c{text-align:right;font-weight:600}
+.C .spark{height:18px}
+.C .ev{display:grid;grid-template-columns:60px 1fr 60px;padding:9px 14px;border-bottom:1px solid #1d232c;gap:8px}
+.C .ev .w{color:#6b7484}.C .ev .r{text-align:right;font-weight:600}
+
+/* ===== D. SWISS GRID ===== */
+.D{--up:#000;--dn:#e30613;background:#fff;color:#000;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
+.D .hd{padding:18px 32px;border-bottom:3px solid #000}
+.D .logo{font-weight:700;font-size:20px;letter-spacing:-.6px}
+.D .logo span{display:inline-block;width:12px;height:12px;background:#e30613;margin-right:8px}
+.D nav{display:flex;gap:24px;font-size:14px;font-weight:700}.D nav span{color:#999}.D nav b{color:#000}
+.D .srch{width:200px;border:2px solid #000;font-size:13px;padding:5px 10px;color:#999;font-weight:500}
+.D .pro{background:#000;color:#fff;font-weight:700;font-size:13px;padding:7px 14px;letter-spacing:1px;display:flex;gap:8px;align-items:center}
+.D .pro i{width:8px;height:8px;background:#e30613}
+.D .tick{padding:0 32px;border-bottom:1px solid #000}
+.D .tick .t{flex:1;flex-direction:column;gap:2px;padding:10px 0;border-right:1px solid #000;padding-left:12px}
+.D .tick .t:first-child{padding-left:0}.D .tick .t:last-child{border-right:0}
+.D .tick .n{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.D .tick .v{font-size:20px;font-weight:700;letter-spacing:-.5px}.D .tick .c{font-size:12px;font-weight:700}
+.D .body{padding:0 32px;grid-template-columns:1fr 320px;gap:0}
+.D .main{border-right:1px solid #000;padding-right:28px}
+.D .lead{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:26px 0;border-bottom:3px solid #000}
+.D .big{font-size:96px;font-weight:700;line-height:.8;letter-spacing:-5px;color:#e30613}
+.D .big small{display:block;font-size:11px;letter-spacing:.5px;color:#000;margin-top:12px}
+.D .lead h2{font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1.05}
+.D .lead p{font-size:14.5px;line-height:1.5;margin-top:10px;color:#333;max-width:620px}
+.D .lead .meta{font-size:12px;font-weight:700;margin-top:12px;text-transform:uppercase;letter-spacing:.5px}
+.D .row{grid-template-columns:50px 1fr 120px;padding:13px 0;border-bottom:1px solid #000;gap:14px}
+.D .imp{font-size:26px;font-weight:700;letter-spacing:-1px}.D .imp.h{color:#e30613}
+.D .hl{font-size:15.5px;font-weight:700;letter-spacing:-.2px;line-height:1.25}
+.D .sub{font-size:12px;color:#666;margin-top:3px}
+.D .tk{font-size:12px;font-weight:700;text-align:right}
+.D .side{padding-left:28px}
+.D .sh{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:26px 0 8px;border-bottom:3px solid #000}
+.D .wl{grid-template-columns:62px 1fr 80px;padding:9px 0;border-bottom:1px solid #000;font-size:14px}
+.D .wl .s{font-weight:700}.D .wl .p{text-align:right}.D .wl .c{text-align:right;font-weight:700}
+.D .ev{padding:9px 0;border-bottom:1px solid #000;font-size:13.5px;display:grid;grid-template-columns:56px 1fr auto;gap:8px}
+.D .ev .w{font-weight:700}.D .ev .r{font-weight:700}
+</style></head><body>
+<div class="wrap">
+<div class="intro">
+  <h1>Round 52: Pro mode. 4 professional looks + where the button goes</h1>
+  <p>Same My News page and the same real headlines (robot, 26 Nov) in 4 very different "pro" styles. Price numbers are <b>sample numbers</b>, only for the look.
+  What Pro mode switches <b>off</b> in all 4: mascots, seasons, opening intros, story photos, emoji and playful motion. All features stay. One click switches back to the normal look, and the site remembers your choice.</p>
+</div>
+
+<div class="tabsbar"><a href="#place">Button place</a><a href="#A">A. Terminal</a><a href="#B">B. Research note</a><a href="#C">C. Workstation</a><a href="#D">D. Swiss grid</a></div>
+
+<!-- placement -->
+<div class="lbl" id="place"><b>Where the Pro button goes (normal look today)</b><span>1 = top right, next to Settings (my pick). 2 = top left, next to the logo.</span></div>
+<div class="frame cur">
+  <div class="hd"><div class="logo">Investment<i>.</i>Center</div><nav><b>My News</b><span>World Brief</span><span>Charts</span><span>Portfolio</span></nav><div class="sp"></div><div class="srch">Search stories, stocks...</div><div class="probtn ring">Pro <span class="k"></span></div><span class="gear">⚙</span><div class="av">M</div></div>
+  <div class="note">1 · Top right: where controls already live (search, Settings, account). Your eye looks here for "settings-like" things.</div>
+</div>
+<div class="frame cur" style="margin-top:12px">
+  <div class="hd"><div class="logo">Investment<i>.</i>Center</div><div class="probtn ring">Pro <span class="k"></span></div><nav><b>My News</b><span>World Brief</span><span>Charts</span><span>Portfolio</span></nav><div class="sp"></div><div class="srch">Search stories, stocks...</div><span class="gear">⚙</span><div class="av">M</div></div>
+  <div class="note">2 · Top left: reads like part of the name ("Investment Center Pro"), but it sits between the logo and the page tabs.</div>
+</div>
+
+<div class="lbl" id="A"><b>A. Terminal</b><span>black + amber, monospace, very dense, sharp corners. Most "trading desk". Hardest to read long text.</span></div>
+<div class="frame"><div class="pg A" data-s="A"></div></div>
+
+<div class="lbl" id="B"><b>B. Research note</b><span>ivory paper, navy ink, serif headlines, thin rules, lots of space. Looks like a private-bank report. Fewer stories per screen.</span></div>
+<div class="frame"><div class="pg B" data-s="B"></div></div>
+
+<div class="lbl" id="C"><b>C. Workstation</b><span>graphite panels, one cool blue, impact as meter bars, tabular numbers. Modern pro software. Closest to today's dark theme.</span></div>
+<div class="frame"><div class="pg C" data-s="C"></div></div>
+
+<div class="lbl" id="D"><b>D. Swiss grid</b><span>white, black, one red, Helvetica, thick rules, huge numbers. Bold and calm, very "designed". Less colour for up/down (red = down only).</span></div>
+<div class="frame"><div class="pg D" data-s="D"></div></div>
+</div>
+
+<script>
+const S=[
+ {i:8,t:"09:42",s:"Bearish",tk:["AMD","GOOGL","NVDA"],src:"Bloomberg",n:1,h:"Nasdaq 100 enters bear market territory amid concerns over artificial intelligence",p:"The Nasdaq 100 index has officially entered bear market territory as investors question returns on AI spending."},
+ {i:8,t:"08:15",s:"Bearish",tk:["NVDA","TSM"],src:"Associated Press",n:7,h:"Nvidia suppliers and clients navigate challenges from U.S. chip export restrictions",p:""},
+ {i:8,t:"07:58",s:"Bearish",tk:[],src:"Associated Press",n:11,h:"US prepares new tariffs on major global trading partners including China and EU",p:""},
+ {i:7,t:"07:20",s:"Bearish",tk:["GOOGL","NVDA"],src:"Reuters",n:1,h:"S&P Global places Nvidia on CreditWatch Negative due to governance concerns",p:""},
+ {i:7,t:"06:41",s:"Bullish",tk:[],src:"InfoQuest",n:1,h:"US economy grows 4.3 percent in third quarter of 2026",p:""},
+ {i:7,t:"06:05",s:"Mixed",tk:["TSM"],src:"Associated Press",n:8,h:"TSMC shares decline as Taiwan is included in proposed U.S. tariff list",p:""},
+ {i:6,t:"05:30",s:"Bullish",tk:["AMD","NVDA","TSM"],src:"Yahoo Finance",n:1,h:"President Trump to attend groundbreaking for TSMC's new Arizona chip foundry",p:""},
+ {i:6,t:"04:12",s:"Bearish",tk:["PANW"],src:"Bloomberg",n:2,h:"Palo Alto Networks faces accounting fraud accusations from former executive",p:""}];
+const TK=[["S&P 500","6,412.30","-0.82%"],["Nasdaq","21,036.55","-1.64%"],["SET","1,284.17","+0.41%"],["USD/THB","32.48","-0.12%"],["Gold","3,912.40","-0.55%"],["BTC","88,240","+1.20%"]];
+const WL=[["NVDA","148.21","-2.91%"],["TSM","182.60","-6.65%"],["GOOGL","161.05","-1.12%"],["AMD","118.44","-2.30%"],["PTT","31.75","+0.79%"]];
+const EV=[["Wed","Core PCE m/m","0.3%","dn"],["Wed","Prelim GDP q/q","4.3%","up"],["Thu","Thanksgiving: US closed","",""],["Fri","BOT rate decision","1.25%",""]];
+const c=v=>v.startsWith("-")?"dn":"up";
+const lvl=i=>i>=8?"h":i>=7?"m":"l";
+const spark=(d)=>`<svg class="spark" viewBox="0 0 60 18" width="60"><polyline fill="none" stroke="${d==='dn'?'#f0525c':'#2fbf71'}" stroke-width="1.5" points="${d==='dn'?'0,4 10,6 20,5 30,9 40,8 50,13 60,15':'0,14 10,12 20,13 30,9 40,10 50,6 60,4'}"/></svg>`;
+const nav=["My News","World Brief","Charts","Portfolio"];
+const R={
+A:()=>`<div class="hd"><div class="logo">INV·CTR</div><nav>${nav.map((n,k)=>`<span class="${k?'':'on'}"><em>F${k+1}</em>${n.toUpperCase()}</span>`).join("")}</nav><div class="cmd"><b>&gt;</b> NVDA &lt;GO&gt;  type a ticker or command</div><span class="clock">26 NOV 09:48 BKK</span><div class="pro"><i></i>PRO</div></div>
+<div class="tick">${TK.map(t=>`<div class="t"><span class="n">${t[0].toUpperCase()}</span><span class="v num">${t[1]}</span><span class="${c(t[2])} num">${t[2]}</span></div>`).join("")}</div>
+<div class="body"><div class="main"><div class="sec">MY NEWS · TOP IMPACT <span>8 STORIES · 3 HIGH · UPDATED 09:30</span></div>
+<div class="det"><h2>${S[0].h.toUpperCase()}</h2><p>${S[0].p}</p><div class="tg"><b>IMPACT 8 · BEARISH</b><span>AMD GOOGL NVDA</span><span>BLOOMBERG</span></div></div>
+${S.map((s,k)=>`<div class="row ${k?'':'sel'}"><span class="imp ${lvl(s.i)}">${s.i}</span><span class="tm">${s.t}</span><span class="hl">${s.h}</span><span class="tk">${s.tk.join(" ")||"-"}</span><span class="src">${({"Associated Press":"AP","Yahoo Finance":"YAHOO","InfoQuest":"INFOQ"}[s.src]||s.src).toUpperCase().slice(0,6)}</span></div>`).join("")}</div>
+<div class="side"><div class="box"><div class="sec">WATCHLIST <span>5</span></div>${WL.map(w=>`<div class="row wl"><span class="s">${w[0]}</span><span></span><span class="p num">${w[1]}</span><span class="c ${c(w[2])} num">${w[2]}</span></div>`).join("")}</div>
+<div class="box"><div class="sec">ECO CALENDAR <span>THIS WEEK</span></div>${EV.map(e=>`<div class="ev"><span class="w">${e[0].toUpperCase()}</span><span>${e[1]}</span><span class="r ${e[3]}">${e[2]}</span></div>`).join("")}</div></div></div>`,
+B:()=>`<div class="hd"><div class="logo">Investment Center<small>PRO</small></div><div class="sp"></div><nav>${nav.map((n,k)=>k?`<span>${n}</span>`:`<b>${n}</b>`).join("")}</nav><div class="srch">Search</div><div class="pro"><i></i>PRO</div></div>
+<div class="tick">${TK.map(t=>`<div class="t"><span class="n">${t[0]}</span><span class="num">${t[1]}</span><span class="${c(t[2])} num">${t[2]}</span></div>`).join("")}</div>
+<div class="body"><div class="main"><div class="date">Thursday, 26 November 2026 · Morning edition</div>
+<div class="lead"><h2>${S[0].h}</h2><p>${S[0].p} The index is now more than 20% below its peak; chipmakers led the fall.</p><div class="meta"><b>Impact 8 · Bearish</b><span>AMD · GOOGL · NVDA</span><span>Bloomberg</span></div></div>
+<div class="list">${S.slice(1,7).map(s=>`<div class="row"><span class="imp">${s.i}</span><div><div class="hl">${s.h}</div><div class="sub">${s.src}${s.n>1?` and ${s.n-1} more outlets`:""} · ${s.s}</div></div><span class="tk">${s.tk.join(" · ")}</span></div>`).join("")}</div></div>
+<div class="side"><div class="box"><div class="sh">Your watchlist</div>${WL.map(w=>`<div class="row wl"><span class="s">${w[0]}</span><span class="p num">${w[1]}</span><span class="c ${c(w[2])} num">${w[2]}</span></div>`).join("")}</div>
+<div class="box"><div class="sh">The week ahead</div>${EV.map(e=>`<div class="ev"><div class="w">${e[0]}</div><div>${e[1]}${e[2]?` <span class="r ${e[3]}">${e[2]}</span>`:""}</div></div>`).join("")}</div></div></div>`,
+C:()=>`<div class="hd"><div class="logo"><i></i>Investment Center</div><nav>${nav.map((n,k)=>`<span class="${k?'':'on'}">${n}</span>`).join("")}</nav><div class="sp"></div><div class="srch">Search stories, stocks <kbd>/</kbd></div><div class="seg"><span>Standard</span><span class="on">Pro</span></div></div>
+<div class="tick">${TK.map(t=>`<div class="t"><span class="n">${t[0]}</span><span class="v num">${t[1]}</span><span class="${c(t[2])} num">${t[2]}</span></div>`).join("")}</div>
+<div class="body"><div class="panel main"><div class="ph">My News <span>8 stories · updated 09:30</span></div>
+${S.map(s=>`<div class="row"><span class="meter ${s.i>=8?'':'m'}">${Array.from({length:10},(_,k)=>`<i class="${k<s.i?'f':''}"></i>`).join("")}<b>${s.i}</b></span><div><div class="hl">${s.h}</div><div class="sub">${s.src}${s.n>1?` +${s.n-1}`:""} · ${s.t}</div></div><div class="tk">${s.tk.map(t=>`<span>${t}</span>`).join("")}</div><span class="sent ${s.s==='Bullish'?'up':s.s==='Bearish'?'dn':''}">${s.s}</span></div>`).join("")}</div>
+<div class="side"><div class="panel"><div class="ph">Watchlist <span>5</span></div>${WL.map(w=>`<div class="row wl"><span class="s">${w[0]}</span>${spark(c(w[2]))}<span class="p num">${w[1]}</span><span class="c ${c(w[2])} num">${w[2]}</span></div>`).join("")}</div>
+<div class="panel"><div class="ph">Economic calendar <span>this week</span></div>${EV.map(e=>`<div class="ev"><span class="w">${e[0]}</span><span>${e[1]}</span><span class="r ${e[3]}">${e[2]}</span></div>`).join("")}</div></div></div>`,
+D:()=>`<div class="hd"><div class="logo"><span></span>Investment Center</div><nav>${nav.map((n,k)=>k?`<span>${n}</span>`:`<b>${n}</b>`).join("")}</nav><div class="sp"></div><div class="srch">Search</div><div class="pro"><i></i>PRO</div></div>
+<div class="tick">${TK.map(t=>`<div class="t"><span class="n">${t[0]}</span><span class="v num">${t[1]}</span><span class="c ${c(t[2])} num">${t[2]}</span></div>`).join("")}</div>
+<div class="body"><div class="main"><div class="lead"><div class="big">8<small>IMPACT / 10</small></div><div><h2>${S[0].h}</h2><p>${S[0].p}</p><div class="meta">Bearish · AMD GOOGL NVDA · Bloomberg</div></div></div>
+${S.slice(1,8).map(s=>`<div class="row"><span class="imp ${s.i>=8?'h':''}">${s.i}</span><div><div class="hl">${s.h}</div><div class="sub">${s.src} · ${s.s}</div></div><span class="tk">${s.tk.join(" ")}</span></div>`).join("")}</div>
+<div class="side"><div class="sh">Watchlist</div>${WL.map(w=>`<div class="row wl"><span class="s">${w[0]}</span><span class="p num">${w[1]}</span><span class="c ${c(w[2])} num">${w[2]}</span></div>`).join("")}
+<div class="sh">This week</div>${EV.map(e=>`<div class="ev"><span class="w">${e[0]}</span><span>${e[1]}</span><span class="r ${e[3]}">${e[2]}</span></div>`).join("")}</div></div>`};
+document.querySelectorAll(".pg").forEach(el=>el.innerHTML=R[el.dataset.s]());
+</script>
+</body></html>

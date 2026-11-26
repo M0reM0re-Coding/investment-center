@@ -178,7 +178,7 @@ function kcToolbar(el) {   // top bar, bottom bar and chart-type menu clicks
 // Shortcuts on a stock chart (not while typing): Alt+T trend line, Alt+F Fibonacci, Alt+H horizontal line, Alt+I indicators, Alt+R reset,
 // Delete removes the selected drawing, Ctrl+Z undo, Ctrl+Y (or Ctrl+Shift+Z) redo
 document.addEventListener("keydown", (e) => {
-  if (!kc.chart || !(location.hash || "").startsWith("#/charts/") || (chOf().pane || "chart") !== "chart" || e.target.closest?.("input, textarea, select, [contenteditable]") || document.querySelector(".kcmodal")) return;
+  if (!kc.chart || !kcLive() || ((location.hash || "").startsWith("#/charts/") && (chOf().pane || "chart") !== "chart") || e.target.closest?.("input, textarea, select, [contenteditable]") || document.querySelector(".kcmodal")) return;
   const k = e.key.toLowerCase();
   if (e.altKey && ["t", "f", "h", "j", "v"].includes(k)) { e.preventDefault(); ktStart({ t: "segment", f: "fibonacciLine", h: "horizontalStraightLine", j: "horizontalRayLine", v: "verticalStraightLine" }[k]); }
   else if (e.altKey && ["i", "r", "a"].includes(k)) { e.preventDefault(); if (k === "a") kcAlertWindow(); else kcAction({ i: "ind", r: "reset" }[k]); }
@@ -200,6 +200,6 @@ function kcFull() {
   setTimeout(() => kc.chart?.resize(), 250);
 }
 document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement) document.body.classList.remove("kcfull"); setTimeout(() => kc.chart?.resize(), 200); });
-addEventListener("hashchange", () => { if (!(location.hash || "").startsWith("#/charts/") && document.body.classList.contains("kcfull")) { document.body.classList.remove("kcfull"); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } });
+addEventListener("hashchange", () => { if (!kcLive() && document.body.classList.contains("kcfull")) { document.body.classList.remove("kcfull"); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("kcfull") && !document.fullscreenElement && !document.querySelector(".kcmodal") && !kc.tool) { document.body.classList.remove("kcfull"); setTimeout(() => kc.chart?.resize(), 200); } });
 

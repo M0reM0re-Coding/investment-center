@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Round 53 - Pro space + Pro themes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#e9e9ec;color:#111;padding:28px 0 80px}
+.wrap{max-width:1360px;margin:0 auto;padding:0 24px}
+.intro h1{font-size:22px;font-weight:800}.intro p{color:#555;font-size:14px;margin-top:6px;line-height:1.5;max-width:980px}
+.lbl{display:flex;align-items:baseline;gap:12px;margin:40px 0 10px}.lbl b{font-size:20px}.lbl span{color:#555;font-size:13.5px}
+.frame{border-radius:10px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.14);border:1px solid #bbb}
+.tabsbar{position:sticky;top:0;z-index:50;background:#e9e9ec;padding:10px 0;display:flex;gap:8px}
+.tabsbar a{font-size:13px;font-weight:600;color:#111;text-decoration:none;background:#fff;border:1px solid #ccc;border-radius:6px;padding:6px 12px}
+
+/* ---- colour schemes ---- */
+[data-sc=amber]  {--bg:#000;--pn:#070707;--hd:#0d0d0d;--ln:#2e2e2e;--ln2:#1a1a1a;--ink:#e6e6e6;--hi:#fff;--dim:#7a7a7a;--acc:#ffb000;--on:#000;--sel:#1a1400;--tk:#5fb3ff;--up:#3ddc84;--dn:#ff5c5c}
+[data-sc=phosphor]{--bg:#020a04;--pn:#03100a;--hd:#06180e;--ln:#123d22;--ln2:#0a2414;--ink:#9ff0b4;--hi:#d6ffe0;--dim:#4f8a60;--acc:#33ff77;--on:#00140a;--sel:#0a2a15;--tk:#7fe7ff;--up:#33ff77;--dn:#ff6b5c}
+[data-sc=arctic] {--bg:#060b14;--pn:#0a1220;--hd:#0e1829;--ln:#1f2d45;--ln2:#152137;--ink:#cfdcef;--hi:#fff;--dim:#6d7f9a;--acc:#4fd1ff;--on:#03121c;--sel:#0f2238;--tk:#9fb8ff;--up:#35d39a;--dn:#ff6b7a}
+[data-sc=paper]  {--bg:#f4f1ea;--pn:#fbf9f4;--hd:#ebe6da;--ln:#c9c1ae;--ln2:#e1dbcc;--ink:#2a2620;--hi:#000;--dim:#857c69;--acc:#b8460b;--on:#fff;--sel:#f3e3d3;--tk:#1d4ed8;--up:#15803d;--dn:#c2261d}
+
+/* ---- Pro shell ---- */
+.P{background:var(--bg);color:var(--ink);font-family:'IBM Plex Mono',Consolas,monospace;font-size:12px}
+.P .num{font-variant-numeric:tabular-nums}
+.P .up{color:var(--up)}.P .dn{color:var(--dn)}
+.P .top{display:flex;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid var(--ln);background:var(--bg)}
+.P .logo{color:var(--acc);font-weight:600;letter-spacing:1px}
+.P .cmd{flex:1;background:var(--pn);border:1px solid var(--ln);color:var(--dim);padding:5px 10px}
+.P .cmd b{color:var(--acc);font-weight:500}.P .cmd i{font-style:normal;color:var(--hi)}
+.P .clock{color:var(--dim)}
+.P .gear{border:1px solid var(--ln);color:var(--dim);padding:4px 8px}
+.P .pro{background:var(--acc);color:var(--on);font-weight:600;padding:5px 10px;letter-spacing:1px;display:flex;gap:6px;align-items:center;cursor:pointer}
+.P .pro i{width:7px;height:7px;background:var(--on);border-radius:50%}
+.P .fk{display:flex;gap:2px;padding:5px 12px;border-bottom:1px solid var(--ln);background:var(--bg)}
+.P .fk span{padding:3px 8px;background:var(--hd);color:var(--dim);white-space:nowrap}
+.P .fk span em{font-style:normal;color:var(--acc);margin-right:4px}
+.P .fk span.on{background:var(--acc);color:var(--on);font-weight:600}.P .fk span.on em{color:var(--on)}
+.P .fk span.soon{opacity:.55}
+.P .fk .sp{flex:1;background:none}
+.P .grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;grid-auto-rows:minmax(0,auto);gap:1px;background:var(--ln);border-bottom:1px solid var(--ln)}
+.P .pn{background:var(--pn);min-height:180px}
+.P .pn.w2{grid-column:span 2}
+.P .ph{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--hd);border-bottom:1px solid var(--ln2);color:var(--acc);letter-spacing:.5px}
+.P .ph .src{color:var(--dim);font-size:10.5px;letter-spacing:0}
+.P .ph .src b{font-weight:500;color:var(--ink)}
+.P .r{display:grid;padding:4px 10px;border-bottom:1px solid var(--ln2);gap:8px;align-items:center}
+.P .r:last-child{border-bottom:0}
+.P .r.sel{background:var(--sel);box-shadow:inset 2px 0 var(--acc)}
+.P .t{color:var(--tk)}.P .d{color:var(--dim)}.P .h{color:var(--hi)}.P .rt{text-align:right}
+.P .imp{text-align:center;color:var(--on);font-weight:600}
+.P .imp.h8{background:var(--dn)}.P .imp.h7{background:var(--acc)}
+.P .soonbox{padding:18px 10px;color:var(--dim);line-height:1.6}
+.P .soonbox b{color:var(--acc);font-weight:500}
+.P .bar{height:6px;background:var(--ln2);position:relative}.P .bar i{position:absolute;inset:0 auto 0 0;background:var(--acc)}
+.P .foot{display:flex;gap:18px;padding:5px 12px;color:var(--dim);font-size:11px}
+.P .foot b{color:var(--acc);font-weight:500}
+.P .case{padding:8px 10px;border-bottom:1px solid var(--ln2)}
+.P .case b{color:var(--hi);font-weight:600}.P .case p{color:var(--ink);margin-top:3px;line-height:1.5}
+.P svg .ln{fill:none;stroke:var(--acc);stroke-width:1.5}.P svg .gr{stroke:var(--ln2)}
+
+/* ---- settings mock ---- */
+.set{background:#fff;padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.set h3{font-size:15px;margin-bottom:4px}.set .hint{font-size:12.5px;color:#666;margin-bottom:12px;line-height:1.45}
+.seg{display:inline-flex;border:1px solid #ccc;border-radius:8px;overflow:hidden;font-size:13px;font-weight:600}
+.seg span{padding:7px 14px;color:#555}.seg span.on{background:#111;color:#fff}
+.sw{display:flex;gap:12px;margin-top:6px}
+.sw .c{width:120px;border:2px solid #ddd;border-radius:8px;overflow:hidden;font-size:12px;font-weight:600}
+.sw .c.on{border-color:#111}
+.sw .c .pv{height:62px;padding:8px;font-family:'IBM Plex Mono';font-size:10px;line-height:1.5}
+.sw .c .nm{padding:6px 8px;background:#fafafa;border-top:1px solid #eee}
+.sw .c .nm small{display:block;font-weight:400;color:#888}
+.off{font-size:12.5px;color:#444;line-height:1.7}
+.off s{color:#999}
+</style></head><body>
+<div class="wrap">
+<div class="intro">
+  <h1>Round 53: the Pro space + Pro's own theme settings</h1>
+  <p>Click <b>PRO</b> (top right) and the site turns into the terminal. It shows <b>only Pro plan modules</b> (F1-F10). My News, World Brief, Charts, Stocks, Portfolio and the calendars stay in normal mode. Click PRO again to go back.
+  Below: the same Pro home in <b>4 colour schemes</b>, then the Pro Settings panel. Headlines are real (robot, 26 Nov). All other numbers are <b>sample numbers</b>.
+  Panels for modules that aren't built yet say which phase brings them.</p>
+</div>
+<div class="tabsbar"><a href="#s1">1. Amber</a><a href="#s2">2. Phosphor</a><a href="#s3">3. Arctic</a><a href="#s4">4. Paper (light)</a><a href="#set">Pro Settings</a></div>
+
+<div class="lbl" id="s1"><b>1. Amber (classic)</b><span>round 52 A as picked: black + amber. The default.</span></div>
+<div class="frame"><div class="P" data-sc="amber"></div></div>
+<div class="lbl" id="s2"><b>2. Phosphor</b><span>old green-screen terminal: green on near-black. Most "retro computer". Up and down are harder to tell apart (green everywhere).</span></div>
+<div class="frame"><div class="P" data-sc="phosphor"></div></div>
+<div class="lbl" id="s3"><b>3. Arctic</b><span>deep navy + ice cyan. Cooler and softer on the eyes at night; less "Bloomberg".</span></div>
+<div class="frame"><div class="P" data-sc="arctic"></div></div>
+<div class="lbl" id="s4"><b>4. Paper (light)</b><span>the same terminal in daylight: warm paper, black mono text, rust accent. Used when Pro is set to Light, or Auto in daytime.</span></div>
+<div class="frame"><div class="P" data-sc="paper"></div></div>
+
+<div class="lbl" id="set"><b>Pro Settings</b><span>opens from the ⚙ next to PRO. Same pattern as the normal Settings (Auto / Light / Dark + a style for each), but with Pro's own choices.</span></div>
+<div class="frame"><div class="set">
+  <div>
+    <h3>Pro appearance</h3><div class="hint">Separate from your normal theme. Changing this never changes My News, World Brief etc.</div>
+    <div class="seg"><span class="on">Auto</span><span>Light</span><span>Dark</span></div>
+    <h3 style="margin-top:20px">Dark scheme</h3><div class="hint">Used for Dark, and for Auto at night.</div>
+    <div class="sw">
+      <div class="c on"><div class="pv" style="background:#000;color:#e6e6e6"><span style="color:#ffb000">INV·CTR</span><br>NVDA <span style="color:#ff5c5c">-2.91%</span><br><span style="background:#ffb000;color:#000;padding:0 3px">F1</span></div><div class="nm">Amber<small>classic, default</small></div></div>
+      <div class="c"><div class="pv" style="background:#020a04;color:#9ff0b4"><span style="color:#33ff77">INV·CTR</span><br>NVDA <span style="color:#ff6b5c">-2.91%</span><br><span style="background:#33ff77;color:#00140a;padding:0 3px">F1</span></div><div class="nm">Phosphor<small>green screen</small></div></div>
+      <div class="c"><div class="pv" style="background:#060b14;color:#cfdcef"><span style="color:#4fd1ff">INV·CTR</span><br>NVDA <span style="color:#ff6b7a">-2.91%</span><br><span style="background:#4fd1ff;color:#03121c;padding:0 3px">F1</span></div><div class="nm">Arctic<small>navy + ice</small></div></div>
+    </div>
+    <h3 style="margin-top:20px">Light scheme</h3><div class="hint">Used for Light, and for Auto in daytime.</div>
+    <div class="sw"><div class="c on"><div class="pv" style="background:#f4f1ea;color:#2a2620"><span style="color:#b8460b">INV·CTR</span><br>NVDA <span style="color:#c2261d">-2.91%</span><br><span style="background:#b8460b;color:#fff;padding:0 3px">F1</span></div><div class="nm">Paper<small>daylight terminal</small></div></div></div>
+  </div>
+  <div>
+    <h3>Always off in Pro</h3><div class="hint">These normal-mode settings don't apply inside Pro (they stay as you set them for normal mode).</div>
+    <div class="off"><s>Mascots</s> · <s>Seasons</s> · <s>Opening intros</s> · <s>Story photos</s> · <s>Playful motion</s> · <s>Light styles (crisp / newsprint / cloud / sage)</s> · <s>Dark styles (graphite / true black / midnight)</s></div>
+    <h3 style="margin-top:20px">Shared with normal mode</h3><div class="hint">These follow you into Pro, because they're your data, not the look.</div>
+    <div class="off">Watchlist · Topics · Price alerts · Portfolio trades · Telegram alerts · Market-hours badges</div>
+    <h3 style="margin-top:20px">Remembered</h3><div class="hint">Pro on/off and the Pro scheme are saved on this device, like your normal theme.</div>
+  </div>
+</div></div>
+</div>
+
+<script>
+const NEWS=[[8,"09:42","Nasdaq 100 enters bear market territory amid concerns over AI","NVDA"],[8,"08:15","Nvidia suppliers navigate U.S. chip export restrictions","TSM"],[8,"07:58","US prepares new tariffs on China, EU and 14 others","-"],[7,"07:20","S&P Global puts Nvidia on CreditWatch Negative","NVDA"],[7,"06:41","US economy grows 4.3% in Q3 2026 (2nd estimate)","-"]];
+const WEI=[["S&P 500","6,412.30","-0.82%"],["NASDAQ 100","21,036.55","-1.64%"],["DOW","50,018.70","+0.85%"],["SET","1,284.17","+0.41%"],["NIKKEI 225","48,903.10","-0.37%"],["DAX","23,880.40","+0.22%"],["USD/THB","32.48","-0.12%"],["GOLD","3,912.40","-0.55%"],["BTC","88,240","+1.20%"]];
+const c=v=>v.startsWith("-")?"dn":"up";
+const F=[["F1","HOME",1],["F2","MKT",1],["F3","MACRO",0],["F4","ROT",0],["F5","VAL",0],["F6","THESIS",0],["F7","RISK",0],["F8","NEWS",1],["F9","SMART",0],["F10","CRYPTO",0]];
+function hub(){return `
+<div class="top"><span class="logo">INV·CTR PRO</span><div class="cmd"><b>&gt;</b> <i>NVDA DCF</i>&nbsp; type a ticker + function, e.g. NVDA DES · WEI · ECO · US MACRO</div><span class="clock">THU 26 NOV 09:48 BKK</span><span class="gear">⚙</span><div class="pro"><i></i>PRO</div></div>
+<div class="fk">${F.map((f,k)=>`<span class="${k?'':'on'} ${f[2]?'':'soon'}"><em>${f[0]}</em>${f[1]}</span>`).join("")}<span class="sp"></span><span>LAYOUT: MORNING ▾</span></div>
+<div class="grid">
+ <div class="pn"><div class="ph">WEI · WORLD INDICES<span class="src"><b>YAHOO</b> · 15M DELAY</span></div>
+  ${WEI.map((w,k)=>`<div class="r ${k==1?'sel':''}" style="grid-template-columns:1fr 90px 64px"><span class="h">${w[0]}</span><span class="rt num">${w[1]}</span><span class="rt num ${c(w[2])}">${w[2]}</span></div>`).join("")}</div>
+ <div class="pn"><div class="ph">NVDA GP · CHART 6M<span class="src"><b>YAHOO</b> · DAILY</span></div>
+  <svg viewBox="0 0 300 150" width="100%" height="190" preserveAspectRatio="none"><line class="gr" x1="0" y1="40" x2="300" y2="40"/><line class="gr" x1="0" y1="80" x2="300" y2="80"/><line class="gr" x1="0" y1="120" x2="300" y2="120"/><polyline class="ln" points="0,60 20,52 40,48 60,40 80,30 100,26 120,22 140,30 160,44 180,50 200,66 220,72 240,88 260,96 280,110 300,118"/></svg>
+  <div class="foot" style="padding:4px 10px"><span>LAST <b>148.21</b></span><span class="dn">-2.91%</span><span>FROM PEAK <span class="dn">-48%</span></span></div></div>
+ <div class="pn"><div class="ph">NVDA THESIS<span class="src"><b>YOUR NOTES</b></span></div>
+  <div class="soonbox">Bull / base / bear case, evidence for and against, target, "sell if..." rules.<br><b>Comes in phase 3</b> (Valuation Lab + Thesis).</div></div>
+ <div class="pn w2"><div class="ph">TOP · NEWS INTELLIGENCE<span class="src"><b>ROBOT + GEMINI</b> · HOURLY</span></div>
+  ${NEWS.map((n,k)=>`<div class="r ${k?'':'sel'}" style="grid-template-columns:28px 44px 1fr 60px"><span class="imp h${n[0]}">${n[0]}</span><span class="d">${n[1]}</span><span class="h">${n[2]}</span><span class="t rt">${n[3]}</span></div>`).join("")}</div>
+ <div class="pn"><div class="ph">US MACRO<span class="src"><b>FRED</b> · DAILY</span></div>
+  <div class="soonbox">10Y, 2s10s curve, CPI / PCE / NFP surprises, Fed balance sheet, TGA.<br><b>Comes in phase 5.</b></div></div>
+ <div class="pn"><div class="ph">RISK · PORTFOLIO<span class="src"><b>YOUR TRADES</b> · 15M DELAY</span></div>
+  <div class="r" style="grid-template-columns:1fr 90px"><span>VALUE (THB)</span><span class="rt h num">412,880</span></div>
+  <div class="r" style="grid-template-columns:1fr 90px"><span>UNREALISED P&amp;L</span><span class="rt dn num">-18,240</span></div>
+  <div class="r" style="grid-template-columns:1fr 90px"><span>TECH EXPOSURE</span><span class="rt h num">64%</span></div>
+  <div class="r" style="grid-template-columns:1fr"><div class="bar"><i style="width:64%"></i></div></div>
+  <div class="soonbox" style="padding-top:8px">Beta, drawdown, VaR, journal: <b>phase 4</b>.</div></div>
+ <div class="pn"><div class="ph">ROT · SECTORS 1W<span class="src"><b>YAHOO</b> · DAILY</span></div>
+  <div class="soonbox">Sector ETFs, growth vs value, small vs large, relative strength.<br><b>Comes in phase 5.</b></div></div>
+ <div class="pn"><div class="ph">CRYPTO · FUNDING<span class="src"><b>BYBIT/OKX</b> · LIVE</span></div>
+  <div class="soonbox">Funding rates, open interest, stablecoins, big BTC moves.<br><b>Comes in phase 6.</b></div></div>
+</div>
+<div class="foot"><span><b>F1-F10</b> modules</span><span><b>/</b> command line</span><span><b>TAB</b> next panel</span><span>panels follow ticker: <b>NVDA</b></span><span style="margin-left:auto">dimmed F-keys = not built yet</span></div>`}
+document.querySelectorAll(".P").forEach(e=>e.innerHTML=hub());
+</script>
+</body></html>

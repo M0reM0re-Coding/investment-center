@@ -18,7 +18,8 @@ const SIGN = { crisp: [.390, .473, .252, .110], newsprint: [.344, .533, .335, .1
 const themeChar = () => season || (isDark() ? darkStyle() : lightStyle());   // the character that matches what you see right now
 function charOf() { const m = mascotPref(); return m === "none" ? null : m.startsWith("c:") ? m.slice(2) : themeChar(); }
 const charImg = (c, pose, cls = "") => `<img class="mimg ${cls}" src="mascot/${c}/${pose}.png" alt="" draggable="false" onerror="this.remove()">`;
-function mascotArt(pose, cls = "") {   // the chosen mascot in a pose; "" when the user picked "No mascot"
+function mascotArt(pose, cls = "") {
+  if (typeof proOn === "function" && proOn()) return "";   // Pro: no mascots   // the chosen mascot in a pose; "" when the user picked "No mascot"
   const m = mascotPref(), c = charOf();
   if (m === "none") return "";
   return charImg(c || themeChar(), pose, cls);   // old picks (Official/Retro, removed) fall back to the theme character
@@ -42,7 +43,7 @@ function afterIntro(fn, n = 0) {   // wait for the opening intro to finish (max 
   fn();
 }
 function showBig(list, preview = false) {
-  if (!list.length || document.querySelector(".bigal")) return;
+  if (!list.length || document.querySelector(".bigal") || (typeof proOn === "function" && proOn())) return;   // Pro: no full-screen alert (Telegram still sends)
   let i = 0;
   const el = document.createElement("div");
   el.className = "bigal";

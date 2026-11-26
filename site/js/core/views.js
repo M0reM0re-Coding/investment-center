@@ -4,6 +4,7 @@
 
 // ---------- views ----------
 function header(active) {
+  if (typeof proOn === "function" && proOn()) return proTop();
   return `<header><div class="wrap nav">
     <a class="logo" href="#/"><i class="lmark" aria-hidden="true"></i>investment center</a>
     <nav>
@@ -16,6 +17,7 @@ function header(active) {
       <form class="hsearch" id="hsearch" role="search"><span>⌕</span><input id="hq" type="search" placeholder="Search news & notes" value="${esc(state.searchQ || "")}" autocomplete="off" maxlength="60"></form>
       <span class="live" title="Checks for new stories every 2 minutes"><i></i>LIVE</span>
       <a class="btn ghost" href="#/settings">Topics<span class="hide-sm"> &amp; watchlist</span></a>
+      ${typeof proBtn === "function" ? proBtn() : ""}
       <a class="gear ${active === "prefs" ? "on" : ""}" href="#/prefs" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
       <button class="btn" data-act="logout">Sign out</button>
       <button class="msearch" data-act="msearch" aria-label="Search" title="Search">${ICO.search}</button>

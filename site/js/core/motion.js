@@ -50,6 +50,7 @@ function rememberQuotes() {
 }
 let pageReady = false;   // true once the first real page (news or login) is drawn
 function playIntro(now = false) {
+  if (typeof proOn === "function" && proOn()) return;   // Pro: no intros
   const force = now || /[?&]intro\b/.test(location.search);
   if (calm() || (!force && ssGet("ic_intro_seen"))) return;
   ssSet("ic_intro_seen", "1");
@@ -187,7 +188,7 @@ function pageWipe() {
   const changed = lastView !== null && key !== lastView;
   const reading = key === "story" || lastView === "story"; // opening / leaving a story: no wipe, it made reading feel slow
   lastView = key;
-  if (!changed || reading || calm()) return;
+  if (!changed || reading || calm() || (typeof proOn === "function" && proOn())) return;
   document.querySelector(".pwipe")?.remove();
   const w = document.createElement("div");
   w.className = "pwipe";
